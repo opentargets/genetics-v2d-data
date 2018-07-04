@@ -12,9 +12,7 @@ Tables:
 #### Notes
 - Do we only include UKB studies with an EFO
 
-#### Steps
-
-Variant-disease associations
+#### Top loci table
   1. Download all associations from: ftp://ftp.ebi.ac.uk/pub/databases/gwas/releases/latest
   2. Map rsid and chr:pos to variant_ids (GRCh37)
     - This is complicated by:
@@ -26,8 +24,8 @@ Variant-disease associations
       - Two associations don't have the same number of SNPs in SNPS, CHR_ID and
         CHR_POS. These have been dropped as they are ambiguous.
       - I am assuming that variants with id e.g. chr21:43693789 are from build GRCh37.
-      - Variants that do not have a rsid or chr:pos will be dropped
-      - Variants that do not have a match in the Ensembl VCF will be dropped.
+      - Associations that do not have a rsid or chr:pos will be dropped
+      - Associations that do not have a match in the Ensembl VCF will be dropped.
     - Steps:
       - Load GWAS Catalog data and split multiSNPs into separate rows
       - Load Ensembl VCF and split multiallelic sites into multiple rows
@@ -40,7 +38,7 @@ Variant-disease associations
   3. (Not doing this, see below). Extract beta/OR:
     - Note:
       - I will only keep p-values
-      - I have decided not to extract effect sizes/OR and SE, because this can't
+      - I have decided not to extract effect sizes/OR and SE. This this can't
         be done in a consistent way across studies, because:
           - Both alleles are not reported so the direction of the effect
             cannot be inferred unambiguously
@@ -69,7 +67,7 @@ Variant-disease associations
 
   ? Define locus interval +-1cM. Could be useful for clustering lead SNPs.
 
-Study information table
+#### Study information table
   1. Parse EFOs
   2. N
   3. Number of cases
