@@ -7,7 +7,9 @@ Tables:
     - Neale et al UK Biobank top loci
   2. Study information table
   3. Lead variant to tag variant table
-  4. Summary statistic table
+    - Finemapping table
+    - LD table
+  4. Summary statistic tables
 
 #### Notes
 - Do we only include UKB studies with an EFO
@@ -68,17 +70,52 @@ Tables:
   ? Define locus interval +-1cM. Could be useful for clustering lead SNPs.
 
 #### Study information table
-  1. Parse EFOs
+
+Get GWAS Catalog studies. This is easier to get from the API as ancestry is
+difficult to parse from the
+  1. EFO and mapped trait
+  2. Reported trait
   2. N
-  3. Number of cases
-  4. Ancestry
-  5. Whether fine mapping is available
-  5. Whether summary statistics
+  3. Number of cases (?). This is
+  4. Ancestries
+  5. Publication info
+    - Pubmedid
+    - Year
+    - Author
+    - Title
+    - Journal
+  Notes:
+    - There are 18 studies where sample size == 0 because ancestry
+
+Neale UKB studies:
+  Steps:
+    - Get and merge self-reported and ICD10 EFO curations
+    - Map EFOs to mapped_trait
+    - Load Nelae et al manifest
+    - Merge EFOs with manifest
+    - Extract required columns
+  Todo:
+    - Fix field S72	EFO_000855 in EFO curation (short_form not recognised)
+
+#### Finemapping table
+
+Steps:
+  - Get from GS
+  - Make study ID
+  - Filter to only keep those in 95% credible sets
+  - Put into a standard format
+
+Notes:
+  - Only keep variants in 95% credible sets
+
 
 #### Required columns
 TODO
 
 #### Usage
+
+Additional requirements:
+  `pip install ontoma`
 
 ```
 # Install dependencies into isolated environment

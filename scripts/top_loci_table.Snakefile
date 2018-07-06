@@ -84,12 +84,24 @@ rule merge_gwascat_and_nealeUKB_toploci:
         gwas = tmpdir + '/gwas-catalog-associations_ot-format.{version}.tsv',
         neale = tmpdir + '/nealeUKB-associations_ot-format.{version}.tsv'
     output:
-        'output/ot_genetics_toploci.{version}.tsv'
+        'output/ot_genetics_toploci_table.{version}.tsv'
     run:
         # Load
         gwas = pd.read_csv(input['gwas'], sep='\t', header=0)
         neale = pd.read_csv(input['neale'], sep='\t', header=0)
         # Merge
-        merged = pd.concat([gwas, neale])
+        merged = pd.concat([gwas, neale], sort=False)
         # Save
         merged.to_csv(output[0], sep='\t', index=None)
+
+rule toploci_to_GCS:
+    ''' Copy to GCS
+    '''
+    input:
+        'output/ot_genetics_toploci_table.{version}.tsv'
+    output:
+        GSRemoteProvider().remote(
+            '{gs_dir}/{{version}}/ot_genetics_toploci_table.{{version}}.tsv'.format(gs_dir=config['gs_dir'])
+            )
+    shell:
+        'cp {input} {output}'
