@@ -42,12 +42,23 @@ targets.append(GSRemoteProvider().remote(
                                                                             version=config['version'])
     ))
 
+# Make targets for ld table
+targets.append(
+    'output/ot_genetics_ld_table.{version}.tsv.gz'.format(version=config['version'])
+    )
+targets.append(GSRemoteProvider().remote(
+    '{gs_dir}/{version}/ot_genetics_ld_table.{version}.tsv.gz'.format(gs_dir=config['gs_dir'],
+                                                                      version=config['version'])
+    ))
+
 # Trigger making of targets
 rule all:
     input:
         targets
+        # tmpdir + '/postgap_ld_table.temp.tsv.gz'
 
 # Add workflows
 include: 'scripts/top_loci_table.Snakefile'
 include: 'scripts/study_table.Snakefile'
 include: 'scripts/finemapping_table.Snakefile'
+include: 'scripts/ld_table.Snakefile'

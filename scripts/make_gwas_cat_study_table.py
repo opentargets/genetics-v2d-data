@@ -27,7 +27,7 @@ def main():
         row = {}
         row['study_id'] = study['accessionId']
         # Get publication info
-        row['pmid'] = study['publicationInfo']['pubmedId']
+        row['pmid'] = str(study['publicationInfo']['pubmedId'])
         row['pub_date'] = study['publicationInfo']['publicationDate']
         row['pub_journal'] = study['publicationInfo']['publication']
         row['pub_title'] = study['publicationInfo']['title']

@@ -1,68 +1,73 @@
-import pandas as pd
-
-rule make_gwas_cat_studies_table:
-    ''' Use GWAS Catalog API to get all studies
-    '''
-    output:
-        tmpdir + '/gwas-catalog_study_table.{version}.tsv'
-    shell:
-        'python scripts/make_gwas_cat_study_table.py '
-        '--outf {output}'
-
-rule process_efo_curation:
-    ''' Downloads EFO curation, applies filters, merges
-    Finally, maps EFOs to mapped trait names using ? API.
+rule list_ancestries:
+    ''' Make a tsv showing all unique ancestries in study table
     '''
     input:
-        icd10=GSRemoteProvider().remote(config['neale_efo_icd10'], keep_local=True),
-        selfrep=GSRemoteProvider().remote(config['neale_efo_self'], keep_local=True)
-    output:
-        tmpdir + '/nealeUKB_efo_curation.{version}.tsv'
-    shell:
-        'python scripts/process_nealeUKB_efo_curations.py '
-        '--in_icd10 "{input.icd10}" '
-        '--in_self "{input.selfrep}" '
-        '--outf {output}'
-
-rule make_nealeUKB_studies_table:
-    ''' Makes study table for Neale et al UKB summary statistics
-    '''
-    input:
-        manifest=GSRemoteProvider().remote(config['neale_manifest'], keep_local=True),
-        efos=tmpdir + '/nealeUKB_efo_curation.{version}.tsv'
-    output:
-        tmpdir + '/nealeUKB_study_table.{version}.tsv'
-    shell:
-        'python scripts/make_nealeUKB_study_table.py '
-        '--in_manifest {input.manifest} '
-        '--in_efos {input.efos} '
-        '--outf {output}'
-
-rule merge_study_tables:
-    ''' Merges the GWAS Catalog and Neale UK Biobank study tables together
-    '''
-    input:
-        gwas=tmpdir + '/gwas-catalog_study_table.{version}.tsv',
-        neale=tmpdir + '/nealeUKB_study_table.{version}.tsv'
-    output:
         'output/ot_genetics_studies_table.{version}.tsv'
-    run:
-        # Load
-        gwas = pd.read_csv(input['gwas'], sep='\t', header=0)
-        neale = pd.read_csv(input['neale'], sep='\t', header=0)
-        # Merge
-        merged = pd.concat([gwas, neale], sort=False)
-        # Save
-        merged.to_csv(output[0], sep='\t', index=None)
+    output:
+        tmpdir + '/ancestry_list.{version}.tsv'
+    shell:
+        'python scripts/list_ancestries.py '
+        '--inf {output} '
+        '--outf {output}'
 
-rule study_to_GCS:
+rule get_postgap_data:
+    ''' Download postgap data. This will be used as a temporary stop gap to
+        extract LD table
+    '''
+    input:
+        HTTPRemoteProvider().remote('https://storage.googleapis.com/postgap-data/postgap.20180615.txt.gz')
+    output:
+        tmpdir + '/postgap.20180615.txt.gz'
+    shell:
+        'cp {input} {output}'
+
+rule get_1000g_variantID_lut:
+    ''' Download rsid to variant id look up table for 1000G variants
+    '''
+    input:
+        GSRemoteProvider().remote('genetics-portal-data/lut/1000g_rsid_to_variantid_lut.tsv.gz')
+    output:
+        tmpdir + '/1000g_rsid_to_variantid_lut.tsv.gz'
+    shell:
+        'cp {input} {output}'
+
+rule parse_postgap:
+    ''' Parses LD information from the postgap output. Temporary fix.
+    '''
+    input:
+        in_postgap=tmpdir + '/postgap.20180615.txt.gz',
+        in_lut=tmpdir + '/1000g_rsid_to_variantid_lut.tsv.gz'
+    output:
+        tmpdir + '/postgap_ld_table.temp.tsv.gz'
+    shell:
+        'python scripts/parse_ld_from_postgap_output.py '
+        '--in_postgap {input.in_postgap} '
+        '--in_lut {input.in_lut} '
+        '--outf {output}'
+
+rule merge_ld_to_loci:
+    ''' Merges the postgap ld table to the top loci table and outputs into
+        a standard format
+    '''
+    input:
+        in_ld=tmpdir + '/postgap_ld_table.temp.tsv.gz',
+        in_loci='output/ot_genetics_toploci_table.{version}.tsv'
+    output:
+        'output/ot_genetics_ld_table.{version}.tsv.gz'
+    shell:
+        'python scripts/merge_postgap_ld_to_top_loci.py '
+        '--in_ld {input.in_ld} '
+        '--in_loci {input.in_loci} '
+        '--outf {output}'
+
+rule ld_to_GCS:
     ''' Copy to GCS
     '''
     input:
-        'output/ot_genetics_studies_table.{version}.tsv'
+        'output/ot_genetics_ld_table.{version}.tsv.gz'
     output:
         GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/ot_genetics_studies_table.{{version}}.tsv'.format(gs_dir=config['gs_dir'])
+            '{gs_dir}/{{version}}/ot_genetics_ld_table.{{version}}.tsv.gz'.format(gs_dir=config['gs_dir'])
             )
     shell:
         'cp {input} {output}'

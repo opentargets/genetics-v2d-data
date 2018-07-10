@@ -26,7 +26,8 @@ def main():
     top_loci.loc[:, 'study_id'] = 'NEALEUKB_' + top_loci['trait'].astype(str)
 
     # Fix very low p-values
-    top_loci.loc[top_loci.p == 0, 'p'] = sys.float_info.min
+    # top_loci.loc[top_loci.p == 0, 'p'] = sys.float_info.min
+    top_loci.loc[top_loci.p == 0, 'p'] = (1 / sys.float_info.max)
 
     # Filter p-values
     top_loci = top_loci.loc[top_loci.p < 1e-5, :]

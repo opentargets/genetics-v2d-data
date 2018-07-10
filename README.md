@@ -1,27 +1,90 @@
 Variant-disease tables
 ======================
 
-Tables:
-  1. Variant-disease associations
-    - GWAS Catalog
-    - Neale et al UK Biobank top loci
-  2. Study information table
-  3. Lead variant to tag variant table
-    - Finemapping table
-    - LD table
-  4. Summary statistic tables
+This repositroy contains scripts to produce variant-disease association tables for the OT Genetics Portal.
 
-#### Notes
-- Do we only include UKB studies with an EFO
+### Contents
+
+  1. Top loci associations table
+  2. Study information table
+  3. Finemapping (credible set) results table
+  4. LD table
+  5. (TODO) Summary statistic tables
+
+### Outputs
+
+#### Top loci table
+
+List of loci associated with disease. Currently this data comes from two sources: i. GWAS Catalog, ii. Neale et al UK Biobank summary statistics conditional analysis
+
+Columns:
+- `study_id`: unique identifier for study
+- `variant_id_b37`: chrom_pos_ref_alt (build 37) identifier for variant. RSID to variant ID mapping is non-unique, therefore multiple IDs may exist separated by ';'
+- `rsid`: RSID for each corresponding variant ID, separated by ';'
+- `pval_mantissa`: the p-value coefficient when written in scientfic notation
+- `pval_exponent`: the p-value exponent (base 10)
+
+#### Study table
+
+Information about each study found in the top loci table.
+
+Columns:
+  - `study_id`: unique identifier for study
+  - `pmid`: pubmed ID (GWAS Catalog studies only)
+  - `pub_date`: publication date
+  - `pub_journal`: publication journal
+  - `pub_title`: publication title
+  - `pub_author`: publication author
+  - `trait_reported`: trait reported in publication
+  - `trait_mapped`: ontology trait label
+  - `trait_efos`: EFO short_form
+  - `ancestry_initial`: ancestry of initial GWAS sample, separated by ';'
+  - `ancestry_replication`: ancestry of replication GWAS sample, separated by ';'
+  - `n_initial`: GWAS initial sample size
+  - `n_replication`: GWAS replication sample size
+  - `n_cases`: number of cases. Warning: there is currently no easy way to get this information from GWAS Catalog, therefore it is set to null
+
+Merges to top loci table using `study_id`.
+
+#### Finemapping table
+
+Finemapping results for linking lead variants (from top loci table) to tagging variants using credible set analysis. Methods: https://github.com/opentargets/finemapping.
+
+Columns:
+  - `study_id`: unique identifier for study
+  - `index_variantid_b37`: unique variant identifier for index variant, chrom_pos_ref_alt (build 37)
+  - `tag_variantid_b37`: unique variant identifier for tagging variant, chrom_pos_ref_alt (build 37)
+  - `log10_ABF`: log10 of the approximate Bayes factor for this tagging variant
+  - `posterior_prob`: posterior probability of causality for this tagging variant compared to other variants at this locus
+
+Table is pre-filtered to contain only 95% credible set variants. Merges to top loci table using `study_id` and `index_variantid_b37`.
+
+#### LD table
+
+Table of LD values linking index and tagging variants. This information is currently parsed directly from the POSTGAP output but we plan to recalculate these values taking into account the ancestry of the original GWAS.
+
+Columns:
+  - `study_id`: unique identifier for study
+  - `index_variantid_b37`: unique variant identifier for index variant, chrom_pos_ref_alt (build 37)
+  - `tag_variantid_b37`: unique variant identifier for tagging variant, chrom_pos_ref_alt (build 37)
+  - `overall_r2`: overall R<sup>2</sup> averaged of superpopulations
+  - `AFR_1000G_prop`: proportion of sample from AFR superpopulation
+  - `AMR_1000G_prop`: proportion of sample from AMR superpopulation
+  - `EAS_1000G_prop`: proportion of sample from EAS superpopulation
+  - `EUR_1000G_prop`: proportion of sample from EUR superpopulation
+  - `SAS_1000G_prop`: proportion of sample from SAS superpopulation
+
+Table is pre-filtered to only contain R<sup>2</sup> > 0.7. All samples are currently assumed to be European (`EUR_1000G_prop` == 1.0).
+
+### Methods
 
 #### Top loci table
   1. Download all associations from: ftp://ftp.ebi.ac.uk/pub/databases/gwas/releases/latest
   2. Map rsid and chr:pos to variant_ids (GRCh37)
     - This is complicated by:
-      (i) some GWAScat loci have mulitple rsid assignments,
-      (ii) some rows don't have rsids, use chrom:pos (GRCh37 assumed) instead
-      (iii) rsids/chrom:pos can map to multiple variant ids
-            (e.g. rs773154059)
+      - some GWAScat loci have mulitple rsid assignments
+      - some rows don't have rsids, use chrom:pos (GRCh37 assumed) instead
+      - rsids/chrom:pos can map to multiple variant ids (e.g. rs773154059)
     - Notes:
       - Two associations don't have the same number of SNPs in SNPS, CHR_ID and
         CHR_POS. These have been dropped as they are ambiguous.
@@ -55,28 +118,30 @@ Tables:
       - Were there are multiple p-values when grouped by (study, variant), keep only the lowest p-value.
     Notes:
       - There can be multiple P-values for each (study, variant). This occurs where different subphenotypes (`P-VALUE (TEXT)`) are reported (e.g. different sexs, subpopulations). Occasionally there are multiple P-values for the same subphenotye also For the time being I will drop these.
-      - Question: How to store p-values?
 
   6. Append UKB top loci from conditional analysis
     Steps:
       - Download from GS
       - Select rows where `locus_index_varid == varid` as these will be the top loci
       - Make study_id from trait name
-      - Set any p-values that == 0 to minimum pvalue
+      - Set any p-values that == 0 to minimum float
       - Remove any rows where nominal p-value is > 1e-5
       - Extract pvalue mantissa and exponent
       - Append
 
-  ? Define locus interval +-1cM. Could be useful for clustering lead SNPs.
+  ? Define locus interval +-1cM. Could be useful for clustering lead SNPs. (not doing this, this can be done more easily when loaded into a DB).
 
 #### Study information table
 
+###### GWAS Catalog studies
 Get GWAS Catalog studies. This is easier to get from the API as ancestry is
-difficult to parse from the
+difficult to parse from the flat file.
+
+To extract:
   1. EFO and mapped trait
   2. Reported trait
   2. N
-  3. Number of cases (?). This is
+  3. Number of cases (?). This is currently not possible from the API. This field will be set to missing.
   4. Ancestries
   5. Publication info
     - Pubmedid
@@ -84,23 +149,26 @@ difficult to parse from the
     - Author
     - Title
     - Journal
-  Notes:
-    - There are 18 studies where sample size == 0 because ancestry
 
-Neale UKB studies:
-  Steps:
-    - Get and merge self-reported and ICD10 EFO curations
-    - Map EFOs to mapped_trait
-    - Load Nelae et al manifest
-    - Merge EFOs with manifest
-    - Extract required columns
-  Todo:
-    - Fix field S72	EFO_000855 in EFO curation (short_form not recognised)
+Notes:
+  - There are 18 studies where sample size == 0 because ancestry in API is null. Annalisa has recommended these studies be removed, as they are old curations that are not consistent with the rest of the catalog.
+
+###### Neale UKB studies
+
+Steps
+  - Get and merge self-reported and ICD10 EFO curations
+  - Map EFOs to mapped_trait
+  - Load Nelae et al manifest
+  - Merge EFOs with manifest
+  - Extract required columns
+
+Todo:
+  - Fix field `S72	EFO_000855` in EFO curation (short_form not recognised)
 
 #### Finemapping table
 
-Steps:
-  - Get from GS
+Steps
+  - Get from GCS
   - Make study ID
   - Filter to only keep those in 95% credible sets
   - Put into a standard format
@@ -108,14 +176,39 @@ Steps:
 Notes:
   - Only keep variants in 95% credible sets
 
+#### LD table
 
-#### Required columns
-TODO
+###### Currently temporary implementation
+
+Steps
+  - Get latest POSTGAP output from https://storage.googleapis.com/postgap-data/postgap.20180615.txt.gz
+  - Parse columns `gwas_snp`, `ld_snp_rsID`, `r2`
+  - Deduplicate rows
+  - Make 1000 Genomes RSID to variant ID map. Can be found here `gs://genetics-portal-data/lut/1000g_rsid_to_variantid_lut.tsv.gz`
+  - Map RSIDs to variant IDs using above rsid->variant ID map
+  - Merge to top loci table in order to get `study_id` for each index variant
+
+###### Future implementation
+
+Steps:
+  1. Curate populations from GWAS Catalog into 1000 Genomes super populations
+    - Make list of unique populations
+    - Manually curate. Suppl fig 6 from here https://arxiv.org/pdf/1805.03233.pdf is useful.
+  2. Output list of index variants with super populaiton proportions
+  3. TODO
+
+Notes:
+  - Studies with missing or NR ancestries will be assumed to be European
+  - https://storage.googleapis.com/postgap-data/postgap.20180615.txt.gz
+
+#### Questions / todo
+- For GWAS Catalog RSID to variant mapping, should I only include variants from e.g. 1000 genomes?
+- Implement new LD lookup taking into account ancestries
+- Do we only include UKB studies with an EFO
+- How should we store p-values?
+
 
 #### Usage
-
-Additional requirements:
-  `pip install ontoma`
 
 ```
 # Install dependencies into isolated environment
