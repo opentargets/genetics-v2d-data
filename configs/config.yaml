@@ -13,3 +13,6 @@ variant_map: 'uk_biobank_data/em21/neale_summary_statistics_20170915/cleaned_dat
 neale_manifest: 'uk_biobank_data/em21/neale_summary_statistics_20170915/cleaned_data/phenosummary_final_11898_18597.fixed.curation_manifest.tsv'
 neale_efo_icd10: 'uk_biobank_data/em21/neale_summary_statistics_20170915/efo_curation/v1_2018_07_05/phenosummary_final_11898_18597.fixed.curation_manifest - QC of ICD10 traits - Iteration 1.csv'
 neale_efo_self: 'uk_biobank_data/em21/neale_summary_statistics_20170915/efo_curation/v1_2018_07_05/phenosummary_final_11898_18597.fixed.curation_manifest - QC of self-reported traits - Iteration 1.csv'
+
+# LD table
+gwascat_2_superpop: 'configs/gwascat_superpopulation_lut.curated.tsv'

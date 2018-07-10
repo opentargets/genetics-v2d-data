@@ -7,8 +7,42 @@ rule list_ancestries:
         tmpdir + '/ancestry_list.{version}.tsv'
     shell:
         'python scripts/list_ancestries.py '
-        '--inf {output} '
+        '--inf {input} '
         '--outf {output}'
+
+rule make_ld_input_queries:
+    ''' Make query variant and superpopulation proportions table. This table
+        will be the input for making our improved look-up table
+    '''
+    input:
+        loci='output/ot_genetics_toploci_table.{version}.tsv',
+        study='output/ot_genetics_studies_table.{version}.tsv',
+        pop_map=config['gwascat_2_superpop']
+    output:
+        'output/ld_analysis_input_table.{version}.tsv.gz'
+    shell:
+        'python scripts/create_ld_input_table.py '
+        '--in_loci {input.loci} '
+        '--in_study {input.study} '
+        '--in_popmap {input.pop_map} '
+        '--outf {output}'
+
+rule ld_input_to_GCS:
+    ''' Copy to GCS
+    '''
+    input:
+        'output/ld_analysis_input_table.{version}.tsv.gz'
+    output:
+        GSRemoteProvider().remote(
+            '{gs_dir}/{{version}}/extras/ld_analysis_input_table.{{version}}.tsv.gz'.format(gs_dir=config['gs_dir'])
+            )
+    shell:
+        'cp {input} {output}'
+
+#
+# Rules for temporary LD solution
+#
+
 
 rule get_postgap_data:
     ''' Download postgap data. This will be used as a temporary stop gap to
