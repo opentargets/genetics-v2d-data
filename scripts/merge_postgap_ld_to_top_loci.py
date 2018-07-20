@@ -33,11 +33,14 @@ def main():
                       right_on='varid_1_b37')
 
     # Keep required columns
-    merged = merged.loc[:, ['study_id', 'varid_1_b37', 'varid_2_b37', 'r2']]
+    merged = merged.loc[:, ['study_id', 'variant_id_b37', 'varid_2_b37', 'r2']]
     merged = merged.drop_duplicates()
     merged =merged.rename(columns={'r2': 'overall_r2',
-                                   'varid_1_b37': 'index_variantid_b37',
+                                   'variant_id_b37': 'index_variantid_b37',
                                    'varid_2_b37': 'tag_variantid_b37'})
+
+    # Drop rows with missing LD information
+    merged = merged.dropna()
 
     # Add columns
     merged['AFR_1000G_prop'] = 0.0

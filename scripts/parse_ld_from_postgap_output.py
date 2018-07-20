@@ -49,9 +49,9 @@ def load_map(inf, rsids):
     d = {}
     with gzip.open(inf, 'r') as in_h:
         for line in in_h:
-            rsid, varid = line.decode().rstrip().split('\t')
+            rsid, varid_1kg, varid_ens = line.decode().rstrip().split('\t')
             if rsid in rsids:
-                d[rsid] = varid
+                d[rsid] = varid_ens
     return d
 
 def parse_args():
