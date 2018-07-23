@@ -81,7 +81,7 @@ Table is pre-filtered to only contain R<sup>2</sup> > 0.7. All samples are curre
 
 #### Locus overlap table
 
-Table showing the degree of overlapping tag variants for each (study_id, index_variant) found within 5Mb of each other. This calculated using: (i) only finemapping sets, (ii) only LD sets, (iii) a combination of finemapping and LD, prefering finemapping over LD where available.
+Table showing the number of overlapping tag variants for each (study_id, index_variant) found within 5Mb of each other. This calculated using: (i) only finemapping sets, (ii) only LD sets, (iii) a combination of finemapping and LD, prefering finemapping over LD where available.
 
 Columns:
   - `study_id_A`: locusA unique identifier for study
