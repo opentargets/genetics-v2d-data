@@ -5,3 +5,4 @@ dependencies:
   - python=3
   - snakemake
   - pandas
+  - pypy3.5

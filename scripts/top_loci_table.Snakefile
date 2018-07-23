@@ -40,7 +40,7 @@ rule extract_gwas_rsids:
     output:
         tmpdir + '/HRC.r1-1.GRCh37.gwasCat_only.{version}.vcf.gz'
     shell:
-        'python scripts/extract_from_vcf.py '
+        'pypy3 scripts/extract_from_vcf.py '
         '--gwas {input.gwascat} '
         '--vcf {input.vcf} '
         '--out {output}'
