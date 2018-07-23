@@ -16,7 +16,9 @@ This repositroy contains scripts to produce variant-disease association tables f
 
 #### Top loci table
 
-List of loci associated with disease. Currently this data comes from two sources: i. GWAS Catalog, ii. Neale et al UK Biobank summary statistics conditional analysis
+List of loci associated with disease. Currently this data comes from two sources: (i) GWAS Catalog, (ii) Neale et al UK Biobank summary statistics conditional analysis.
+
+Note: GWAS Catalog RSIDs are mapped to variant IDs using the HRC sitelist. Therefore, if the variant is not in HRC it will be dropped from the top loci table.
 
 Columns:
 - `study_id`: unique identifier for study
