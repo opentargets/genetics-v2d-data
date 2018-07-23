@@ -1,12 +1,26 @@
 import pandas as pd
 
+# rule make_gwas_cat_studies_table:
+#     ''' Use GWAS Catalog API to get all studies
+#     '''
+#     output:
+#         tmpdir + '/gwas-catalog_study_table.{version}.tsv'
+#     shell:
+#         'python scripts/make_gwas_cat_study_table.py '
+#         '--outf {output}'
+
 rule make_gwas_cat_studies_table:
-    ''' Use GWAS Catalog API to get all studies
+    ''' Make GWAS Catalog table
     '''
+    input:
+        studies=HTTPRemoteProvider().remote('https://www.ebi.ac.uk/gwas/api/search/downloads/studies_alternative', keep_local=True),
+        ancestries=HTTPRemoteProvider().remote('https://www.ebi.ac.uk/gwas/api/search/downloads/ancestry', keep_local=True)
     output:
         tmpdir + '/gwas-catalog_study_table.{version}.tsv'
     shell:
         'python scripts/make_gwas_cat_study_table.py '
+        '--in_studies {input.studies} '
+        '--in_ancestries {input.ancestries} '
         '--outf {output}'
 
 rule process_efo_curation:

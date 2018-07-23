@@ -1,0 +1,151 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Ed Mountjoy
+#
+
+import sys
+import os
+import argparse
+import gzip
+
+def main():
+
+    # Parse args
+    args = parse_args()
+    window = 5 * 1e6 # plus/minus 5Mb
+    min_r2 = 0.7
+    only_save_overlapping = True
+
+    #
+    # Prepare data -------------------------------------------------------------
+    #
+
+    # Load finemap data
+    print('Loading finemap...')
+    tag_dict_finemap = {}
+    with gzip.open(args.finemap, 'r') as in_h:
+        in_h.readline() # Skip header
+        for line in in_h:
+            line = line.decode()
+            study_id, index_var, tag_var, _, _ = line.rstrip().split('\t')
+            key = (study_id, index_var)
+            try:
+                tag_dict_finemap[key].add(tag_var)
+            except KeyError:
+                tag_dict_finemap[key] = set([tag_var])
+
+    # Load LD data
+    print('Loading LD...')
+    tag_dict_ld = {}
+    with gzip.open(args.ld, 'r') as in_h:
+        in_h.readline() # Skip header
+        for line in in_h:
+            line = line.decode()
+            study_id, index_var, tag_var, r2, *_ = line.rstrip().split('\t')
+            # Skip low R2
+            if float(r2) < min_r2:
+                continue
+            # Add to dict
+            key = (study_id, index_var)
+            try:
+                tag_dict_ld[key].add(tag_var)
+            except KeyError:
+                tag_dict_ld[key] = set([tag_var])
+
+    # Merge finemap and LD
+    print('Merging finemap and LD...')
+    tag_dict = {}
+    for d in [tag_dict_finemap, tag_dict_ld]:
+        for key in d:
+            if not key in tag_dict:
+                tag_dict[key] = d[key]
+
+    #
+    # Find overlaps ------------------------------------------------------------
+    #
+
+    # Find overlaps
+    print('Finding overlaps...')
+    overlap_data = []
+    header = ['study_id_A',
+              'index_variantid_b37_A',
+              'study_id_B',
+              'index_variantid_b37_B',
+              'set_type',
+              'distinct_A',
+              'overlap_AB',
+              'distinct_B']
+
+    set_types = {'finemapping': tag_dict_finemap,
+                 'ld_eur': tag_dict_ld,
+                 'combined': tag_dict}
+
+    # Process each set type separately
+    for set_key in set_types:
+        set_dict = set_types[set_key]
+
+        c = 0
+        for study_A, var_A in set_dict.keys():
+            if c % 1000 == 0:
+                print(' processing {0} {1} of {2}...'.format(set_key, c, len(set_dict)))
+            c += 1
+            for study_B, var_B in set_dict.keys():
+                if varids_overlap_window(var_A, var_B, window):
+                    # Find overlap in sets
+                    distinct_A = set_dict[(study_A, var_A)].difference(set_dict[(study_B, var_B)])
+                    overlap_AB = set_dict[(study_A, var_A)].intersection(set_dict[(study_B, var_B)])
+                    distinct_B = set_dict[(study_B, var_B)].difference(set_dict[(study_A, var_A)])
+                    # Save result
+                    if len(overlap_AB) > 0 or only_save_overlapping == False:
+                        out_row = [study_A,
+                                   var_A,
+                                   study_B,
+                                   var_B,
+                                   set_key,
+                                   len(distinct_A),
+                                   len(overlap_AB),
+                                   len(distinct_B)]
+                        overlap_data.append(out_row)
+
+    # Write results
+    with gzip.open(args.outf, 'w') as out_h:
+        # Write header
+        out_h.write(('\t'.join(header) + '\n').encode())
+        for row in overlap_data:
+            out_h.write(('\t'.join([str(x) for x in row]) + '\n').encode())
+
+
+def varids_overlap_window(var_A, var_B, window):
+    ''' Extracts chrom:pos info from two variant IDs and checks if they are
+        within a certain window of each other
+    Args:
+        var_A (chr_pos_a1_a2)
+        var_B (chr_pos_a1_a2)
+        window (int): bp window to consider an overlap
+    '''
+    # Get positional info
+    chrom_A, pos_A = var_A.split('_')[:2]
+    chrom_B, pos_B = var_B.split('_')[:2]
+    # Check chroms are the same
+    if not chrom_A == chrom_B:
+        return False
+    # Check window
+    if abs(int(pos_A) - int(pos_B)) > window:
+        return False
+    else:
+        return True
+
+def parse_args():
+    """ Load command line args """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--top_loci', metavar="<file>", type=str, required=True)
+    parser.add_argument('--ld', metavar="<file>", type=str, required=True)
+    parser.add_argument('--finemap', metavar="<file>", type=str, required=True)
+    parser.add_argument('--outf', metavar="<str>", type=str, required=True)
+    args = parser.parse_args()
+    return args
+
+if __name__ == '__main__':
+
+    main()
