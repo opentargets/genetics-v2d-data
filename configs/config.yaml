@@ -1,5 +1,5 @@
 # Params
-version: 'v1_180703' # Version number
+version: 'v2_180723' # Version number
 
 # Output config
 temp_dir: 'temp'

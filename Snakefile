@@ -16,11 +16,11 @@ keep_local = True
 targets = []
 
 # Make targets for top loci table
-# targets.append(
-#     'output/ot_genetics_toploci_table.{version}.tsv'.format(version=config['version']) )
-# targets.append(GSRemoteProvider().remote(
-#     '{gs_dir}/{version}/ot_genetics_toploci_table.{version}.tsv'.format(gs_dir=config['gs_dir'],
-#                                                                         version=config['version']) ))
+targets.append(
+    'output/ot_genetics_toploci_table.{version}.tsv'.format(version=config['version']) )
+targets.append(GSRemoteProvider().remote(
+    '{gs_dir}/{version}/ot_genetics_toploci_table.{version}.tsv'.format(gs_dir=config['gs_dir'],
+                                                                        version=config['version']) ))
 #
 # # # Make targets for study table
 # targets.append(

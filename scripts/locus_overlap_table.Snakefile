@@ -8,7 +8,7 @@ rule calculate_overlaps:
     output:
         'output/ot_genetics_locus_overlap_table.{version}.tsv.gz'
     shell:
-        'python scripts/calculate_locus_set_overlaps.py '
+        'pypy3 scripts/calculate_locus_set_overlaps.py '
         '--top_loci {input.top_loci} '
         '--ld {input.ld} '
         '--finemap {input.finemap} '
