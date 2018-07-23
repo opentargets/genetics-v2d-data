@@ -9,7 +9,8 @@ This repositroy contains scripts to produce variant-disease association tables f
   2. Study information table
   3. Finemapping (credible set) results table
   4. LD table
-  5. (TODO) Summary statistic tables
+  5. Locus overlap table
+  6. (TODO) Summary statistic tables
 
 ### Outputs
 
@@ -75,6 +76,22 @@ Columns:
   - `SAS_1000G_prop`: proportion of sample from SAS superpopulation
 
 Table is pre-filtered to only contain R<sup>2</sup> > 0.7. All samples are currently assumed to be European (`EUR_1000G_prop` == 1.0).
+
+#### Locus overlap table
+
+Table showing the degree of overlapping tag variants for each (study_id, index_variant) found within 5Mb of each other. This calculated using: (i) only finemapping sets, (ii) only LD sets, (iii) a combination of finemapping and LD, prefering finemapping over LD where available.
+
+Columns:
+  - `study_id_A`: locusA unique identifier for study
+  - `index_variantid_b37_A`: locusA unique variant identifier, chrom_pos_ref_alt (build 37)
+  - `study_id_B`: locusB unique identifier for study
+  - `index_variantid_b37_B`: locusB unique variant identifier, chrom_pos_ref_alt (build 37)
+  - `set_type`: one of 'finemapping', 'ld' or 'combined' (see above)
+  - `distinct_A`: number of tag variants distinct to locusA
+  - `overlap_AB`: number of tag variants overlapping locusA and locusB
+  - `distinct_B`: number of tag variants distinct to locusB
+
+Only loci with >=1 overlapping tag variants are stored.
 
 ### Methods
 

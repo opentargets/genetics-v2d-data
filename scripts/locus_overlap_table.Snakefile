@@ -14,16 +14,14 @@ rule calculate_overlaps:
         '--finemap {input.finemap} '
         '--outf {output}'
 
-
-
-# rule ld_to_GCS:
-#     ''' Copy to GCS
-#     '''
-#     input:
-#         'output/ot_genetics_ld_table.{version}.tsv.gz'
-#     output:
-#         GSRemoteProvider().remote(
-#             '{gs_dir}/{{version}}/ot_genetics_ld_table.{{version}}.tsv.gz'.format(gs_dir=config['gs_dir'])
-#             )
-#     shell:
-#         'cp {input} {output}'
+rule overlap_to_GCS:
+    ''' Copy to GCS
+    '''
+    input:
+        'output/ot_genetics_locus_overlap_table.{version}.tsv.gz'
+    output:
+        GSRemoteProvider().remote(
+            '{gs_dir}/{{version}}/ot_genetics_locus_overlap_table.{{version}}.tsv.gz'.format(gs_dir=config['gs_dir'])
+            )
+    shell:
+        'cp {input} {output}'

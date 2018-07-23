@@ -90,7 +90,7 @@ def main():
     # Combine
     merged = pd.concat([merged_rs, merged_chr])
 
-    # Drop rows without mapping in Ensembl VCF
+    # Drop rows without mapping in VCF
     merged = merged.dropna(subset=['rsid'])
     merged['pos'] = merged['pos'].astype(int)
 
