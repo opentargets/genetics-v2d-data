@@ -8,6 +8,7 @@ import sys
 import os
 import argparse
 import gzip
+from pprint import pprint
 
 def main():
 
@@ -83,30 +84,45 @@ def main():
 
     # Process each set type separately
     for set_key in set_types:
+
         set_dict = set_types[set_key]
 
+        # Partition by chromosome to speed things up
+        set_dict_chroms = {}
+        for key in set_dict:
+            chrom, _ = parse_chrom_pos(key[1])
+            try:
+                set_dict_chroms[chrom][key] = set_dict[key]
+            except KeyError:
+                set_dict_chroms[chrom] = {}
+                set_dict_chroms[chrom][key] = set_dict[key]
+
+        # Run each chromosome separately
         c = 0
-        for study_A, var_A in set_dict.keys():
-            if c % 1000 == 0:
-                print(' processing {0} {1} of {2}...'.format(set_key, c, len(set_dict)))
-            c += 1
-            for study_B, var_B in set_dict.keys():
-                if varids_overlap_window(var_A, var_B, window):
-                    # Find overlap in sets
-                    distinct_A = set_dict[(study_A, var_A)].difference(set_dict[(study_B, var_B)])
-                    overlap_AB = set_dict[(study_A, var_A)].intersection(set_dict[(study_B, var_B)])
-                    distinct_B = set_dict[(study_B, var_B)].difference(set_dict[(study_A, var_A)])
-                    # Save result
-                    if len(overlap_AB) > 0 or only_save_overlapping == False:
-                        out_row = [study_A,
-                                   var_A,
-                                   study_B,
-                                   var_B,
-                                   set_key,
-                                   len(distinct_A),
-                                   len(overlap_AB),
-                                   len(distinct_B)]
-                        overlap_data.append(out_row)
+        for chrom in set_dict_chroms:
+            set_dict_chrom = set_dict_chroms[chrom]
+
+            for study_A, var_A in set_dict_chrom.keys():
+                if c % 1000 == 0:
+                    print(' processing {0} {1} of {2}...'.format(set_key, c, len(set_dict)))
+                c += 1
+                for study_B, var_B in set_dict_chrom.keys():
+                    if varids_overlap_window(var_A, var_B, window):
+                        # Find overlap in sets
+                        distinct_A = set_dict_chrom[(study_A, var_A)].difference(set_dict_chrom[(study_B, var_B)])
+                        overlap_AB = set_dict_chrom[(study_A, var_A)].intersection(set_dict_chrom[(study_B, var_B)])
+                        distinct_B = set_dict_chrom[(study_B, var_B)].difference(set_dict_chrom[(study_A, var_A)])
+                        # Save result
+                        if len(overlap_AB) > 0 or only_save_overlapping == False:
+                            out_row = [study_A,
+                                       var_A,
+                                       study_B,
+                                       var_B,
+                                       set_key,
+                                       len(distinct_A),
+                                       len(overlap_AB),
+                                       len(distinct_B)]
+                            overlap_data.append(out_row)
 
     # Write results
     with gzip.open(args.outf, 'w') as out_h:
@@ -115,6 +131,13 @@ def main():
         for row in overlap_data:
             out_h.write(('\t'.join([str(x) for x in row]) + '\n').encode())
 
+def parse_chrom_pos(varid):
+    ''' Gets chrom and pos from a variant ID
+    Returns:
+        (chrom, pos)
+    '''
+    chrom, pos = varid.split('_')[:2]
+    return chrom, pos
 
 def varids_overlap_window(var_A, var_B, window):
     ''' Extracts chrom:pos info from two variant IDs and checks if they are
@@ -125,8 +148,8 @@ def varids_overlap_window(var_A, var_B, window):
         window (int): bp window to consider an overlap
     '''
     # Get positional info
-    chrom_A, pos_A = var_A.split('_')[:2]
-    chrom_B, pos_B = var_B.split('_')[:2]
+    chrom_A, pos_A = parse_chrom_pos(var_A)
+    chrom_B, pos_B = parse_chrom_pos(var_B)
     # Check chroms are the same
     if not chrom_A == chrom_B:
         return False

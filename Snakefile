@@ -55,7 +55,7 @@ targets.append(
     'output/ot_genetics_locus_overlap_table.{version}.tsv.gz'.format(version=config['version']) )
 targets.append(GSRemoteProvider().remote(
     '{gs_dir}/{version}/ot_genetics_locus_overlap_table.{version}.tsv.gz'.format(gs_dir=config['gs_dir'],
-                                                                                 version=config['version']) ))
+                                                                      version=config['version']) ))
 
 # Trigger making of targets
 rule all:
