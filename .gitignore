@@ -1,5 +1,6 @@
 .snakemake/
 tmp/
+output/
 
 
 # Created by https://www.gitignore.io/api/python
@@ -115,3 +116,5 @@ venv.bak/
 
 
 # End of https://www.gitignore.io/api/python
+
+.vscode/
