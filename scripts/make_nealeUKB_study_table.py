@@ -53,7 +53,7 @@ def main():
         ('pub_title', 'pub_title'),
         ('pub_author', 'pub_author'),
         ('Field', 'trait_reported'),
-        ('efo_trait', 'trait_mapped'),
+        # ('efo_trait', 'trait_mapped'),
         ('efo_code', 'trait_efos'),
         ('ancestry_initial', 'ancestry_initial'),
         ('ancestry_replication', 'ancestry_replication'),
