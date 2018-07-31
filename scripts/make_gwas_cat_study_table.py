@@ -10,6 +10,7 @@ import argparse
 import pandas as pd
 from pprint import pprint
 from collections import OrderedDict
+import hashlib
 
 def main():
 
@@ -28,6 +29,8 @@ def main():
                       on='STUDY ACCESSION',
                       how='left')
 
+    merged['trait_code'] = [make_hash_trait(val) for val in merged['DISEASE/TRAIT']]
+
     # Keep required cols
     cols = OrderedDict([
         ['STUDY ACCESSION', 'study_id'],
@@ -38,6 +41,7 @@ def main():
         ['FIRST AUTHOR', 'pub_author'],
         ['DISEASE/TRAIT', 'trait_reported'],
         ['MAPPED_TRAIT_URI', 'trait_efos'],
+        ['trait_code', 'trait_code'],
         # ['MAPPED_TRAIT', 'trait_mapped'],
         ['ancestry_initial', 'ancestry_initial'],
         ['ancestry_replication', 'ancestry_replication'],
@@ -58,6 +62,16 @@ def main():
 
     # Write
     df.to_csv(args.outf, sep='\t', index=None)
+
+
+def make_hash_trait(traitlabel):
+    '''creates an id for each GWAS trait with
+    low probability of collision
+    '''
+    hasher = hashlib.md5(traitlabel.encode('utf-8').lower())
+    # truncating it in half gives 64 bit, which for ~10000 traits makes the collision probability < 1e-7
+    return 'GT_' + hasher.hexdigest()[0:16]
+
 
 def clean_efo(efo_str):
     ''' Extracts efo codes from the URI strings provided

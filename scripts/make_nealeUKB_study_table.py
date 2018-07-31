@@ -35,6 +35,7 @@ def main():
 
     # Ouput required columns
     manifest.loc[:, 'study_id'] = 'NEALEUKB_' + manifest['Field.code'].astype(str)
+    manifest.loc[:, 'trait_code'] = 'UKB_' + manifest['Field.code'].astype(str)
     manifest.loc[:, 'pmid'] = ''
     manifest.loc[:, 'pub_date'] = '15/09/2017'
     manifest.loc[:, 'pub_journal'] = ''
@@ -53,6 +54,7 @@ def main():
         ('pub_title', 'pub_title'),
         ('pub_author', 'pub_author'),
         ('Field', 'trait_reported'),
+        ('trait_code', 'trait_code'),
         # ('efo_trait', 'trait_mapped'),
         ('efo_code', 'trait_efos'),
         ('ancestry_initial', 'ancestry_initial'),
