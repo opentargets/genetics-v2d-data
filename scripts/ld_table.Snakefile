@@ -2,9 +2,9 @@ rule list_ancestries:
     ''' Make a tsv showing all unique ancestries in study table
     '''
     input:
-        'output/ot_genetics_studies_table.{version}.tsv'
+        'output/{version}/studies.tsv'
     output:
-        tmpdir + '/ancestry_list.{version}.tsv'
+        tmpdir + '/{version}/ancestry_list.tsv'
     shell:
         'python scripts/list_ancestries.py '
         '--inf {input} '
@@ -15,11 +15,11 @@ rule make_ld_input_queries:
         will be the input for making our improved look-up table
     '''
     input:
-        loci='output/ot_genetics_toploci_table.{version}.tsv',
-        study='output/ot_genetics_studies_table.{version}.tsv',
+        loci='output/{version}/toploci.tsv',
+        study='output/{version}/studies.tsv',
         pop_map=config['gwascat_2_superpop']
     output:
-        'output/ld_analysis_input_table.{version}.tsv.gz'
+        'output/{version}/ld_analysis_input.tsv.gz'
     shell:
         'python scripts/create_ld_input_table.py '
         '--in_loci {input.loci} '
@@ -31,10 +31,10 @@ rule ld_input_to_GCS:
     ''' Copy to GCS
     '''
     input:
-        'output/ld_analysis_input_table.{version}.tsv.gz'
+        'output/{version}/ld_analysis_input.tsv.gz'
     output:
         GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/extras/ld_analysis_input_table.{{version}}.tsv.gz'.format(gs_dir=config['gs_dir'])
+            '{gs_dir}/{{version}}/extras/ld_analysis_input.tsv.gz'.format(gs_dir=config['gs_dir'])
             )
     shell:
         'cp {input} {output}'
@@ -85,9 +85,9 @@ rule merge_ld_to_loci:
     '''
     input:
         in_ld=tmpdir + '/postgap_ld_table.temp.tsv.gz',
-        in_loci='output/ot_genetics_toploci_table.{version}.tsv'
+        in_loci='output/{version}/toploci.tsv'
     output:
-        'output/ot_genetics_ld_table.{version}.tsv.gz'
+        'output/{version}/ld.tsv.gz'
     shell:
         'python scripts/merge_postgap_ld_to_top_loci.py '
         '--in_ld {input.in_ld} '
@@ -98,10 +98,10 @@ rule ld_to_GCS:
     ''' Copy to GCS
     '''
     input:
-        'output/ot_genetics_ld_table.{version}.tsv.gz'
+        'output/{version}/ld.tsv.gz'
     output:
         GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/ot_genetics_ld_table.{{version}}.tsv.gz'.format(gs_dir=config['gs_dir'])
+            '{gs_dir}/{{version}}/ld.tsv.gz'.format(gs_dir=config['gs_dir'])
             )
     shell:
         'cp {input} {output}'

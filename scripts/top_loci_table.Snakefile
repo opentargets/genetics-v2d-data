@@ -6,7 +6,7 @@ rule get_gwas_cat_assoc:
     input:
         FTPRemoteProvider().remote('ftp://ftp.ebi.ac.uk/pub/databases/gwas/releases/latest/gwas-catalog-associations_ontology-annotated.tsv')
     output:
-        tmpdir + '/gwas-catalog-associations_ontology-annotated.{version}.tsv'
+        tmpdir + '/{version}/gwas-catalog-associations_ontology-annotated.tsv'
     shell:
         'cp {input} {output}'
 
@@ -35,10 +35,10 @@ rule extract_gwas_rsids:
         these from the VCF file. Takes ~10 mins.
     '''
     input:
-        gwascat= tmpdir + '/gwas-catalog-associations_ontology-annotated.{version}.tsv',
+        gwascat= tmpdir + '/{version}/gwas-catalog-associations_ontology-annotated.tsv',
         vcf= tmpdir + '/HRC.r1-1.GRCh37.wgs.mac5.sites.vcf.gz'
     output:
-        tmpdir + '/HRC.r1-1.GRCh37.gwasCat_only.{version}.vcf.gz'
+        tmpdir + '/{version}/HRC.r1-1.GRCh37.gwasCat_only.vcf.gz'
     shell:
         'pypy3 scripts/extract_from_vcf.py '
         '--gwas {input.gwascat} '
@@ -50,10 +50,10 @@ rule annotate_gwas_cat_with_variant_ids:
         a VCF
     '''
     input:
-        gwascat= tmpdir + '/gwas-catalog-associations_ontology-annotated.{version}.tsv',
-        vcf37= tmpdir + '/HRC.r1-1.GRCh37.gwasCat_only.{version}.vcf.gz'
+        gwascat= tmpdir + '/{version}/gwas-catalog-associations_ontology-annotated.tsv',
+        vcf37= tmpdir + '/{version}/HRC.r1-1.GRCh37.gwasCat_only.vcf.gz'
     output:
-        tmpdir + '/gwas-catalog-associations_ontology_variantID-annotated.{version}.tsv'
+        tmpdir + '/{version}/gwas-catalog-associations_ontology_variantID-annotated.tsv'
     shell:
         'python scripts/annotate_gwascat_varaintids.py '
         '--gwas {input.gwascat} '
@@ -64,10 +64,10 @@ rule convert_gwas_catalog_to_standard:
     ''' Outputs the GWAS Catalog association data into a standard format
     '''
     input:
-        tmpdir + '/gwas-catalog-associations_ontology_variantID-annotated.{version}.tsv'
+        tmpdir + '/{version}/gwas-catalog-associations_ontology_variantID-annotated.tsv'
     output:
-        out_assoc = tmpdir + '/gwas-catalog-associations_ot-format.{version}.tsv',
-        log = 'logs/gwas-cat-assocs.{version}.log'
+        out_assoc = tmpdir + '/{version}/gwas-catalog-associations_ot-format.tsv',
+        log = 'logs/{version}/gwas-cat-assocs.log'
     shell:
         'python scripts/format_gwas_assoc.py '
         '--inf {input} '
@@ -81,7 +81,7 @@ rule convert_nealeUKB_to_standard:
     input:
         GSRemoteProvider().remote(config['credset'], keep_local=True) # DEBUG
     output:
-        tmpdir + '/nealeUKB-associations_ot-format.{version}.tsv'
+        tmpdir + '/{version}/nealeUKB-associations_ot-format.tsv'
     shell:
         'python scripts/format_nealeUKB_assoc.py '
         '--inf {input} '
@@ -91,10 +91,10 @@ rule merge_gwascat_and_nealeUKB_toploci:
     ''' Merges association files from gwas_cat and neale UKB
     '''
     input:
-        gwas = tmpdir + '/gwas-catalog-associations_ot-format.{version}.tsv',
-        neale = tmpdir + '/nealeUKB-associations_ot-format.{version}.tsv'
+        gwas = tmpdir + '/{version}/gwas-catalog-associations_ot-format.tsv',
+        neale = tmpdir + '/{version}/nealeUKB-associations_ot-format.tsv'
     output:
-        'output/ot_genetics_toploci_table.{version}.tsv'
+        'output/{version}/toploci.tsv'
     run:
         # Load
         gwas = pd.read_csv(input['gwas'], sep='\t', header=0)
@@ -108,10 +108,10 @@ rule toploci_to_GCS:
     ''' Copy to GCS
     '''
     input:
-        'output/ot_genetics_toploci_table.{version}.tsv'
+        'output/{version}/toploci.tsv'
     output:
         GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/ot_genetics_toploci_table.{{version}}.tsv'.format(gs_dir=config['gs_dir'])
+            '{gs_dir}/{{version}}/toploci.tsv'.format(gs_dir=config['gs_dir'])
             )
     shell:
         'cp {input} {output}'

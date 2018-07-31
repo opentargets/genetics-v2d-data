@@ -1,6 +1,3 @@
-# Params
-version: 'v2_180723' # Version number
-
 # Output config
 temp_dir: 'tmp'
 gs_dir: 'genetics-portal-staging/v2d'

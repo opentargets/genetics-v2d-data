@@ -4,7 +4,7 @@ import pandas as pd
 #     ''' Use GWAS Catalog API to get all studies
 #     '''
 #     output:
-#         tmpdir + '/gwas-catalog_study_table.{version}.tsv'
+#         tmpdir + '/{version}/gwas-catalog_study_table.tsv'
 #     shell:
 #         'python scripts/make_gwas_cat_study_table.py '
 #         '--outf {output}'
@@ -16,7 +16,7 @@ rule make_gwas_cat_studies_table:
         studies=HTTPRemoteProvider().remote('https://www.ebi.ac.uk/gwas/api/search/downloads/studies_alternative', keep_local=True),
         ancestries=HTTPRemoteProvider().remote('https://www.ebi.ac.uk/gwas/api/search/downloads/ancestry', keep_local=True)
     output:
-        tmpdir + '/gwas-catalog_study_table.{version}.tsv'
+        tmpdir + '/{version}/gwas-catalog_study_table.tsv'
     shell:
         'python scripts/make_gwas_cat_study_table.py '
         '--in_studies {input.studies} '
@@ -31,7 +31,7 @@ rule process_efo_curation:
         icd10=GSRemoteProvider().remote(config['neale_efo_icd10'], keep_local=True),
         selfrep=GSRemoteProvider().remote(config['neale_efo_self'], keep_local=True)
     output:
-        tmpdir + '/nealeUKB_efo_curation.{version}.tsv'
+        tmpdir + '/{version}/nealeUKB_efo_curation.tsv'
     shell:
         'python scripts/process_nealeUKB_efo_curations.py '
         '--in_icd10 "{input.icd10}" '
@@ -43,9 +43,9 @@ rule make_nealeUKB_studies_table:
     '''
     input:
         manifest=GSRemoteProvider().remote(config['neale_manifest'], keep_local=True),
-        efos=tmpdir + '/nealeUKB_efo_curation.{version}.tsv'
+        efos=tmpdir + '/{version}/nealeUKB_efo_curation.tsv'
     output:
-        tmpdir + '/nealeUKB_study_table.{version}.tsv'
+        tmpdir + '/{version}/nealeUKB_study_table.tsv'
     shell:
         'python scripts/make_nealeUKB_study_table.py '
         '--in_manifest {input.manifest} '
@@ -56,10 +56,10 @@ rule merge_study_tables:
     ''' Merges the GWAS Catalog and Neale UK Biobank study tables together
     '''
     input:
-        gwas=tmpdir + '/gwas-catalog_study_table.{version}.tsv',
-        neale=tmpdir + '/nealeUKB_study_table.{version}.tsv'
+        gwas=tmpdir + '/{version}/gwas-catalog_study_table.tsv',
+        neale=tmpdir + '/{version}/nealeUKB_study_table.tsv'
     output:
-        'output/ot_genetics_studies_table.{version}.tsv'
+        'output/{version}/studies.tsv'
     run:
         # Load
         gwas = pd.read_csv(input['gwas'], sep='\t', header=0)
@@ -73,10 +73,10 @@ rule study_to_GCS:
     ''' Copy to GCS
     '''
     input:
-        'output/ot_genetics_studies_table.{version}.tsv'
+        'output/{version}/studies.tsv'
     output:
         GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/ot_genetics_studies_table.{{version}}.tsv'.format(gs_dir=config['gs_dir'])
+            '{gs_dir}/{{version}}/studies.tsv'.format(gs_dir=config['gs_dir'])
             )
     shell:
         'cp {input} {output}'
