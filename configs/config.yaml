@@ -2,8 +2,8 @@
 version: 'v2_180723' # Version number
 
 # Output config
-temp_dir: 'temp'
-gs_dir: 'genetics-portal-data/em21_data/v2d'
+temp_dir: 'tmp'
+gs_dir: 'genetics-portal-staging/v2d'
 
 # Finemapping files
 credset: 'uk_biobank_analysis/em21/neale_summary_statistics_20170915/finemapping/results/neale_ukb_uk10kref_180502.crediblesets.long.varids.tsv.gz'
