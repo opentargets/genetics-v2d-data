@@ -79,7 +79,7 @@ rule convert_nealeUKB_to_standard:
         format.
     '''
     input:
-        GSRemoteProvider().remote(config['credset'], keep_local=True) # DEBUG
+        GSRemoteProvider().remote(config['credset'], keep_local=KEEP_LOCAL) # DEBUG
     output:
         tmpdir + '/{version}/nealeUKB-associations_ot-format.tsv'
     shell:

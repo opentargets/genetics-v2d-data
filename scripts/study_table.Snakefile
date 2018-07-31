@@ -13,8 +13,8 @@ rule make_gwas_cat_studies_table:
     ''' Make GWAS Catalog table
     '''
     input:
-        studies=HTTPRemoteProvider().remote('https://www.ebi.ac.uk/gwas/api/search/downloads/studies_alternative', keep_local=True),
-        ancestries=HTTPRemoteProvider().remote('https://www.ebi.ac.uk/gwas/api/search/downloads/ancestry', keep_local=True)
+        studies=HTTPRemoteProvider().remote('https://www.ebi.ac.uk/gwas/api/search/downloads/studies_alternative', keep_local=KEEP_LOCAL),
+        ancestries=HTTPRemoteProvider().remote('https://www.ebi.ac.uk/gwas/api/search/downloads/ancestry', keep_local=KEEP_LOCAL)
     output:
         tmpdir + '/{version}/gwas-catalog_study_table.tsv'
     shell:
@@ -28,8 +28,8 @@ rule process_efo_curation:
     Finally, maps EFOs to mapped trait names using ? API.
     '''
     input:
-        icd10=GSRemoteProvider().remote(config['neale_efo_icd10'], keep_local=True),
-        selfrep=GSRemoteProvider().remote(config['neale_efo_self'], keep_local=True)
+        icd10=GSRemoteProvider().remote(config['neale_efo_icd10'], keep_local=KEEP_LOCAL),
+        selfrep=GSRemoteProvider().remote(config['neale_efo_self'], keep_local=KEEP_LOCAL)
     output:
         tmpdir + '/{version}/nealeUKB_efo_curation.tsv'
     shell:
@@ -42,7 +42,7 @@ rule make_nealeUKB_studies_table:
     ''' Makes study table for Neale et al UKB summary statistics
     '''
     input:
-        manifest=GSRemoteProvider().remote(config['neale_manifest'], keep_local=True),
+        manifest=GSRemoteProvider().remote(config['neale_manifest'], keep_local=KEEP_LOCAL),
         efos=tmpdir + '/{version}/nealeUKB_efo_curation.tsv'
     output:
         tmpdir + '/{version}/nealeUKB_study_table.tsv'
