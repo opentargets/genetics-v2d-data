@@ -38,7 +38,7 @@ def main():
         ['FIRST AUTHOR', 'pub_author'],
         ['DISEASE/TRAIT', 'trait_reported'],
         ['MAPPED_TRAIT_URI', 'trait_efos'],
-        ['MAPPED_TRAIT', 'trait_mapped'],
+        # ['MAPPED_TRAIT', 'trait_mapped'],
         ['ancestry_initial', 'ancestry_initial'],
         ['ancestry_replication', 'ancestry_replication'],
         ['n_initial', 'n_initial'],
@@ -50,7 +50,7 @@ def main():
 
     # Clean efo codes
     df['trait_efos'] = df['trait_efos'].apply(clean_efo)
-    df['trait_mapped'] = df['trait_mapped'].str.replace(', ', ';')
+    # df['trait_mapped'] = df['trait_mapped'].str.replace(', ', ';')
 
     # Remove rows where n_initial == nan, these are old studies and their data is
     # inconsistent with the rest of GWAS Catalog (correspondance w Annalisa Buniello)
