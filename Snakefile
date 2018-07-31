@@ -15,7 +15,7 @@ configfile: "configs/config.yaml"
 tmpdir = config['temp_dir']
 keep_local = True
 
-config['version'] = date.today.strftime("%d/%m/%y")
+config['version'] = date.today().strftime("%y%m%d")
 
 targets = []
 
