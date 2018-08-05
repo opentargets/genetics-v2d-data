@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 # rule make_gwas_cat_studies_table:
 #     ''' Use GWAS Catalog API to get all studies
@@ -61,9 +62,13 @@ rule merge_study_tables:
     output:
         'output/{version}/studies.tsv'
     run:
+
         # Load
-        gwas = pd.read_csv(input['gwas'], sep='\t', header=0)
-        neale = pd.read_csv(input['neale'], sep='\t', header=0)
+        # casting everything as object since, pandas does not support NaN for int
+        # see: http://pandas.pydata.org/pandas-docs/stable/gotchas.html#support-for-integer-na
+            
+        gwas = pd.read_csv(input['gwas'], sep='\t', header=0, dtype=object)
+        neale = pd.read_csv(input['neale'], sep='\t', header=0, dtype=object)
         # Merge
         merged = pd.concat([gwas, neale], sort=False)
         # Save

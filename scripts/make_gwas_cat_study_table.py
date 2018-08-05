@@ -103,7 +103,7 @@ def parse_ancestry_info(inf):
         # Make N
         key = 'n_{0}'.format(stage)
         value = int(group['NUMBER OF INDIVDUALS'].sum())
-        anc_dict[study_id][key] = value
+        anc_dict[study_id][key] = str(value)
         # Make ancestry string
         key = 'ancestry_{0}'.format(stage)
         values = []
