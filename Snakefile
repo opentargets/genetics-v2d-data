@@ -14,7 +14,7 @@ from datetime import date
 configfile: "configs/config.yaml"
 tmpdir = config['temp_dir']
 KEEP_LOCAL = False
-UPLOAD = False
+UPLOAD = True
 
 config['version'] = date.today().strftime("%y%m%d")
 
@@ -28,7 +28,7 @@ if UPLOAD:
     '{gs_dir}/{version}/toploci.tsv'.format(gs_dir=config['gs_dir'],
                                                                         version=config['version']) ))
 
-# # Make targets for study table
+# Make targets for study table
 targets.append(
     'output/{version}/studies.tsv'.format(version=config['version']) )
 if UPLOAD:

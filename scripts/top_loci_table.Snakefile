@@ -10,15 +10,15 @@ rule get_gwas_cat_assoc:
     shell:
         'cp {input} {output}'
 
-# rule get_ensembl_variation_grch37:
-#     ''' Download all Ensembl variation data
-#     '''
-#     input:
-#         FTPRemoteProvider().remote('ftp://ftp.ensembl.org/pub/grch37/update/variation/vcf/homo_sapiens/Homo_sapiens.vcf.gz')
-#     output:
-#         tmpdir + '/Homo_sapiens.grch37.vcf.gz'
-#     shell:
-#         'cp {input} {output}'
+rule get_ensembl_variation_grch37:
+    ''' Download all Ensembl variation data
+    '''
+    input:
+        FTPRemoteProvider().remote('ftp://ftp.ensembl.org/pub/grch37/update/variation/vcf/homo_sapiens/Homo_sapiens.vcf.gz')
+    output:
+        tmpdir + '/Ensembl.Homo_sapiens.grch37.vcf.gz'
+    shell:
+        'cp {input} {output}'
 
 rule get_HRC_variation_grch37:
     ''' Download all HRC variation data
@@ -30,7 +30,7 @@ rule get_HRC_variation_grch37:
     shell:
         'cp {input} {output}'
 
-rule extract_gwas_rsids:
+rule extract_gwas_rsids_from_HRC:
     ''' Makes set of GWAS Catalog rsids and chrom:pos strings. Then reads
         these from the VCF file. Takes ~10 mins.
     '''
@@ -45,19 +45,36 @@ rule extract_gwas_rsids:
         '--vcf {input.vcf} '
         '--out {output}'
 
+rule extract_gwas_rsids_from_Ensembl:
+    ''' Makes set of GWAS Catalog rsids and chrom:pos strings. Then reads
+        these from the VCF file. Takes ~10 mins.
+    '''
+    input:
+        gwascat= tmpdir + '/{version}/gwas-catalog-associations_ontology-annotated.tsv',
+        vcf= tmpdir + '/Ensembl.Homo_sapiens.grch37.vcf.gz'
+    output:
+        tmpdir + '/{version}/Ensembl.Homo_sapiens.grch37.gwasCat_only.vcf.gz'
+    shell:
+        'pypy3 scripts/extract_from_vcf.py '
+        '--gwas {input.gwascat} '
+        '--vcf {input.vcf} '
+        '--out {output}'
+
 rule annotate_gwas_cat_with_variant_ids:
     ''' Annotates rows in the gwas catalog assoc file with variant IDs from
         a VCF
     '''
     input:
         gwascat= tmpdir + '/{version}/gwas-catalog-associations_ontology-annotated.tsv',
-        vcf37= tmpdir + '/{version}/HRC.r1-1.GRCh37.gwasCat_only.vcf.gz'
+        vcf_hrc= tmpdir + '/{version}/HRC.r1-1.GRCh37.gwasCat_only.vcf.gz',
+        vcf_ensembl= tmpdir + '/{version}/Ensembl.Homo_sapiens.grch37.gwasCat_only.vcf.gz'
     output:
         tmpdir + '/{version}/gwas-catalog-associations_ontology_variantID-annotated.tsv'
     shell:
         'python scripts/annotate_gwascat_varaintids.py '
         '--gwas {input.gwascat} '
-        '--vcf_grch37 {input.vcf37} '
+        '--vcf_hrc {input.vcf_hrc} '
+        '--vcf_ensembl {input.vcf_ensembl} '
         '--out {output}'
 
 rule convert_gwas_catalog_to_standard:
