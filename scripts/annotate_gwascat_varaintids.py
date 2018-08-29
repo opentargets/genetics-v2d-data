@@ -279,7 +279,8 @@ def get_best_rsid(row):
         try:
             return 'rs{0}'.format(int(row['SNP_ID_CURRENT']))
         except ValueError:
-            return 'rs{0}'.format(int(row['SNP_ID_CURRENT'].replace('b', '')))
+            numeric_only = re.sub('[^0-9]','', row['SNP_ID_CURRENT'])
+            return 'rs{0}'.format(int(numeric_only))
     elif not pd.isnull(row['SNPS']):
         return row['SNPS']
     return None
