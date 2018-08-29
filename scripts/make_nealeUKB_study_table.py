@@ -37,7 +37,7 @@ def main():
     manifest.loc[:, 'study_id'] = 'NEALEUKB_' + manifest['Field.code'].astype(str)
     manifest.loc[:, 'trait_code'] = 'UKB_' + manifest['Field.code'].astype(str)
     manifest.loc[:, 'pmid'] = ''
-    manifest.loc[:, 'pub_date'] = '15/09/2017'
+    manifest.loc[:, 'pub_date'] = '2017-09-15'
     manifest.loc[:, 'pub_journal'] = ''
     manifest.loc[:, 'pub_title'] = ''
     manifest.loc[:, 'pub_author'] = 'Neale et al.'
