@@ -45,12 +45,12 @@ if UPLOAD:
                                                                             version=config['version']) ))
 
 # Make targets for ld table
-targets.append(
-    'output/{version}/ld.tsv.gz'.format(version=config['version']) )
-if UPLOAD:
-    targets.append(GSRemoteProvider().remote(
-    '{gs_dir}/{version}/ld.tsv.gz'.format(gs_dir=config['gs_dir'],
-                                                                      version=config['version']) ))
+# targets.append(
+#     'output/{version}/ld.tsv.gz'.format(version=config['version']) )
+# if UPLOAD:
+#     targets.append(GSRemoteProvider().remote(
+#     '{gs_dir}/{version}/ld.tsv.gz'.format(gs_dir=config['gs_dir'],
+#                                                                       version=config['version']) ))
 
 # Make targets for ld table query variant inputs with population information
 targets.append(
