@@ -17,7 +17,7 @@ def main():
     args = parse_args()
 
     # Load manifest
-    manifest = pd.read_csv(args.in_manifest, sep='\t', header=0)
+    manifest = pd.read_csv(args.in_manifest, sep='\t', header=0, dtype=object)
 
     # Load EFOs and merge multiple rows into one
     efos = ( pd.read_csv(args.in_efos, sep='\t', header=0)
