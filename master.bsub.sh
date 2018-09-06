@@ -8,6 +8,8 @@
 
 # Run interactive:   bsub -q normal -J interactive -n 1 -R "select[mem>8000] rusage[mem=8000] span[hosts=1]" -M8000 -Is bash
 
+set -euo pipefail
+
 # Set args
 version_date=`date +%y%m%d`
 cores=16
@@ -19,3 +21,5 @@ source activate v2d_data
 snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores $cores
 snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores
 snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores
+
+echo COMPLETE
