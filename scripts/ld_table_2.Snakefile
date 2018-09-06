@@ -46,7 +46,7 @@ rule calculate_r_using_plink:
     output:
         tmpdir + '/{version}/ld/plink_r_calc/{varid}/{varid}.ld.gz'
     params:
-        bfile_pref=lambda wildcards: tmpdir + '/{version}/ld/1000Genomep3/POPULATION/POPULATION.CHROM.1000Gp3.20130502',
+        bfile_pref=lambda wildcards: tmpdir + '/{version}/ld/1000Genomep3/POPULATION/POPULATION.CHROM.1000Gp3.20130502'.format(version=wildcards['version']),
         pops=hap1000G_pops,
         ld_window=config['ld_window']
     shell:

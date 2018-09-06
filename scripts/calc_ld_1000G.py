@@ -36,7 +36,7 @@ def main():
         results.append(res)
 
     # Merge results together
-    merged = reduce(lambda left, right: pd.merge(left, right), results)
+    merged = reduce(lambda left, right: pd.merge(left, right, how='outer'), results)
     merged = merged.loc[:, ['index_variant_id_b37', 'tag_variant_id_b37', 'R_AFR', 'R_AMR', 'R_EAS', 'R_EUR', 'R_SAS']]
 
     # DEBUG, i'm expected this to fail but don't know what the error will be
