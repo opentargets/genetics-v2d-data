@@ -13,3 +13,5 @@ neale_efo_self: 'uk_biobank_data/em21/neale_summary_statistics_20170915/efo_cura
 
 # LD table
 gwascat_2_superpop: 'configs/gwascat_superpopulation_lut.curated.tsv'
+ld_window: 500
+min_r2: 0.7
