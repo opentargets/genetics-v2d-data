@@ -66,4 +66,4 @@ rule all:
 include: 'scripts/top_loci_table.Snakefile'
 include: 'scripts/study_table.Snakefile'
 include: 'scripts/finemapping_table.Snakefile'
-include: 'scripts/ld_table.Snakefile'
+include: 'scripts/ld_table_1.Snakefile'

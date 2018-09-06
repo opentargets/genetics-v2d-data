@@ -1,6 +1,6 @@
 #!/bin/sh
 #BSUB -J ot_ld
-#BSUB -q long
+#BSUB -q normal
 #BSUB -n 16
 #BSUB -R "select[mem>32000] rusage[mem=32000] span[hosts=1]" -M32000
 #BSUB -o output.%J.%I # %J=jobid; %I=array index
@@ -11,8 +11,8 @@
 set -euo pipefail
 
 # Set args
-version_date=`date +%y%m%d`
 cores=16
+version_date=`date +%y%m%d`
 
 # Load environment
 source activate v2d_data
