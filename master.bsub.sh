@@ -19,8 +19,8 @@ version_date=180906 # WARNING, this line needs removing!!!!!
 source activate v2d_data
 
 # Run pipelines
-# snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores 1
-snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores
-snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores
+# snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores 1 --rerun-incomplete
+snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores --rerun-incomplete
+snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores --rerun-incomplete
 
 echo COMPLETE
