@@ -86,6 +86,11 @@ def calc_ld(varid, bfile, pop, ld_window, outf):
         res.index_variant_id_b37 = res.index_variant_id_b37.str.replace(':', '_')
         res.tag_variant_id_b37 = res.tag_variant_id_b37.str.replace(':', '_')
     except FileNotFoundError:
+        '''
+        TODO. I don't want this to pick up ANY missing. It should only create a
+        file if the following error is in the plink log file:
+            Error: No valid variants specified by --ld-snp/--ld-snps/--ld-snp-list.
+        '''
         res = pd.DataFrame(columns=['index_variant_id_b37', 'tag_variant_id_b37', 'R_{}'.format(pop)])
 
     return res
