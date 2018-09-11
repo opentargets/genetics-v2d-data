@@ -18,7 +18,7 @@ def main():
     args = parse_args()
     header_done = False
 
-    infiles = glob(arg.inpattern)
+    infiles = glob(args.inpattern)
 
     # Open output file
     with gzip.open(args.output, 'wt') as out_h:
