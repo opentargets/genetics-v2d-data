@@ -10,6 +10,7 @@ import sys
 import os
 import argparse
 import gzip
+from glob import glob
 
 def main():
 
@@ -17,11 +18,13 @@ def main():
     args = parse_args()
     header_done = False
 
+    infiles = glob(arg.inpattern)
+
     # Open output file
     with gzip.open(args.output, 'wt') as out_h:
 
         # Process each input file
-        for inf in args.infiles:
+        for inf in infiles:
             with gzip.open(inf, 'rt') as in_h:
 
                 # Process header
@@ -39,7 +42,7 @@ def main():
 def parse_args():
     """ Load command line args """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--infiles', metavar="<str>", help=("Input files to merge"), nargs='+', type=str, required=True)
+    parser.add_argument('--inpattern', metavar="<str>", help=("Input files glob pattern"), nargs='+', type=str, required=True)
     parser.add_argument('--output', metavar="<str>", help=("Output merged file"), type=str, required=True)
     args = parser.parse_args()
     return args

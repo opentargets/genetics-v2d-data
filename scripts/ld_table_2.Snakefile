@@ -65,9 +65,11 @@ rule concat_ld_scores:
                varid=varid_list)
     output:
         tmpdir + '/{version}/ld/top_loci_variants.ld.gz'
+    params:
+        in_pattern=tmpdir + '/' + str(config['version']) + '/ld/plink_r_calc/*/*.ld.gz'
     shell:
         'python scripts/merge_ld_outputs.py '
-        '--infiles {input} '
+        '--inpattern {params.in_pattern} '
         '--output {output}'
 
 rule calc_study_specific_weighted_r2:
