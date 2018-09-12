@@ -61,7 +61,7 @@ rule concat_ld_scores:
     ''' Concat LD caluclated using plink to a single table
     '''
     input:
-        expand(tmpdir + '/' + str(config['version']) + '/ld/plink_r_calc/{varid}/{varid}.ld.gz',
+        expand(tmpdir + '/' + str(config['version']) + '/ld/plink_r_calc/{varid}/{varid}.index_var.ld.gz',
                varid=varid_list)
     output:
         tmpdir + '/{version}/ld/top_loci_variants.ld.gz'
