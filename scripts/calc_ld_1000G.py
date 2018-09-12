@@ -64,7 +64,7 @@ def calc_ld(varid, bfile, pop, ld_window, outf):
         '--ld-snp', varid,
         '--ld-window-kb', ld_window,
         # '--ld-window-r2', 0,
-        '--r',
+        '--r', 'inter-chr', 'gz',
         # '--r2',
         '--memory', 1000,
         '--threads', 1,
@@ -78,7 +78,7 @@ def calc_ld(varid, bfile, pop, ld_window, outf):
 
     # Load result to df
     try:
-        res_file = outf + '.ld'
+        res_file = outf + '.ld.gz'
         res = pd.read_table(res_file, header=0, sep=r"\s+", engine='python')
         res = res.loc[:, ['SNP_A', 'SNP_B', 'R']]
         res.columns = ['index_variant_id_b37', 'tag_variant_id_b37', 'R_{}'.format(pop)]
