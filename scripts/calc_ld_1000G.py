@@ -25,7 +25,7 @@ def main():
         # Make command variables
         plink_varid = args.varid.replace('_', ':')
         inbfile = args.bfile.replace('POPULATION', pop).replace('CHROM', args.varid.split('_')[0])
-        outtemp = args.outf.replace('.ld.gz', '.plink')
+        outtemp = args.outf.replace('.index_var.ld.gz', '.plink')
 
         # Calc LD
         res = calc_ld(plink_varid,

@@ -44,7 +44,7 @@ rule calculate_r_using_plink:
     '''
     input: make_input_bfiles
     output:
-        tmpdir + '/{version}/ld/plink_r_calc/{varid}/{varid}.ld.gz'
+        tmpdir + '/{version}/ld/plink_r_calc/{varid}/{varid}.index_var.ld.gz'
     params:
         bfile_pref=lambda wildcards: tmpdir + '/{version}/ld/1000Genomep3/POPULATION/POPULATION.CHROM.1000Gp3.20130502'.format(version=wildcards['version']),
         pops=hap1000G_pops,
@@ -66,7 +66,7 @@ rule concat_ld_scores:
     output:
         tmpdir + '/{version}/ld/top_loci_variants.ld.gz'
     params:
-        in_pattern=tmpdir + '/' + str(config['version']) + '/ld/plink_r_calc/\*/\*.ld.gz'
+        in_pattern=tmpdir + '/' + str(config['version']) + '/ld/plink_r_calc/\*/\*.index_var.ld.gz'
     shell:
         'python scripts/merge_ld_outputs.py '
         '--inpattern {params.in_pattern} '
