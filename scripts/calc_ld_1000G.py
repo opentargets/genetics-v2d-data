@@ -63,9 +63,8 @@ def calc_ld(varid, bfile, pop, ld_window, outf):
         '--bfile', bfile,
         '--ld-snp', varid,
         '--ld-window-kb', ld_window,
-        # '--ld-window-r2', 0,
-        '--r', 'inter-chr', 'gz',
-        # '--r2',
+        '--ld-window', 99999999,
+        '--r', 'gz',
         '--memory', 1000,
         '--threads', 1,
         '--out', outf
