@@ -18,6 +18,7 @@ def main():
     args = parse_args()
     header_done = False
 
+    print(args.inpattern)
     infiles = glob(args.inpattern)
     print(infiles)
     sys.exit()
