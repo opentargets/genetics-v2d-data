@@ -66,7 +66,7 @@ rule concat_ld_scores:
     output:
         tmpdir + '/{version}/ld/top_loci_variants.ld.gz'
     params:
-        in_pattern=tmpdir + '/' + str(config['version']) + '/ld/plink_r_calc/*/*.ld.gz'
+        in_pattern=tmpdir + '/' + str(config['version']) + '/ld/plink_r_calc/\*/\*.ld.gz'
     shell:
         'python scripts/merge_ld_outputs.py '
         '--inpattern {params.in_pattern} '
