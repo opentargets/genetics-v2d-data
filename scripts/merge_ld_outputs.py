@@ -45,7 +45,7 @@ def main():
 def parse_args():
     """ Load command line args """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--inpattern', metavar="<str>", help=("Input files glob pattern"), nargs='+', type=str, required=True)
+    parser.add_argument('--inpattern', metavar="<str>", help=("Input files glob pattern"), type=str, required=True)
     parser.add_argument('--output', metavar="<str>", help=("Output merged file"), type=str, required=True)
     args = parser.parse_args()
     return args
