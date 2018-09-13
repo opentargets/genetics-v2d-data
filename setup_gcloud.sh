@@ -12,6 +12,7 @@ bash miniconda.sh -b -p $HOME/miniconda
 echo export PATH="$HOME/miniconda/bin:\$PATH" >> ~/.profile
 sleep 1
 . ~/.profile
+cd ..
 
 # Install environment
 conda env create -n v2d_data --file environment.yaml

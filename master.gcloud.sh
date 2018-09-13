@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # Set args
-cores=16
+cores=64
 version_date=`date +%y%m%d`
 
 # Load environment
@@ -20,6 +20,5 @@ gsutil -m -o GSUtil:parallel_composite_upload_threshold=150M rsync -r -x ".*DS_S
 
 # Shutdown instance
 gcloud compute instances stop em-ld --zone="europe-west1-d"
-
 
 echo COMPLETE
