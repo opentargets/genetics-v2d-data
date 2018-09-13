@@ -39,6 +39,12 @@ def main():
     merged = reduce(lambda left, right: pd.merge(left, right, how='outer'), results)
     merged = merged.loc[:, ['index_variant_id_b37', 'tag_variant_id_b37', 'R_AFR', 'R_AMR', 'R_EAS', 'R_EUR', 'R_SAS']]
 
+    # Caluclate R2 and remove rows where the max R2 < min_r2
+    # This is needed to save storage space in the output files
+    r2 = merged.loc[:, ['R_AFR', 'R_AMR', 'R_EAS', 'R_EUR', 'R_SAS']] ** 2
+    to_keep = (r2.max(axis=1) >= args.min_r2)
+    merged = merged.loc[to_keep, :]
+
     # DEBUG, i'm expected this to fail but don't know what the error will be
     # assert(merged.shape[0] > 0)
 
@@ -101,6 +107,7 @@ def parse_args():
     parser.add_argument('--bfile', metavar="<str>", help=("Input plink file pattern"), type=str, required=True)
     parser.add_argument('--pops', metavar="<str>", help=("Populations"), nargs='+', type=str, required=True)
     parser.add_argument('--ld_window', metavar="<int>", help=("Window to calc LD in (kb)"), type=str, required=True)
+    parser.add_argument('--min_r2', metavar="<int>", help=("Minimum R2 to be kept"), type=float, required=True)
     parser.add_argument('--outf', metavar="<str>", help=("Output"), type=str, required=True)
     args = parser.parse_args()
     return args

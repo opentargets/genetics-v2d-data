@@ -48,13 +48,15 @@ rule calculate_r_using_plink:
     params:
         bfile_pref=lambda wildcards: tmpdir + '/{version}/ld/1000Genomep3/POPULATION/POPULATION.CHROM.1000Gp3.20130502'.format(version=wildcards['version']),
         pops=hap1000G_pops,
-        ld_window=config['ld_window']
+        ld_window=config['ld_window'],
+        min_r2=config['min_r2']
     shell:
         'python scripts/calc_ld_1000G.py '
         '--varid {wildcards.varid} '
         '--bfile {params.bfile_pref} '
         '--pops {params.pops} '
         '--ld_window {params.ld_window} '
+        '--min_r2 {params.min_r2} '
         '--outf {output} '
 
 rule concat_ld_scores:
