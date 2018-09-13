@@ -12,8 +12,8 @@ set -euo pipefail
 
 # Set args
 cores=16
-version_date=`date +%y%m%d`
-# version_date=180906 # WARNING, this line needs removing!!!!!
+# version_date=`date +%y%m%d`
+version_date=180912 # WARNING, this line needs removing!!!!!
 
 # Load environment
 source activate v2d_data
