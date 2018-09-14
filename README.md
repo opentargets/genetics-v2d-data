@@ -10,7 +10,6 @@ This repositroy contains scripts to produce variant-disease association tables f
   3. Finemapping (credible set) results table
   4. LD table
   5. Locus overlap table
-  6. (TODO) Summary statistic tables
 
 ### Outputs
 
@@ -197,34 +196,21 @@ Notes:
 
 #### LD table
 
-###### Currently temporary implementation
+LD calculated for each (study_id, index_variant) pair using 1000 Genomes p3.
 
-Steps
-  - Get latest POSTGAP output from https://storage.googleapis.com/postgap-data/postgap.20180615.txt.gz
-  - Parse columns `gwas_snp`, `ld_snp_rsID`, `r2`
-  - Deduplicate rows
-  - Make 1000 Genomes RSID to variant ID map. Can be found here `gs://genetics-portal-data/lut/variantID_to_1000Gp3_lut.tsv.gz`
-  - Map RSIDs to variant IDs using above rsid->variant ID map
-  - Merge to top loci table in order to get `study_id` for each index variant
-
-###### Future implementation
-
-Steps:
-  1. Curate populations from GWAS Catalog into 1000 Genomes super populations
-    - Make list of unique populations
-    - Manually curate. Suppl fig 6 from here https://arxiv.org/pdf/1805.03233.pdf is useful.
-  2. Output list of index variants with super populaiton proportions
-  3. TODO
+Methods:
+  1. GWAS Catalog populations mapped to 1000 Genomes super populations
+    - Manually curated. Suppl fig 6 from here https://arxiv.org/pdf/1805.03233.pdf is useful.
+    - Curations in `configs/gwascat_superpopulation_lut.curated.tsv`
+  2. Output list of index variants with super populaiton proportions for each study
+  3. Use plink to calculate correaltion coefficients (R) for each index study in each 1000 superpopulation.
+  4. Fisher-Z transform R coefficients.
+  5. For each study take weighted average across populations weighting by sample size.
+  6. Inverse-Fisher-Z transform to get R values
+  7. Take R-squared and filter rows R2 < 0.7.
 
 Notes:
   - Studies with missing or NR ancestries will be assumed to be European
-  - https://storage.googleapis.com/postgap-data/postgap.20180615.txt.gz
-
-#### Questions / todo
-- For GWAS Catalog RSID to variant mapping, should I only include variants from e.g. 1000 genomes?
-- Implement new LD lookup taking into account ancestries
-- Do we only include UKB studies with an EFO
-- How should we store p-values?
 
 
 #### Usage
