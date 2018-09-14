@@ -28,12 +28,13 @@ def main():
                       'efo_trait':combine_rows})
                 .reset_index() )
 
-    # Merge
+    # Merge EFO codes
     manifest = pd.merge(manifest, efos_collapsed,
                         how='left',
                         left_on='Field.code', right_on='trait_code')
 
-    # Ouput required columns
+
+    # Make columns
     manifest.loc[:, 'study_id'] = 'NEALEUKB_' + manifest['Field.code'].astype(str)
     manifest.loc[:, 'trait_code'] = 'UKB_' + manifest['Field.code'].astype(str)
     manifest.loc[:, 'pmid'] = ''
@@ -46,6 +47,14 @@ def main():
     manifest.loc[:, 'ancestry_initial'] = 'European=' + manifest['n_initial'].astype(str)
     manifest.loc[:, 'ancestry_replication'] = ''
 
+
+    # Load categories
+    categ = load_categories(args.in_categories)
+    manifest = pd.merge(manifest, categ,
+                        on='trait_code',
+                        how='left')
+
+    # Ouput required columns
     cols = OrderedDict([
         ('study_id', 'study_id'),
         ('pmid', 'pmid'),
@@ -57,6 +66,7 @@ def main():
         ('trait_code', 'trait_code'),
         # ('efo_trait', 'trait_mapped'),
         ('efo_code', 'trait_efos'),
+        ('category', 'trait_category'),
         ('ancestry_initial', 'ancestry_initial'),
         ('ancestry_replication', 'ancestry_replication'),
         ('n_initial', 'n_initial'),
@@ -65,7 +75,7 @@ def main():
         ])
     manifest = ( manifest.loc[:, list(cols.keys())]
                          .rename(columns=cols) )
-    print(manifest.columns)
+    # print(manifest.columns)
 
     # Write
     manifest.to_csv(args.outf, sep='\t', index=None)
@@ -73,11 +83,27 @@ def main():
 def combine_rows(items):
     return ';'.join(items)
 
+def load_categories(inf):
+    ''' Loads category annotations that will be used in PheWAS plot
+    args:
+        inf (str)
+    returns:
+        pd.Df
+    '''
+    df = (pd.read_csv(inf, sep='\t', header=0)
+            .loc[:, ['phenocode', 'category']]
+            .rename(columns={'phenocode':'trait_code'})
+    )
+    df.trait_code = 'UKB_' + df.trait_code
+    return df
+
+
 def parse_args():
     """ Load command line args """
     parser = argparse.ArgumentParser()
     parser.add_argument('--in_manifest', metavar="<str>", help=("Input"), type=str, required=True)
     parser.add_argument('--in_efos', metavar="<str>", help=("Input"), type=str, required=True)
+    parser.add_argument('--in_categories', metavar="<str>", help=("Input"), type=str, required=True)
     parser.add_argument('--outf', metavar="<str>", help=("Output"), type=str, required=True)
     args = parser.parse_args()
     return args

@@ -44,6 +44,7 @@ rule make_nealeUKB_studies_table:
     '''
     input:
         manifest=GSRemoteProvider().remote(config['neale_manifest'], keep_local=KEEP_LOCAL),
+        categories=GSRemoteProvider().remote(config['neale_categories'], keep_local=KEEP_LOCAL),
         efos=tmpdir + '/{version}/nealeUKB_efo_curation.tsv'
     output:
         tmpdir + '/{version}/nealeUKB_study_table.tsv'
@@ -51,6 +52,7 @@ rule make_nealeUKB_studies_table:
         'python scripts/make_nealeUKB_study_table.py '
         '--in_manifest {input.manifest} '
         '--in_efos {input.efos} '
+        '--in_categories {input.categories} '
         '--outf {output}'
 
 rule merge_study_tables:
@@ -66,7 +68,7 @@ rule merge_study_tables:
         # Load
         # casting everything as object since, pandas does not support NaN for int
         # see: http://pandas.pydata.org/pandas-docs/stable/gotchas.html#support-for-integer-na
-            
+
         gwas = pd.read_csv(input['gwas'], sep='\t', header=0, dtype=object)
         neale = pd.read_csv(input['neale'], sep='\t', header=0, dtype=object)
         # Merge

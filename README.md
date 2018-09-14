@@ -203,7 +203,7 @@ Steps
   - Get latest POSTGAP output from https://storage.googleapis.com/postgap-data/postgap.20180615.txt.gz
   - Parse columns `gwas_snp`, `ld_snp_rsID`, `r2`
   - Deduplicate rows
-  - Make 1000 Genomes RSID to variant ID map. Can be found here `gs://genetics-portal-data/lut/1000g_rsid_to_variantid_lut.tsv.gz`
+  - Make 1000 Genomes RSID to variant ID map. Can be found here `gs://genetics-portal-data/lut/variantID_to_1000Gp3_lut.tsv.gz`
   - Map RSIDs to variant IDs using above rsid->variant ID map
   - Merge to top loci table in order to get `study_id` for each index variant
 
@@ -243,5 +243,25 @@ nano config.yaml
 gcloud auth application-default login
 
 # Execute workflow (locally)
-snakemake
+version_date=`date +%y%m%d`
+cores=3
+snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores $cores
+snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores
+snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores
+
+# Dry-run gsutil rsync to copy from staging to live
+gsutil -m rsync -rn gs://genetics-portal-staging/v2d/180904 gs://genetics-portal-data/v2d
+
+# Temp
+#snakemake -s 1_make_tables.Snakefile output/$version_date/ld_analysis_input.tsv.gz --cores $cores
+#snakemake -s 1_make_tables.Snakefile tmp/$version_date/ld/variantID_to_1000Gp3_lut.tsv.gz --cores $cores
+
+```
+
+### Test
+
+```
+version_date=180904
+cores=3
+echo snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores -np
 ```

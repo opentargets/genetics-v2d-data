@@ -6,3 +6,4 @@ dependencies:
   - snakemake
   - pandas
   - pypy3.5
+  - plink
