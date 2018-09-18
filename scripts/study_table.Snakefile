@@ -62,7 +62,7 @@ rule merge_study_tables:
         gwas=tmpdir + '/{version}/gwas-catalog_study_table.tsv',
         neale=tmpdir + '/{version}/nealeUKB_study_table.tsv'
     output:
-        'output/{version}/studies.tsv'
+        'output/{version}/studies.tsv', 'output/{version}/studies.json'
     run:
 
         # Load
@@ -75,6 +75,8 @@ rule merge_study_tables:
         merged = pd.concat([gwas, neale], sort=False)
         # Save
         merged.to_csv(output[0], sep='\t', index=None)
+        # also output a newline-delimited JSON
+        merged.to_json(output[1], orient="records", lines=True)
 
 rule study_to_GCS:
     ''' Copy to GCS
