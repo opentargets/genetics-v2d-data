@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import json
 
 # rule make_gwas_cat_studies_table:
 #     ''' Use GWAS Catalog API to get all studies
@@ -62,7 +63,7 @@ rule merge_study_tables:
         gwas=tmpdir + '/{version}/gwas-catalog_study_table.tsv',
         neale=tmpdir + '/{version}/nealeUKB_study_table.tsv'
     output:
-        'output/{version}/studies.tsv', 'output/{version}/studies.json'
+        'output/{version}/studies.tsv'
     run:
 
         # Load
@@ -76,7 +77,28 @@ rule merge_study_tables:
         # Save
         merged.to_csv(output[0], sep='\t', index=None)
         # also output a newline-delimited JSON
-        merged.to_json(output[1], orient="records", lines=True)
+        merged.drop(columns=['ancestry_initial','ancestry_replication'],inplace=True)
+        merged['trait_efos'] = merged['trait_efos'].str.split(";")
+        with open(output[1],"w") as outjson:
+            for index,row in merged.iterrows():
+                r = row.dropna().to_dict()
+                for n_var in ['n_cases','n_initial','n_replication']:
+                    try:
+                        r[n_var] = int(float(r[n_var]))
+                    except KeyError:
+                        pass
+                outjson.write(json.dumps(r) + '\n')
+
+
+rule make_json_study_table:
+    ''' Transform into json
+    '''
+    input:
+        'output/{version}/studies.tsv'
+    output:
+        'output/{version}/studies.json'
+    shell:
+        'python scripts/study_tsv2json.py {input} {output} '
 
 rule study_to_GCS:
     ''' Copy to GCS
@@ -86,6 +108,18 @@ rule study_to_GCS:
     output:
         GSRemoteProvider().remote(
             '{gs_dir}/{{version}}/studies.tsv'.format(gs_dir=config['gs_dir'])
+            )
+    shell:
+        'cp {input} {output}'
+
+rule studyjson_to_GCS:
+    ''' Copy to GCS
+    '''
+    input:
+        'output/{version}/studies.json'
+    output:
+        GSRemoteProvider().remote(
+            '{gs_dir}/{{version}}/studies.json'.format(gs_dir=config['gs_dir'])
             )
     shell:
         'cp {input} {output}'

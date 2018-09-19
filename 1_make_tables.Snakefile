@@ -41,6 +41,9 @@ if UPLOAD:
     targets.append(GSRemoteProvider().remote(
     '{gs_dir}/{version}/studies.tsv'.format(gs_dir=config['gs_dir'],
         version=config['version']) ))
+    targets.append(GSRemoteProvider().remote(
+    '{gs_dir}/{version}/studies.json'.format(gs_dir=config['gs_dir'],
+        version=config['version']) ))
 
 
 # Make targets for finemapping table
