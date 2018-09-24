@@ -100,17 +100,17 @@ rule make_json_study_table:
     shell:
         'python scripts/study_tsv2json.py {input} {output} '
 
-rule study_to_GCS:
-    ''' Copy to GCS
-    '''
-    input:
-        'output/{version}/studies.tsv'
-    output:
-        GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/studies.tsv'.format(gs_dir=config['gs_dir'])
-            )
-    shell:
-        'cp {input} {output}'
+# rule study_to_GCS:
+#     ''' Copy to GCS
+#     '''
+#     input:
+#         'output/{version}/studies.tsv'
+#     output:
+#         GSRemoteProvider().remote(
+#             '{gs_dir}/{{version}}/studies.tsv'.format(gs_dir=config['gs_dir'])
+#             )
+#     shell:
+#         'cp {input} {output}'
 
 rule studyjson_to_GCS:
     ''' Copy to GCS
