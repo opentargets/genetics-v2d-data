@@ -60,6 +60,11 @@ def main():
     # inconsistent with the rest of GWAS Catalog (correspondance w Annalisa Buniello)
     df = df.loc[~pd.isnull(df.n_initial), :]
 
+    # Remove Sun et al pQTL study
+    df = df.loc[df.study_id != 'GCST005806', :]
+    # Remove Huang et al IBD study (GWAS Catalog should not have curated this)
+    df = df.loc[df.study_id != 'GCST005837', :]
+
     # Write
     df.to_csv(args.outf, sep='\t', index=None)
 

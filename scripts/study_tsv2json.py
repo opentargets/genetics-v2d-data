@@ -26,7 +26,7 @@ def string_to_list(line, fields, sep=';'):
     for field in fields:
         if field in line and len(line[field]) > 0:
             tokens = line[field].split(sep)
-            line[field] = map(lambda(el): el.strip(), tokens)
+            line[field] = list(map(lambda el: el.strip(), tokens))
         else:
             line[field] = []
     return line

@@ -247,7 +247,8 @@ gsutil -m rsync -rn gs://genetics-portal-staging/v2d/180904 gs://genetics-portal
 ### Test
 
 ```
-version_date=180904
+version_date=180928
 cores=3
-echo snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores -np
+echo snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores $cores -np
+echo snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores -np
 ```

@@ -57,6 +57,11 @@ def main():
 
     gwas = gwas.sort_values(['study_id', 'variant_id_b37'])
 
+    # Remove Sun et al pQTL study
+    gwas = gwas.loc[gwas.study_id != 'GCST005806', :]
+    # Remove Huang et al IBD study (GWAS Catalog should not have curated this)
+    gwas = gwas.loc[gwas.study_id != 'GCST005837', :]
+
     gwas.to_csv(args.outf, sep='\t', index=None)
 
 def parse_pval_mantissa_exponent(s):

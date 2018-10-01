@@ -9,6 +9,7 @@ import os
 import argparse
 import pandas as pd
 import numpy as np
+import re
 
 def main():
 
@@ -55,12 +56,20 @@ def to_superpopulation_proportions(row, pop_map):
     gwas_anc = {}
     for col in ['ancestry_initial', 'ancestry_replication']:
         if not pd.isnull(row[col]):
-            for entry in row[col].split(';'):
-                anc, n = entry.split('=')
+            for entry in re.split(r',|;', row[col].replace(' ', '')):
+                try:
+                    anc, n = entry.split('=')
+                except ValueError:
+                    continue
                 try:
                     gwas_anc[anc] += int(n)
                 except KeyError:
                     gwas_anc[anc] = int(n)
+    # if row['study_id'] == 'GCST006208':
+    # # if row['study_id'] == 'GCST004132':
+    #     print(row)
+    #     print(gwas_anc)
+    #     sys.exit()
     # Map to superpopulations
     superpop = {}
     for anc in gwas_anc:
@@ -85,6 +94,7 @@ def load_pop_map(inf):
         dict(anc -> super pop)
     '''
     df = pd.read_csv(inf, sep='\t', header=0).dropna()
+    df.gwascat_population = df.gwascat_population.str.replace(' ', '')
     pop_map = dict(zip(df['gwascat_population'], df['1000g_superpopulation']))
     return pop_map
 
