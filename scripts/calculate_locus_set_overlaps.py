@@ -92,9 +92,10 @@ def main():
               'overlap_AB',
               'distinct_B']
 
-    set_types = {'finemapping': tag_dict_finemap,
-                 'ld_eur': tag_dict_ld,
-                 'combined': tag_dict}
+    # set_types = {'finemapping': tag_dict_finemap,
+    #              'ld_eur': tag_dict_ld,
+    #              'combined': tag_dict}
+    set_types = {'combined': tag_dict}
 
     # Process each set type separately
     for set_key in set_types:

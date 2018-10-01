@@ -63,7 +63,23 @@ Table is pre-filtered to contain only 95% credible set variants. Merges to top l
 
 #### LD table
 
-Table of LD values linking index and tagging variants. This information is currently parsed directly from the POSTGAP output but we plan to recalculate these values taking into account the ancestry of the original GWAS.
+Table of LD values linking index and tagging variants.
+
+LD calculated for each (study_id, index_variant) pair using 1000 Genomes p3.
+
+Methods:
+  1. GWAS Catalog populations mapped to 1000 Genomes super populations
+    - Manually curated. Suppl fig 6 from here https://arxiv.org/pdf/1805.03233.pdf is useful.
+    - Curations in `configs/gwascat_superpopulation_lut.curated.tsv`
+  2. Output list of index variants with super populaiton proportions for each study
+  3. Use plink to calculate correaltion coefficients (R) for each index study in each 1000 superpopulation.
+  4. Fisher-Z transform R coefficients.
+  5. For each study take weighted average across populations weighting by sample size.
+  6. Inverse-Fisher-Z transform to get R values
+  7. Take R-squared and filter rows R2 < 0.7.
+
+Notes:
+  - Studies with missing or NR ancestries will be assumed to be European
 
 Columns:
   - `study_id`: unique identifier for study
@@ -76,7 +92,7 @@ Columns:
   - `EUR_1000G_prop`: proportion of sample from EUR superpopulation
   - `SAS_1000G_prop`: proportion of sample from SAS superpopulation
 
-Table is pre-filtered to only contain R<sup>2</sup> > 0.7. All samples are currently assumed to be European (`EUR_1000G_prop` == 1.0).
+Table is pre-filtered to only contain R<sup>2</sup> > 0.7.
 
 #### Locus overlap table
 
@@ -193,25 +209,6 @@ Steps
 
 Notes:
   - Only keep variants in 95% credible sets
-
-#### LD table
-
-LD calculated for each (study_id, index_variant) pair using 1000 Genomes p3.
-
-Methods:
-  1. GWAS Catalog populations mapped to 1000 Genomes super populations
-    - Manually curated. Suppl fig 6 from here https://arxiv.org/pdf/1805.03233.pdf is useful.
-    - Curations in `configs/gwascat_superpopulation_lut.curated.tsv`
-  2. Output list of index variants with super populaiton proportions for each study
-  3. Use plink to calculate correaltion coefficients (R) for each index study in each 1000 superpopulation.
-  4. Fisher-Z transform R coefficients.
-  5. For each study take weighted average across populations weighting by sample size.
-  6. Inverse-Fisher-Z transform to get R values
-  7. Take R-squared and filter rows R2 < 0.7.
-
-Notes:
-  - Studies with missing or NR ancestries will be assumed to be European
-
 
 #### Usage
 
