@@ -5,13 +5,39 @@ This repositroy contains scripts to produce variant-to-disease (V2D) association
 
 ### Contents
 
+- [Usage](#usage)
 - Tables produced by workflow
   1. [Top loci associations table](#top-loci-table)
   2. [Study information table](#study-table)
   3. [Finemapping (credible set) results table](#finemapping-table)
   4. [LD table](#ld-table)
   5. [Locus overlap table](#locus-overlap-table)
-- [Usage](#usage)
+
+### Usage
+
+```
+# Install dependencies into isolated environment
+conda env create -n v2d_data --file environment.yaml
+
+# Activate environment
+source activate v2d_data
+
+# Alter configuration file
+nano config.yaml
+
+# Authenticate google cloud storage
+gcloud auth application-default login
+
+# Execute workflow (locally)
+version_date=`date +%y%m%d`
+cores=3
+snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores $cores
+snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores
+snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores
+
+# Dry-run gsutil rsync to copy from staging to live
+gsutil -m rsync -rn gs://genetics-portal-staging/v2d/180904 gs://genetics-portal-data/v2d
+```
 
 ### Tables
 
@@ -203,29 +229,3 @@ Only loci with >=1 overlapping tag variants are stored.
 ##### Locus overlap methods
 
 Table showing the number of overlapping tag variants for each (study_id, index_variant) found within 5Mb of each other. This calculated using: (i) only finemapping sets, (ii) only LD sets, (iii) a combination of finemapping and LD, prefering finemapping over LD where available. The 'combined' set is used for the Genetics Portal.
-
-#### Usage
-
-```
-# Install dependencies into isolated environment
-conda env create -n v2d_data --file environment.yaml
-
-# Activate environment
-source activate v2d_data
-
-# Alter configuration file
-nano config.yaml
-
-# Authenticate google cloud storage
-gcloud auth application-default login
-
-# Execute workflow (locally)
-version_date=`date +%y%m%d`
-cores=3
-snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores $cores
-snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores
-snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores
-
-# Dry-run gsutil rsync to copy from staging to live
-gsutil -m rsync -rn gs://genetics-portal-staging/v2d/180904 gs://genetics-portal-data/v2d
-```
