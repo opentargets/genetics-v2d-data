@@ -23,12 +23,12 @@ def main():
     #
 
     # Load set of valid study IDs
-    study_set = set([])
-    with open(args.study_info, 'r') as in_h:
+    study_index_set = set([])
+    with open(args.top_loci, 'r') as in_h:
         in_h.readline() # Skip header
         for line in in_h:
-            study_id = line.rstrip().split('\t')[0]
-            study_set.add(study_id)
+            study_id, index_var = line.rstrip().split('\t')[:2]
+            study_index_set.add((study_id, index_var))
 
     # Load finemap data
     print('Loading finemap...')
@@ -38,10 +38,11 @@ def main():
         for line in in_h:
             line = line.decode()
             study_id, index_var, tag_var, _, _ = line.rstrip().split('\t')
-            # Skip studies that are not in the study table
-            if not study_id in study_set:
-                continue
             key = (study_id, index_var)
+            # Skip (stid, index) pairs that are not in the top loci table
+            if not key in study_index_set:
+                continue
+            # Add to dict
             try:
                 tag_dict_finemap[key].add(tag_var)
             except KeyError:
@@ -55,14 +56,14 @@ def main():
         for line in in_h:
             line = line.decode()
             study_id, index_var, tag_var, r2, *_ = line.rstrip().split('\t')
-            # Skip studies that are not in the study table
-            if not study_id in study_set:
+            key = (study_id, index_var)
+            # Skip (stid, index) pairs that are not in the top loci table
+            if not key in study_index_set:
                 continue
             # Skip low R2
             if float(r2) < min_r2:
                 continue
             # Add to dict
-            key = (study_id, index_var)
             try:
                 tag_dict_ld[key].add(tag_var)
             except KeyError:
@@ -177,7 +178,7 @@ def varids_overlap_window(var_A, var_B, window):
 def parse_args():
     """ Load command line args """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--study_info', metavar="<file>", type=str, required=True)
+    parser.add_argument('--top_loci', metavar="<file>", type=str, required=True)
     parser.add_argument('--ld', metavar="<file>", type=str, required=True)
     parser.add_argument('--finemap', metavar="<file>", type=str, required=True)
     parser.add_argument('--outf', metavar="<str>", type=str, required=True)

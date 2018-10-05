@@ -43,14 +43,14 @@ rule calculate_overlaps:
     ''' Calcs overlap between trait associated loci
     '''
     input:
-        studies='output/{version}/studies.tsv',
+        top_loci='output/{version}/toploci.tsv',
         ld='output/{version}/ld.tsv.gz',
         finemap='output/{version}/finemapping.tsv.gz'
     output:
         'output/{version}/locus_overlap.tsv.gz'
     shell:
         'pypy3 scripts/calculate_locus_set_overlaps.py '
-        '--study_info {input.studies} '
+        '--top_loci {input.top_loci} '
         '--ld {input.ld} '
         '--finemap {input.finemap} '
         '--outf {output}'
