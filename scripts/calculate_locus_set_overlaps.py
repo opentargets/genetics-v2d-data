@@ -22,7 +22,7 @@ def main():
     # Prepare data -------------------------------------------------------------
     #
 
-    # Load set of valid study IDs
+    # Load set of valid (study, index) pairs
     study_index_set = set([])
     with open(args.top_loci, 'r') as in_h:
         in_h.readline() # Skip header
