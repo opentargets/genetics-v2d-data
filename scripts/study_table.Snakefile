@@ -52,7 +52,8 @@ rule merge_study_tables:
     '''
     input:
         gwas=tmpdir + '/{version}/gwas-catalog_study_table.tsv',
-        neale=tmpdir + '/{version}/nealeUKB_study_table.tsv'
+        neale=tmpdir + '/{version}/nealeUKB_study_table.tsv',
+        top_loci='output/{version}/toploci.tsv'
     output:
         'output/{version}/studies.tsv'
     run:
@@ -60,11 +61,17 @@ rule merge_study_tables:
         # Load
         # casting everything as object since, pandas does not support NaN for int
         # see: http://pandas.pydata.org/pandas-docs/stable/gotchas.html#support-for-integer-na
-
         gwas = pd.read_csv(input['gwas'], sep='\t', header=0, dtype=object)
         neale = pd.read_csv(input['neale'], sep='\t', header=0, dtype=object)
-        # Merge
+        # Merge gwas cat and neale
         merged = pd.concat([gwas, neale], sort=False)
+        # Load the number of associated loci per study
+        num_loci = ( pd.read_csv(input['top_loci'], sep='\t', header=0)
+                       .groupby('study_id')
+                       .size().reset_index(name='counts')
+                       .rename(columns={'counts': 'num_assoc_loci'}) )
+        merged = pd.merge(merged, num_loci, how='left', on='study_id')
+        merged['num_assoc_loci'] = merged['num_assoc_loci'].fillna(value=0).astype(int)
         # Save
         merged.to_csv(output[0], sep='\t', index=None)
 
