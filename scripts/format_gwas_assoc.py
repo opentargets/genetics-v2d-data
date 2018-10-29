@@ -39,7 +39,7 @@ def main():
     gwas[['pval_mantissa', 'pval_exponent']] = gwas['P-VALUE'].apply(parse_pval_mantissa_exponent).apply(pd.Series)
 
     # Extract harmonised effect sizes
-    gwas[['beta', 'oddsr', 'ci_lower', 'ci_upper']] = gwas.apply(parse_harmonised_effect, axis=1).apply(pd.Series)
+    gwas[['direction', 'beta', 'oddsr', 'ci_lower', 'ci_upper']] = gwas.apply(parse_harmonised_effect, axis=1).apply(pd.Series)
     # gwas.to_csv('tmp/gwas_betas.tsv', sep='\t', index=None) # DEBUG
 
     # Extract and rename required columns
@@ -48,6 +48,7 @@ def main():
         ('variant_id_b37', 'variant_id_b37'),
         ('rsid', 'rsid'),
         # ('P-VALUE (TEXT)', 'sub_phenotype'),
+        ('direction', 'direction'),
         ('beta', 'beta'),
         ('oddsr', 'odds_ratio'),
         ('ci_lower', 'ci_lower'),
@@ -83,10 +84,10 @@ def parse_harmonised_effect(row):
     Args:
         row (pandas.Serires)
     Returns:
-        tbd
+        direction, beta, oddsr, ci_lower, ci_upper
     '''
     # Initiate
-    beta, oddsr, ci_lower, ci_upper = None, None, None, None
+    direction, beta, oddsr, ci_lower, ci_upper = None, None, None, None, None
 
     # Extract risk allele, ref and alt
     risk = extract_risk_allele(row['STRONGEST SNP-RISK ALLELE'])
@@ -127,6 +128,7 @@ def parse_harmonised_effect(row):
         se = estimate / z
         cis = [estimate - 1.96 * se,
                estimate + 1.96 * se]
+        direction = '+' if beta >=0 else '-'
     else:
         oddsr = float(row['OR or BETA'])
         if needs_harmonising:
@@ -135,12 +137,13 @@ def parse_harmonised_effect(row):
         se = estimate / z
         cis = [np.exp(estimate - 1.96 * se),
                np.exp(estimate + 1.96 * se)]
+        direction = '+' if oddsr >=1 else '-'
 
     # Get upper and lower CIs
     ci_lower = min(cis)
     ci_upper = max(cis)
 
-    return beta, oddsr, ci_lower, ci_upper
+    return direction, beta, oddsr, ci_lower, ci_upper
 
 def extract_risk_allele(s):
     ''' Takes a string from GWAS Catalog STRONGEST SNP-RISK ALLELE field and

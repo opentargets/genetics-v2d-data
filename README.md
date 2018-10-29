@@ -49,6 +49,11 @@ List of loci associated with disease. Currently this data comes from two sources
 - `study_id`: unique identifier for study
 - `variant_id_b37`: chrom_pos_ref_alt (build 37) identifier for variant. RSID to variant ID mapping is non-unique, therefore multiple IDs may exist separated by ';'
 - `rsid`: RSID for each corresponding variant ID, separated by ';'
+- `direction` ([+, -, null]): direction of the effect wrt to the alt allele
+- `beta` (float, nullable): beta effect size for quantitative trait
+- `oddsr` (float, nullable): OR effect size for binary trait
+- `ci_lower` (float, nullable): Lower 95% confidence interval of effect estimate
+- `ci_upper` (float, nullable): Upper 95% confidence interval of effect estimate
 - `pval_mantissa`: the p-value coefficient when written in scientfic notation
 - `pval_exponent`: the p-value exponent (base 10)
 
@@ -119,6 +124,7 @@ Information about each study found in the top loci table.
   - `n_initial`: GWAS initial sample size
   - `n_replication`: GWAS replication sample size
   - `n_cases`: number of cases. Warning: there is currently no easy way to get this information from GWAS Catalog, therefore it is set to null
+  - `num_assoc_loci` (int): total number of associated loci for this study in the top loci table
 
 Merges to top loci table using `study_id`.
 

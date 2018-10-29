@@ -44,13 +44,14 @@ def main():
 
     # Extract effect size information
     top_loci = pd.merge(top_loci, study, how='left')
-    top_loci[['beta', 'oddsr', 'ci_lower', 'ci_upper']] = top_loci.apply(extract_effect_sizes, axis=1).apply(pd.Series)
+    top_loci[['direction', 'beta', 'oddsr', 'ci_lower', 'ci_upper']] = top_loci.apply(extract_effect_sizes, axis=1).apply(pd.Series)
 
     # Extract and rename required columns
     cols = OrderedDict([
         ('study_id', 'study_id'),
         ('locus_index_varid', 'variant_id_b37'),
         ('locus_index_snp', 'rsid'),
+        ('direction', 'direction'),
         ('beta', 'beta'),
         ('oddsr', 'odds_ratio'),
         ('ci_lower', 'ci_lower'),
@@ -74,7 +75,7 @@ def extract_effect_sizes(row):
         beta, oddsr, lower_ci, upper_ci
     '''
     # Initiate
-    beta, oddsr, lower_ci, upper_ci = None, None, None, None
+    direction, beta, oddsr, lower_ci, upper_ci = None, None, None, None, None
     # Check whether quantitative or binary
     is_beta = pd.isnull(row['case_prop'])
     # Estimate z-score
@@ -85,6 +86,7 @@ def extract_effect_sizes(row):
         se = row['se']
         lower_ci = beta - 1.96 * se
         upper_ci = beta + 1.96 * se
+        direction = '+' if beta >= 0 else '-'
     else:
         # Perform transformation: https://github.com/opentargets/sumstat_data#requirements-when-adding-new-datasets
         log_or = row['b'] / (row['case_prop'] / (1 - row['case_prop']))
@@ -92,8 +94,9 @@ def extract_effect_sizes(row):
         oddsr = np.exp(log_or)
         lower_ci = np.exp(log_or - 1.96 * log_se)
         upper_ci = np.exp(log_or + 1.96 * log_se)
+        direction = '+' if oddsr >= 1 else '-'
 
-    return beta, oddsr, lower_ci, upper_ci
+    return direction, beta, oddsr, lower_ci, upper_ci
 
 def fexp(number):
     ''' https://stackoverflow.com/a/45359185 '''
