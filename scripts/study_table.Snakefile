@@ -2,15 +2,6 @@ import pandas as pd
 import numpy as np
 import json
 
-# rule make_gwas_cat_studies_table:
-#     ''' Use GWAS Catalog API to get all studies
-#     '''
-#     output:
-#         tmpdir + '/{version}/gwas-catalog_study_table.tsv'
-#     shell:
-#         'python scripts/make_gwas_cat_study_table.py '
-#         '--outf {output}'
-
 rule make_gwas_cat_studies_table:
     ''' Make GWAS Catalog table
     '''
