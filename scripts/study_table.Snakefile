@@ -76,19 +76,6 @@ rule merge_study_tables:
         merged = pd.concat([gwas, neale], sort=False)
         # Save
         merged.to_csv(output[0], sep='\t', index=None)
-        # also output a newline-delimited JSON
-        # merged.drop(columns=['ancestry_initial','ancestry_replication'],inplace=True)
-        # merged['trait_efos'] = merged['trait_efos'].str.split(";")
-        # with open(output[1],"w") as outjson:
-        #     for index,row in merged.iterrows():
-        #         r = row.dropna().to_dict()
-        #         for n_var in ['n_cases','n_initial','n_replication']:
-        #             try:
-        #                 r[n_var] = int(float(r[n_var]))
-        #             except KeyError:
-        #                 pass
-        #         outjson.write(json.dumps(r) + '\n')
-
 
 rule make_json_study_table:
     ''' Transform into json

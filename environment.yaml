@@ -7,3 +7,5 @@ dependencies:
   - pandas
   - pypy3.5
   - plink
+  - scipy
+  - numpy

@@ -96,12 +96,14 @@ rule convert_nealeUKB_to_standard:
         format.
     '''
     input:
-        GSRemoteProvider().remote(config['credset'], keep_local=KEEP_LOCAL) # DEBUG
+        credset=GSRemoteProvider().remote(config['credset'], keep_local=KEEP_LOCAL),
+        study_info=tmpdir + '/{version}/nealeUKB_study_table.tsv'
     output:
         tmpdir + '/{version}/nealeUKB-associations_ot-format.tsv'
     shell:
         'python scripts/format_nealeUKB_assoc.py '
-        '--inf {input} '
+        '--inf {input.credset} '
+        '--study_info {input.study_info} '
         '--outf {output}'
 
 rule merge_gwascat_and_nealeUKB_toploci:
