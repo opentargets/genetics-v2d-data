@@ -89,7 +89,7 @@ List of loci associated with disease. Currently this data comes from two sources
     - GWAS Catalog sometimes enocodes subphenotypes as a sting under the "p-value (text)". Where there are multiple p-values when grouped by (study, variant), keep only the lowest p-value.
 4. Append UKB top loci from the finemapping conditional analysis
   Steps:
-    - Download finemapping results from GCS (`gs://uk_biobank_analysis/em21/neale_summary_statistics_20170915/finemapping/results/neale_ukb_uk10kref_180502.crediblesets.long.varids.tsv.gz`)
+    - Download finemapping results from GCS (`gs://genetics-portal-input/uk_biobank_analysis/em21/neale_summary_statistics_20170915/finemapping/results/neale_ukb_uk10kref_180502.crediblesets.long.varids.tsv.gz`)
     - Select rows where `locus_index_varid == varid` as these will be the top loci
     - Make study_id from trait name (prepend "NEALEUKB_")
     - Set any p-values that == 0 to minimum float

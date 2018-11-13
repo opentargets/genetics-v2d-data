@@ -3,14 +3,14 @@ temp_dir: 'tmp'
 gs_dir: 'genetics-portal-staging/v2d'
 
 # Finemapping files
-credset: 'uk_biobank_analysis/em21/neale_summary_statistics_20170915/finemapping/results/neale_ukb_uk10kref_180502.crediblesets.long.varids.tsv.gz'
-variant_map: 'uk_biobank_data/em21/neale_summary_statistics_20170915/cleaned_data/clean/50.nealeUKB_20170915.assoc.clean.tsv.gz'
+credset: 'genetics-portal-input/uk_biobank_analysis/em21/neale_summary_statistics_20170915/finemapping/results/neale_ukb_uk10kref_180502.crediblesets.long.varids.tsv.gz'
+variant_map: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/cleaned_data/clean/50.nealeUKB_20170915.assoc.clean.tsv.gz'
 
 # Neale et al UK Biobank manifest file
-neale_manifest: 'uk_biobank_data/em21/neale_summary_statistics_20170915/cleaned_data/phenosummary_final_11898_18597.fixed.curation_manifest.tsv'
-neale_efo_icd10: 'uk_biobank_data/em21/neale_summary_statistics_20170915/efo_curation/v1_2018_07_05/phenosummary_final_11898_18597.fixed.curation_manifest - QC of ICD10 traits - Iteration 1.csv'
-neale_efo_self: 'uk_biobank_data/em21/neale_summary_statistics_20170915/efo_curation/v1_2018_07_05/phenosummary_final_11898_18597.fixed.curation_manifest - QC of self-reported traits - Iteration 1.csv'
-neale_categories: 'uk_biobank_data/em21/neale_summary_statistics_20170915/PheWAS_categories/neale_cateogries.v2.tsv'
+neale_manifest: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/cleaned_data/phenosummary_final_11898_18597.fixed.curation_manifest.tsv'
+neale_efo_icd10: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/efo_curation/v1_2018_07_05/phenosummary_final_11898_18597.fixed.curation_manifest - QC of ICD10 traits - Iteration 1.csv'
+neale_efo_self: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/efo_curation/v1_2018_07_05/phenosummary_final_11898_18597.fixed.curation_manifest - QC of self-reported traits - Iteration 1.csv'
+neale_categories: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/PheWAS_categories/neale_cateogries.v2.tsv'
 
 # LD table
 gwascat_2_superpop: 'configs/gwascat_superpopulation_lut.curated.tsv'
