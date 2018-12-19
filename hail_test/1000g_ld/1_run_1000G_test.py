@@ -27,7 +27,9 @@ def main():
 
     # Read the dataset (droppoing duplicate rows)
     mt = ( hl.read_matrix_table('data/1kg.mt')
-             .distinct_by_row() )
+             .distinct_by_row()
+             .sample_rows(0.01) # DEBUG
+    )
 
     #
     # Merge phenotype (superpopulation) annotation -----------------------------
@@ -117,8 +119,8 @@ def main():
     )
 
     # DEBUG - e.g. row 5420
-    var_table.export('tmp/var_table.table.tsv')
-    mt.rows().export('tmp/mt.table.tsv')
+    # var_table.export('tmp/var_table.table.tsv')
+    # mt.rows().export('tmp/mt.table.tsv')
 
     # Extract row vertices
     var_indexes = var_table.mt_var_index.collect()
@@ -127,15 +129,49 @@ def main():
     # Calc LD ------------------------------------------------------------------
     #
 
-    print('Calculating LD...')
-    ld = hl.ld_matrix(mt.GT.n_alt_alleles(), mt.locus, radius=window*1000)
+    # print('Calculating LD...')
+    # ld = hl.ld_matrix(mt.GT.n_alt_alleles(), mt.locus, radius=window*1000)
+    #
+    # # Filter rows to only return those in the manifest
+    # ld_filt = ld.filter_rows(var_indexes)
+    #
+    # print('Full LD matrix shape: ', ld.shape)
+    # print('Filtered LD matrix shape: ', ld_filt.shape)
+    #
+    # # Convert to an entries table
+    # ld_entries = ld_filt.entries()
+    # ld_entries.describe()
+    # ld_entries.show()
 
-    # Filter rows to only return those in the manifest
-    print(list(var_indexes))
-    ld_filt = ld.filter_rows(var_indexes)
+    # Group by superpopulation
+    # res = ( mt.group_cols_by(mt.pheno.SuperPopulation)
+    #           .aggregate_cols(
+    #                ld = hl.ld_matrix(mt.GT.n_alt_alleles(), mt.locus, radius=window*1000).filter_rows(var_indexes).entries()
+    #           ))
+    # res.describe()
+    # res.show()
 
-    print('Full LD matrix shape: ', ld.shape)
-    print('Filtered LD matrix shape: ', ld_filt.shape)
+
+    # Perform LD calculation on each superpopulation separately
+    ld_tables = []
+    superpops = list(mt.aggregate_cols(hl.agg.collect_as_set(mt.pheno.SuperPopulation)))
+    for superpop in superpops:
+        print('Calculating LD for: ', superpop)
+        # Filter to keep only columns matching the superpop
+        mt_pop = mt.filter_cols(mt.pheno.SuperPopulation == superpop)
+        # Calculate ld
+        ld_pop = ( hl.ld_matrix(mt_pop.GT.n_alt_alleles(),
+                                mt_pop.locus,
+                                radius=window*1000)
+                     .filter_rows(var_indexes)
+                     .entries()
+                     .rename({'entry': superpop}) )
+        ld_tables.append(ld_pop)
+
+    # Join all superpopulations together
+    ld_merged = ld_tables[0]
+    for ld_table in ld_tables[1:]:
+        ld_merged = ld_merged.join(ld_table)
 
     return 0
 
@@ -179,6 +215,7 @@ def make_interval_file(locus_list, outf, reference_genome, window=500):
                          'Y': 59373566}
     else:
         sys.exit('Error: only supports GRCh37 currently')
+
 
     # Write file
     with open(outf, 'w') as out_h:
