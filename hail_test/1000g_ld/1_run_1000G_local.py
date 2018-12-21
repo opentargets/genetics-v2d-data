@@ -16,6 +16,7 @@ def main():
     input_manifest = '/Users/em21/Projects/ot_genetics/genetics-v2d_data/output/181217/ld_analysis_input.tsv.gz'
     window = 500 #kb
     reference_genome = 'GRCh37'
+    min_r2 = 0.7
 
     #
     # Read data ----------------------------------------------------------------
@@ -28,7 +29,7 @@ def main():
     # Read the dataset (droppoing duplicate rows)
     mt = ( hl.read_matrix_table('data/1kg.mt')
              .distinct_by_row()
-             .sample_rows(0.01) # DEBUG
+             # .sample_rows(0.01) # DEBUG
     )
 
     #
@@ -52,7 +53,9 @@ def main():
 
     # Write temp interval file
     interval_file = 'tmp/interval_file.tsv'
-    make_interval_file(manifest[['chrom', 'pos']].drop_duplicates().values.tolist(),
+    make_interval_file(manifest[['chrom', 'pos']].drop_duplicates()
+                                                 .values
+                                                 .tolist(),
                        interval_file,
                        reference_genome=reference_genome,
                        window=window)
@@ -60,6 +63,7 @@ def main():
     # Load intervals into hail and filter
     interval_table = hl.import_locus_intervals(interval_file,
         reference_genome='GRCh37')
+    # interval_table = interval_table.order_by(hl.asc('interval')).key_by('interval')
     print('Num variants before interval filter: {0}'.format(mt.count_rows()))
     mt = mt.filter_rows(hl.is_defined(interval_table[mt.locus]))
     print('Num variants after interval filter: {0}'.format(mt.count_rows()))
@@ -72,7 +76,8 @@ def main():
     mt = hl.sample_qc(mt)
 
     # Apply sample filters
-    mt = mt.filter_cols((mt.sample_qc.dp_stats.mean >= 4) & (mt.sample_qc.call_rate >= 0.97))
+    mt = mt.filter_cols((mt.sample_qc.dp_stats.mean >= 4) &
+                        (mt.sample_qc.call_rate >= 0.97))
     print('After filter, %d/284 samples remain.' % mt.count_cols())
 
     # Apply genotype filter (recommended in hail docs)
@@ -89,7 +94,6 @@ def main():
     mt = mt.filter_rows(mt.variant_qc.p_value_hwe > 1e-6)
     mt = mt.filter_rows(mt.variant_qc.AF[1] > min_maf)
     print('Samples: %d  Variants: %d' % (mt.count_cols(), mt.count_rows()))
-
 
     #
     # Get variant row indexes --------------------------------------------------
@@ -117,6 +121,8 @@ def main():
     var_table = var_table.annotate(
         mt_var_index = mt.index_rows(var_table.locus, var_table.alleles).row_idx
     )
+    # var_table.describe()
+    # sys.exit()
 
     # DEBUG - e.g. row 5420
     # var_table.export('tmp/var_table.table.tsv')
@@ -129,32 +135,10 @@ def main():
     # Calc LD ------------------------------------------------------------------
     #
 
-    # print('Calculating LD...')
-    # ld = hl.ld_matrix(mt.GT.n_alt_alleles(), mt.locus, radius=window*1000)
-    #
-    # # Filter rows to only return those in the manifest
-    # ld_filt = ld.filter_rows(var_indexes)
-    #
-    # print('Full LD matrix shape: ', ld.shape)
-    # print('Filtered LD matrix shape: ', ld_filt.shape)
-    #
-    # # Convert to an entries table
-    # ld_entries = ld_filt.entries()
-    # ld_entries.describe()
-    # ld_entries.show()
-
-    # Group by superpopulation
-    # res = ( mt.group_cols_by(mt.pheno.SuperPopulation)
-    #           .aggregate_cols(
-    #                ld = hl.ld_matrix(mt.GT.n_alt_alleles(), mt.locus, radius=window*1000).filter_rows(var_indexes).entries()
-    #           ))
-    # res.describe()
-    # res.show()
-
-
     # Perform LD calculation on each superpopulation separately
     ld_tables = []
-    superpops = list(mt.aggregate_cols(hl.agg.collect_as_set(mt.pheno.SuperPopulation)))
+    superpops = list(mt.aggregate_cols(
+        hl.agg.collect_as_set(mt.pheno.SuperPopulation)))
     for superpop in superpops:
         print('Calculating LD for: ', superpop)
         # Filter to keep only columns matching the superpop
@@ -172,6 +156,34 @@ def main():
     ld_merged = ld_tables[0]
     for ld_table in ld_tables[1:]:
         ld_merged = ld_merged.join(ld_table)
+
+    # Filter to keep any with
+    ld_filt = ld_merged.filter(
+        (ld_merged['AFR'] ** 2 > min_r2) |
+        (ld_merged['EUR'] ** 2 > min_r2) |
+        (ld_merged['SAS'] ** 2 > min_r2) |
+        (ld_merged['EAS'] ** 2 > min_r2) |
+        (ld_merged['AMR'] ** 2 > min_r2)
+    )
+    print('LD filter rows: ', ld_filt.count())
+
+    # Annotate i with names from var_table
+    i_anno = var_table.add_index().key_by('idx')
+    ld_filt = ld_filt.annotate(
+        i_locus = i_anno[ld_filt.i].locus,
+        i_alleles = i_anno[ld_filt.i].alleles
+    )
+
+    # Annotate j with names from mt
+    j_anno = mt.rows().key_by('row_idx')
+    ld_filt = ld_filt.annotate(
+        j_locus = j_anno[ld_filt.j].locus,
+        j_alleles = j_anno[ld_filt.j].alleles
+    )
+
+    # DEBUG
+    print('Writing...')
+    ld_filt.export('tmp/ld_filt.table.tsv.gz')
 
     return 0
 
