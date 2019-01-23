@@ -33,10 +33,9 @@ def main():
                         how='left',
                         left_on='Field.code', right_on='trait_code')
 
-
     # Make columns
     manifest.loc[:, 'study_id'] = 'NEALEUKB_' + manifest['Field.code'].astype(str)
-    manifest.loc[:, 'trait_code'] = 'UKB_' + manifest['Field.code'].astype(str)
+    # manifest.loc[:, 'trait_code'] = 'UKB_' + manifest['Field.code'].astype(str)
     manifest.loc[:, 'pmid'] = ''
     manifest.loc[:, 'pub_date'] = '2017-09-15'
     manifest.loc[:, 'pub_journal'] = ''
@@ -50,8 +49,10 @@ def main():
 
     # Load categories
     categ = load_categories(args.in_categories)
+    print(categ.head())
+    print(manifest.head())
     manifest = pd.merge(manifest, categ,
-                        on='trait_code',
+                        on='study_id',
                         how='left')
 
     # Ouput required columns
@@ -63,7 +64,7 @@ def main():
         ('pub_title', 'pub_title'),
         ('pub_author', 'pub_author'),
         ('Field', 'trait_reported'),
-        ('trait_code', 'trait_code'),
+        # ('trait_code', 'trait_code'),
         # ('efo_trait', 'trait_mapped'),
         ('efo_code', 'trait_efos'),
         ('category', 'trait_category'),
@@ -75,7 +76,6 @@ def main():
         ])
     manifest = ( manifest.loc[:, list(cols.keys())]
                          .rename(columns=cols) )
-    # print(manifest.columns)
 
     # Write
     manifest.to_csv(args.outf, sep='\t', index=None)
@@ -90,13 +90,13 @@ def load_categories(inf):
     returns:
         pd.Df
     '''
-    df = (pd.read_csv(inf, sep='\t', header=0)
-            .loc[:, ['phenocode', 'category']]
-            .rename(columns={'phenocode':'trait_code'})
+    df = (
+        pd.read_csv(inf, sep='\t', header=0)
+          .loc[:, ['phenocode', 'category']]
     )
-    df.trait_code = 'UKB_' + df.trait_code
+    df['study_id'] = 'NEALEUKB_' + df.phenocode
+    df.drop('phenocode', axis=1, inplace=True)
     return df
-
 
 def parse_args():
     """ Load command line args """

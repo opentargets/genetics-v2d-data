@@ -44,7 +44,7 @@ def main():
 
     # Extract effect size information
     top_loci = pd.merge(top_loci, study, how='left')
-    top_loci[['direction', 'beta', 'oddsr', 'ci_lower', 'ci_upper']] = top_loci.apply(extract_effect_sizes, axis=1).apply(pd.Series)
+    top_loci[['direction', 'beta', 'beta_ci_lower', 'beta_ci_upper', 'oddsr', 'oddsr_ci_lower', 'oddsr_ci_upper']] = top_loci.apply(extract_effect_sizes, axis=1).apply(pd.Series)
 
     # Extract and rename required columns
     cols = OrderedDict([
@@ -53,9 +53,11 @@ def main():
         ('locus_index_snp', 'rsid'),
         ('direction', 'direction'),
         ('beta', 'beta'),
+        ('beta_ci_lower', 'beta_ci_lower'),
+        ('beta_ci_upper', 'beta_ci_upper'),
         ('oddsr', 'odds_ratio'),
-        ('ci_lower', 'ci_lower'),
-        ('ci_upper', 'ci_upper'),
+        ('oddsr_ci_lower', 'oddsr_ci_lower'),
+        ('oddsr_ci_upper', 'oddsr_ci_upper'),
         ('p_mantissa', 'pval_mantissa'),
         ('p_exponent', 'pval_exponent')
     ])
@@ -72,10 +74,10 @@ def extract_effect_sizes(row):
     Args:
         row (pd.Series)
     Returns:,
-        beta, oddsr, lower_ci, upper_ci
+        direction, beta, beta_ci_lower, beta_ci_upper, oddsr, oddsr_ci_lower, oddsr_ci_upper
     '''
     # Initiate
-    direction, beta, oddsr, lower_ci, upper_ci = None, None, None, None, None
+    direction, beta, beta_ci_lower, beta_ci_upper, oddsr, oddsr_ci_lower, oddsr_ci_upper = None, None, None, None, None, None, None
     # Check whether quantitative or binary
     is_beta = pd.isnull(row['case_prop'])
     # Estimate z-score
@@ -84,19 +86,19 @@ def extract_effect_sizes(row):
     if is_beta:
         beta = row['b']
         se = row['se']
-        lower_ci = beta - 1.96 * se
-        upper_ci = beta + 1.96 * se
+        beta_ci_lower = beta - 1.96 * se
+        beta_ci_upper = beta + 1.96 * se
         direction = '+' if beta >= 0 else '-'
     else:
         # Perform transformation: https://github.com/opentargets/sumstat_data#requirements-when-adding-new-datasets
         log_or = row['b'] / (row['case_prop'] / (1 - row['case_prop']))
         log_se = row['se'] / (row['case_prop'] / (1 - row['case_prop']))
         oddsr = np.exp(log_or)
-        lower_ci = np.exp(log_or - 1.96 * log_se)
-        upper_ci = np.exp(log_or + 1.96 * log_se)
+        oddsr_ci_lower = np.exp(log_or - 1.96 * log_se)
+        oddsr_ci_upper = np.exp(log_or + 1.96 * log_se)
         direction = '+' if oddsr >= 1 else '-'
 
-    return direction, beta, oddsr, lower_ci, upper_ci
+    return direction, beta, beta_ci_lower, beta_ci_upper, oddsr, oddsr_ci_lower, oddsr_ci_upper
 
 def fexp(number):
     ''' https://stackoverflow.com/a/45359185 '''

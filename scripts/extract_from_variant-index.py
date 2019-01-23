@@ -20,12 +20,13 @@ def main():
     # Parse vcf
     with gzip.open(args.vcf, 'r') as in_h:
         with gzip.open(args.out, 'w') as out_h:
+            in_h.readline() # Skip header
             for line in in_h:
                 lined = line.decode()
-                # Skip headers
-                if lined.startswith('#'):
-                    continue
-                chrom, pos, rsid, _, _, _, _, _ = lined.rstrip().split('\t')
+                parts = lined.rstrip().split('\t')
+                chrom = parts[2]
+                pos = parts[3]
+                rsid = parts[8]
                 chrom_pos = '{0}:{1}'.format(chrom, pos)
                 if chrom_pos in var_set or rsid in var_set:
                     out_h.write(line)

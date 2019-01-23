@@ -2,19 +2,25 @@ import pandas as pd
 import numpy as np
 import json
 
+assert(pd.__version__ >= '0.24')
+
 rule make_gwas_cat_studies_table:
-    ''' Make GWAS Catalog table
+    ''' Make GWAS Catalog table. It needs to use the intermediate top loci table
+        as we must create new study IDs based on the subphenotype in the field
+        "P-VALUE (TEXT)". This isn't available in the GWAS Catalog study file.
     '''
     input:
-        studies=HTTPRemoteProvider().remote('https://www.ebi.ac.uk/gwas/api/search/downloads/studies_alternative', keep_local=KEEP_LOCAL),
+        toploci=tmpdir + '/{version}/gwas-catalog-associations_ontology_variantID-annotated.tsv',
         ancestries=HTTPRemoteProvider().remote('https://www.ebi.ac.uk/gwas/api/search/downloads/ancestry', keep_local=KEEP_LOCAL)
     output:
-        tmpdir + '/{version}/gwas-catalog_study_table.tsv'
+        main=tmpdir + '/{version}/gwas-catalog_study_table.tsv',
+        lut=tmpdir + '/{version}/gwas-catalog_study_id_lut.tsv'
     shell:
         'python scripts/make_gwas_cat_study_table.py '
-        '--in_studies {input.studies} '
+        '--in_toploci {input.toploci} '
         '--in_ancestries {input.ancestries} '
-        '--outf {output}'
+        '--outf {output.main} '
+        '--out_id_lut {output.lut}'
 
 rule process_efo_curation:
     ''' Downloads EFO curation, applies filters, merges
@@ -53,58 +59,24 @@ rule merge_study_tables:
     input:
         gwas=tmpdir + '/{version}/gwas-catalog_study_table.tsv',
         neale=tmpdir + '/{version}/nealeUKB_study_table.tsv',
-        top_loci='output/{version}/toploci.tsv'
+        top_loci='output/{version}/toploci.parquet'
     output:
-        'output/{version}/studies.tsv'
-    run:
-
-        # Load
-        # casting everything as object since, pandas does not support NaN for int
-        # see: http://pandas.pydata.org/pandas-docs/stable/gotchas.html#support-for-integer-na
-        gwas = pd.read_csv(input['gwas'], sep='\t', header=0, dtype=object)
-        neale = pd.read_csv(input['neale'], sep='\t', header=0, dtype=object)
-        # Merge gwas cat and neale
-        merged = pd.concat([gwas, neale], sort=False)
-        # Load the number of associated loci per study
-        num_loci = ( pd.read_csv(input['top_loci'], sep='\t', header=0)
-                       .groupby('study_id')
-                       .size().reset_index(name='counts')
-                       .rename(columns={'counts': 'num_assoc_loci'}) )
-        merged = pd.merge(merged, num_loci, how='left', on='study_id')
-        merged['num_assoc_loci'] = merged['num_assoc_loci'].fillna(value=0).astype(int)
-        # Save
-        merged.to_csv(output[0], sep='\t', index=None)
-
-rule make_json_study_table:
-    ''' Transform into json
-    '''
-    input:
-        'output/{version}/studies.tsv'
-    output:
-        'output/{version}/studies.json'
+        'output/{version}/studies.parquet'
     shell:
-        'python scripts/study_tsv2json.py {input} {output} '
+        'python scripts/merge_study_tables.py '
+        '--in_gwascat {input.gwas} '
+        '--in_neale {input.neale} '
+        '--in_toploci {input.top_loci} '
+        '--output {output}'
 
 rule study_to_GCS:
     ''' Copy to GCS
     '''
     input:
-        'output/{version}/studies.tsv'
+        'output/{version}/studies.parquet'
     output:
         GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/studies.tsv'.format(gs_dir=config['gs_dir'])
-            )
-    shell:
-        'cp {input} {output}'
-
-rule studyjson_to_GCS_json:
-    ''' Copy to GCS
-    '''
-    input:
-        'output/{version}/studies.json'
-    output:
-        GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/studies.json'.format(gs_dir=config['gs_dir'])
+            '{gs_dir}/{{version}}/studies.parquet'.format(gs_dir=config['gs_dir'])
             )
     shell:
         'cp {input} {output}'

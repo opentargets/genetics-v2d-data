@@ -10,54 +10,29 @@ rule get_gwas_cat_assoc:
     shell:
         'cp {input} {output}'
 
-rule get_ensembl_variation_grch37:
-    ''' Download all Ensembl variation data
+rule get_variant_index:
+    ''' Download variant index site list
     '''
     input:
-        FTPRemoteProvider().remote('ftp://ftp.ensembl.org/pub/grch37/update/variation/vcf/homo_sapiens/Homo_sapiens.vcf.gz')
+        GSRemoteProvider().remote(config['var_index_sitelist'], keep_local=KEEP_LOCAL)
     output:
-        tmpdir + '/Ensembl.Homo_sapiens.grch37.vcf.gz'
+        tmpdir + '/variant-annotation.sitelist.tsv.gz'
     shell:
         'cp {input} {output}'
 
-rule get_HRC_variation_grch37:
-    ''' Download all HRC variation data
-    '''
-    input:
-        FTPRemoteProvider().remote('ftp://ngs.sanger.ac.uk/production/hrc/HRC.r1-1/HRC.r1-1.GRCh37.wgs.mac5.sites.vcf.gz')
-    output:
-        tmpdir + '/HRC.r1-1.GRCh37.wgs.mac5.sites.vcf.gz'
-    shell:
-        'cp {input} {output}'
-
-rule extract_gwas_rsids_from_HRC:
+rule extract_gwascat_rsids_from_variant_index:
     ''' Makes set of GWAS Catalog rsids and chrom:pos strings. Then reads
-        these from the VCF file. Takes ~10 mins.
+        these from the variant index. Takes ~2 mins.
     '''
     input:
         gwascat= tmpdir + '/{version}/gwas-catalog-associations_ontology-annotated.tsv',
-        vcf= tmpdir + '/HRC.r1-1.GRCh37.wgs.mac5.sites.vcf.gz'
+        invar= tmpdir + '/variant-annotation.sitelist.tsv.gz'
     output:
-        tmpdir + '/{version}/HRC.r1-1.GRCh37.gwasCat_only.vcf.gz'
+        tmpdir + '/{version}/variant-annotation.sitelist.GWAScat.tsv.gz'
     shell:
-        'pypy3 scripts/extract_from_vcf.py '
+        'pypy3 scripts/extract_from_variant-index.py '
         '--gwas {input.gwascat} '
-        '--vcf {input.vcf} '
-        '--out {output}'
-
-rule extract_gwas_rsids_from_Ensembl:
-    ''' Makes set of GWAS Catalog rsids and chrom:pos strings. Then reads
-        these from the VCF file. Takes ~10 mins.
-    '''
-    input:
-        gwascat= tmpdir + '/{version}/gwas-catalog-associations_ontology-annotated.tsv',
-        vcf= tmpdir + '/Ensembl.Homo_sapiens.grch37.vcf.gz'
-    output:
-        tmpdir + '/{version}/Ensembl.Homo_sapiens.grch37.gwasCat_only.vcf.gz'
-    shell:
-        'pypy3 scripts/extract_from_vcf.py '
-        '--gwas {input.gwascat} '
-        '--vcf {input.vcf} '
+        '--vcf {input.invar} '
         '--out {output}'
 
 rule annotate_gwas_cat_with_variant_ids:
@@ -66,28 +41,28 @@ rule annotate_gwas_cat_with_variant_ids:
     '''
     input:
         gwascat= tmpdir + '/{version}/gwas-catalog-associations_ontology-annotated.tsv',
-        vcf_hrc= tmpdir + '/{version}/HRC.r1-1.GRCh37.gwasCat_only.vcf.gz',
-        vcf_ensembl= tmpdir + '/{version}/Ensembl.Homo_sapiens.grch37.gwasCat_only.vcf.gz'
+        invar= tmpdir + '/{version}/variant-annotation.sitelist.GWAScat.tsv.gz'
     output:
         tmpdir + '/{version}/gwas-catalog-associations_ontology_variantID-annotated.tsv'
     shell:
         'python scripts/annotate_gwascat_varaintids.py '
         '--gwas {input.gwascat} '
-        '--vcf_hrc {input.vcf_hrc} '
-        '--vcf_ensembl {input.vcf_ensembl} '
+        '--invar {input.invar} '
         '--out {output}'
 
 rule convert_gwas_catalog_to_standard:
     ''' Outputs the GWAS Catalog association data into a standard format
     '''
     input:
-        tmpdir + '/{version}/gwas-catalog-associations_ontology_variantID-annotated.tsv'
+        gwas=tmpdir + '/{version}/gwas-catalog-associations_ontology_variantID-annotated.tsv',
+        id_lut=tmpdir + '/{version}/gwas-catalog_study_id_lut.tsv'
     output:
         out_assoc = tmpdir + '/{version}/gwas-catalog-associations_ot-format.tsv',
         log = 'logs/{version}/gwas-cat-assocs.log'
     shell:
         'python scripts/format_gwas_assoc.py '
-        '--inf {input} '
+        '--inf {input.gwas} '
+        '--id_lut {input.id_lut} '
         '--outf {output.out_assoc} '
         '--log {output.log}'
 
@@ -110,18 +85,15 @@ rule merge_gwascat_and_nealeUKB_toploci:
     ''' Merges association files from gwas_cat and neale UKB
     '''
     input:
-        gwas = tmpdir + '/{version}/gwas-catalog-associations_ot-format.tsv',
+        gwascat = tmpdir + '/{version}/gwas-catalog-associations_ot-format.tsv',
         neale = tmpdir + '/{version}/nealeUKB-associations_ot-format.tsv'
     output:
-        'output/{version}/toploci.tsv'
-    run:
-        # Load
-        gwas = pd.read_csv(input['gwas'], sep='\t', header=0)
-        neale = pd.read_csv(input['neale'], sep='\t', header=0)
-        # Merge
-        merged = pd.concat([gwas, neale], sort=False)
-        # Save
-        merged.to_csv(output[0], sep='\t', index=None)
+        'output/{version}/toploci.parquet'
+    shell:
+        'python scripts/merge_top_loci_tables.py '
+        '--in_gwascat {input.gwascat} '
+        '--in_neale {input.neale} '
+        '--output {output}'
 
 rule toploci_to_GCS:
     ''' Copy to GCS

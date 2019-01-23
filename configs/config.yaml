@@ -16,3 +16,6 @@ neale_categories: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_stat
 gwascat_2_superpop: 'configs/gwascat_superpopulation_lut.curated.tsv'
 ld_window: 500
 min_r2: 0.7
+
+# Variant index
+var_index_sitelist: 'genetics-portal-staging/variant-annotation/190118/variant-annotation.sitelist.tsv.gz'

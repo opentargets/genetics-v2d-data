@@ -46,35 +46,35 @@ def main():
     gwas = explode(gwas, ['CHR_ID', 'CHR_POS', 'SNPS', 'STRONGEST SNP-RISK ALLELE'])
 
     #
-    # Load HRC VCF data
+    # Load variant index data
     #
 
     # Load
-    vcf_hrc = pd.read_csv(args.vcf_hrc, sep='\t', header=None).iloc[:, 0:5]
-    vcf_hrc.columns = ['chrom', 'pos', 'rsid', 'ref', 'alt']
+    var_idx = pd.read_csv(args.invar, sep='\t', header=None).iloc[:, [2, 3, 8, 6, 7]]
+    var_idx.columns = ['chrom', 'pos', 'rsid', 'ref', 'alt']
 
     # Assert only 1 rsid per row
-    assert((vcf_hrc.rsid.str.split(',').apply(len) == 1).all())
+    assert((var_idx.rsid.str.split(',').apply(len_robust) == 1).all())
 
     # Split multiallelic
-    vcf_hrc['alt'] = vcf_hrc['alt'].str.split(',')
-    vcf_hrc['is_multiallelic'] = np.where(vcf_hrc['alt'].apply(len) > 1, 1, 0)
-    vcf_hrc = explode(vcf_hrc, ['alt'])
+    var_idx['alt'] = var_idx['alt'].str.split(',')
+    var_idx['is_multiallelic'] = np.where(var_idx['alt'].apply(len) > 1, 1, 0)
+    var_idx = explode(var_idx, ['alt'])
 
     #
-    # Merge to HRC. First on rsids, then on chr:pos
+    # Merge to variant index. First on rsids, then on chr:pos
     #
 
     # Make sure types match
-    vcf_hrc['chrom'] = vcf_hrc['chrom'].astype(str)
-    vcf_hrc['pos'] = vcf_hrc['pos'].astype(int)
+    var_idx['chrom'] = var_idx['chrom'].astype(str)
+    var_idx['pos'] = var_idx['pos'].astype(int)
 
     # Make new rsid column based on either SNP_ID_CURRENT or SNPS
     gwas['best_rsid'] = gwas.apply(get_best_rsid, axis=1)
 
     # Merge on rsids
     gwas_rs = gwas.loc[gwas.best_rsid.str.startswith('rs'), :]
-    merged_rs = pd.merge(gwas_rs, vcf_hrc,
+    merged_rs = pd.merge(gwas_rs, var_idx,
                          how='left',
                          left_on='best_rsid', right_on='rsid')
 
@@ -82,7 +82,7 @@ def main():
     gwas_chr = gwas.loc[gwas.best_rsid.str.startswith('chr'), :]
     gwas_chr[['chrom_37', 'pos_37']] = ( gwas_chr.best_rsid.apply(str_to_chrompos)
                                                            .apply(pd.Series) )
-    merged_chr = pd.merge(gwas_chr, vcf_hrc,
+    merged_chr = pd.merge(gwas_chr, var_idx,
                           how='left',
                           left_on=['chrom_37', 'pos_37'],
                           right_on=['chrom', 'pos'])
@@ -90,74 +90,16 @@ def main():
     # Combine
     merged = pd.concat([merged_rs, merged_chr])
 
-
-    # Split these into those with HRC mapping and those without
-    has_hrc = ~pd.isnull(merged.rsid)
-    merged_w_hrc = merged.loc[has_hrc, :]
-    merged_wo_hrc = merged.loc[~has_hrc, gwas.columns]
-
-    #
-    # Load Ensembl VCF data
-    #
-
-    # Load
-    vcf_ensembl = pd.read_csv(args.vcf_ensembl, sep='\t', header=None).iloc[:, 0:5]
-    vcf_ensembl.columns = ['chrom', 'pos', 'rsid', 'ref', 'alt']
-
-    # Assert only 1 rsid per row
-    assert((vcf_ensembl.rsid.str.split(',').apply(len) == 1).all())
-
-    # Split multiallelic
-    vcf_ensembl['alt'] = vcf_ensembl['alt'].str.split(',')
-    vcf_ensembl['is_multiallelic'] = np.where(vcf_ensembl['alt'].apply(len) > 1, 1, 0)
-    vcf_ensembl = explode(vcf_ensembl, ['alt'])
-
-    #
-    # Merge to Ensembl. First on rsids, then on chr:pos
-    #
-
-    # Make sure types match
-    vcf_ensembl['chrom'] = vcf_ensembl['chrom'].astype(str)
-    vcf_ensembl['pos'] = vcf_ensembl['pos'].astype(int)
-
-    # Make new rsid column based on either SNP_ID_CURRENT or SNPS
-    merged_wo_hrc['best_rsid'] = merged_wo_hrc.apply(get_best_rsid, axis=1)
-
-    # Merge on rsids
-    merged_wo_hrc_rs = merged_wo_hrc.loc[merged_wo_hrc.best_rsid.str.startswith('rs'), :]
-    merged_rs = pd.merge(merged_wo_hrc_rs, vcf_ensembl,
-                         how='left',
-                         left_on='best_rsid', right_on='rsid')
-
-    # Merge on chr:pos
-    merged_wo_hrc_chr = merged_wo_hrc.loc[merged_wo_hrc.best_rsid.str.startswith('chr'), :]
-    merged_wo_hrc_chr[['chrom_37', 'pos_37']] = ( merged_wo_hrc_chr.best_rsid.apply(str_to_chrompos)
-                                                           .apply(pd.Series) )
-    merged_chr = pd.merge(merged_wo_hrc_chr, vcf_ensembl,
-                          how='left',
-                          left_on=['chrom_37', 'pos_37'],
-                          right_on=['chrom', 'pos'])
-
-    # Combine
-    ens_merged = pd.concat([merged_rs, merged_chr])
-
-    #
-    # Combine HRC and Ensembl merges
-    #
-
-    hrc_ens_merged = pd.concat([merged_w_hrc, ens_merged])
-
-
     # Drop rows without mapping in VCF
-    hrc_ens_merged = hrc_ens_merged.dropna(subset=['rsid'])
-    hrc_ens_merged['pos'] = hrc_ens_merged['pos'].astype(int)
+    merged = merged.dropna(subset=['rsid'])
+    merged['pos'] = merged['pos'].astype(int)
 
     #
     # Create variant IDs
     #
 
     # Make a variant_id
-    hrc_ens_merged['variant_id_b37'] = hrc_ens_merged.apply(make_var_id, axis=1)
+    merged['variant_id_b37'] = merged.apply(make_var_id, axis=1)
 
     #
     # For rows with a risk allele reported, see if concordant with ref or alt
@@ -165,18 +107,18 @@ def main():
     #
 
     # Extract risk allele
-    hrc_ens_merged['risk_allele'] = hrc_ens_merged['STRONGEST SNP-RISK ALLELE'].apply(extract_risk_allele)
+    merged['risk_allele'] = merged['STRONGEST SNP-RISK ALLELE'].apply(extract_risk_allele)
     # Check concordancy
-    hrc_ens_merged['risk_allele_concordant'] = hrc_ens_merged[['risk_allele', 'ref', 'alt']].apply(check_concordancy, axis=1)
+    merged['risk_allele_concordant'] = merged[['risk_allele', 'ref', 'alt']].apply(check_concordancy, axis=1)
     # Remove rows where not concordant
-    hrc_ens_merged = hrc_ens_merged.loc[hrc_ens_merged['risk_allele_concordant'] != 'no', :]
+    merged = merged.loc[merged['risk_allele_concordant'] != 'no', :]
 
     #
     # Tidy
     #
 
     # Drop unneeded columns
-    hrc_ens_merged = hrc_ens_merged.drop(labels=[
+    merged = merged.drop(labels=[
         'alt',
         'best_rsid',
         'chrom',
@@ -186,7 +128,7 @@ def main():
         'risk_allele',
         'risk_allele_concordant',
         'ref'], axis=1)
-    hrc_ens_merged = hrc_ens_merged.drop_duplicates()
+    merged = merged.drop_duplicates()
 
 
     #
@@ -194,7 +136,7 @@ def main():
     #
 
     # Collapse multiple variants into a single row separated by ';'
-    multivar = hrc_ens_merged.loc[:, ['assoc_id', 'rsid', 'variant_id_b37']]
+    multivar = merged.loc[:, ['assoc_id', 'rsid', 'variant_id_b37']]
     multivar_collapsed = (
         multivar.groupby('assoc_id')
                 .agg({'rsid':combine_rows, 'variant_id_b37':combine_rows})
@@ -208,6 +150,12 @@ def main():
     out_df.to_csv(args.out, sep='\t', index=None)
 
     return 0
+
+def len_robust(val):
+    try:
+        return len(val)
+    except TypeError:
+        return 1
 
 def check_concordancy(row):
     ''' Check whether risk allele is concordant with ref or alt on wither forward or reverse.
@@ -313,8 +261,7 @@ def parse_args():
     """ Load command line args """
     parser = argparse.ArgumentParser()
     parser.add_argument('--gwas', metavar="<file>", help=('GWAS Catalog input'), type=str, required=True)
-    parser.add_argument('--vcf_hrc', metavar="<file>", help=("HRC VCF input"), type=str, required=True)
-    parser.add_argument('--vcf_ensembl', metavar="<file>", help=("Ensembl VCF input"), type=str, required=True)
+    parser.add_argument('--invar', metavar="<file>", help=("Variant index input"), type=str, required=True)
     parser.add_argument('--out', metavar="<str>", help=("Output"), type=str, required=True)
     args = parser.parse_args()
     return args

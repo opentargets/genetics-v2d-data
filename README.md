@@ -22,6 +22,9 @@ conda env create -n v2d_data --file environment.yaml
 # Activate environment
 source activate v2d_data
 
+# NOTE, pandas >= 0.24 is required for NaN Int64 support
+conda install -c conda-forge/label/rc pandas
+
 # Alter configuration file
 nano config.yaml
 
