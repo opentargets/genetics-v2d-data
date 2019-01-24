@@ -3,6 +3,15 @@ Variant-disease tables
 
 This repositroy contains scripts to produce variant-to-disease (V2D) association tables for Open Targets Genetics.
 
+Todo for v2:
+- Update readme, output columns
+
+Changes made (Jan 2019):
+- All outputs in Apache Parquet format
+- Top loci table contains harmonised effect size, 95% CI and direction
+- GWAS Catalog sub-phenotypes (in `P-VALUE (TEXT)` column) are split into separate `study_ids`
+- All `variant_id`s are decomposed into `chrom`, `pos`, `ref`, `alt`
+
 ### Contents
 
 - [Usage](#usage)
@@ -202,7 +211,7 @@ Methods:
   1. GWAS Catalog populations mapped to 1000 Genomes super populations
     - Manually curated. Suppl fig 6 from here https://arxiv.org/pdf/1805.03233.pdf is useful.
     - Curations in `configs/gwascat_superpopulation_lut.curated.tsv`
-  2. Output list of index variants with super population proportions for each study (`ld_analysis_input.tsv.gz`). This file is used as the LD analysis input manifest.
+  2. Output list of index variants with super population proportions for each study (`ld_analysis_input.tsv.gz`). Proportions are calulcated across both initial and replication samples. If a compound ancestry is provided by GWAS Catalog e.g. "popA, popB=100", then the sample size is split equally amoungst them, i.e. popA=50, popB=50. This file is used as the LD analysis input manifest.
   3. Prepare 1000 Genomes haplotypes. Script [available here](https://github.com/opentargets/genetics-backend/tree/master/reference_data/1000Genomes_phase3):
     1. Download
     2. Normalise to reference genome

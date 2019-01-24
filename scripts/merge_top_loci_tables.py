@@ -54,6 +54,11 @@ def main():
         .astype(dtype=dtypes)
     )
 
+    # Sort values
+    merged = merged.sort_values(
+        ['study_id', 'chrom', 'pos', 'ref', 'alt']
+    )
+
     # Save as parquet
     write_parquet(merged,
                   args.output,

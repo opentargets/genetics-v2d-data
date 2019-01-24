@@ -263,6 +263,11 @@ def parse_ancestry_info(inf):
         key = 'ancestry_{0}'.format(stage)
         values = []
         for cat, n in zip(group['BROAD ANCESTRAL CATEGORY'], group['NUMBER OF INDIVDUALS']):
+            # Fix problem with "Greater Middle Eastern (Middle Eastern, North African or Persian)"
+            cat = cat.replace(
+                'Greater Middle Eastern (Middle Eastern, North African or Persian)',
+                'Greater Middle Eastern (Middle Eastern / North African / Persian)'
+            )
             try:
                 n = int(n)
             except ValueError:

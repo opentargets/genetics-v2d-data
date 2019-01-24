@@ -78,6 +78,7 @@ def pd_dtype_to_pa_schema(dtypes, str_list_cols=None):
     type_map = {
         'object': pa.string(),
         'Int64': pa.int64(),
+        'int64': pa.int64(),
         'float64': pa.float64()
     }
 

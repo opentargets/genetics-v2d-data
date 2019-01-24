@@ -62,6 +62,9 @@ def main():
     for col in array_cols:
         merged[col] = merged[col].str.split(';')
 
+    # Sort output
+    merged = merged.sort_values(['study_id'])
+
     # Save as parquet
     write_parquet(merged,
                   args.output,

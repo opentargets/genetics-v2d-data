@@ -99,10 +99,10 @@ rule toploci_to_GCS:
     ''' Copy to GCS
     '''
     input:
-        'output/{version}/toploci.tsv'
+        'output/{version}/toploci.parquet'
     output:
         GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/toploci.tsv'.format(gs_dir=config['gs_dir'])
+            '{gs_dir}/{{version}}/toploci.parquet'.format(gs_dir=config['gs_dir'])
             )
     shell:
         'cp {input} {output}'

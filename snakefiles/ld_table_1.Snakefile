@@ -8,11 +8,11 @@ rule make_ld_input_queries:
         will be the input for making our improved look-up table
     '''
     input:
-        loci='output/{version}/toploci.tsv',
-        study='output/{version}/studies.tsv',
+        loci='output/{version}/toploci.parquet',
+        study='output/{version}/studies.parquet',
         pop_map=config['gwascat_2_superpop']
     output:
-        'output/{version}/ld_analysis_input.tsv.gz'
+        'output/{version}/ld_analysis_input.parquet'
     shell:
         'python scripts/create_ld_input_table.py '
         '--in_loci {input.loci} '
@@ -24,10 +24,10 @@ rule ld_input_to_GCS:
     ''' Copy to GCS
     '''
     input:
-        'output/{version}/ld_analysis_input.tsv.gz'
+        'output/{version}/ld_analysis_input.parquet'
     output:
         GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/extras/ld_analysis_input.tsv.gz'.format(gs_dir=config['gs_dir'])
+            '{gs_dir}/{{version}}/extras/ld_analysis_input.parquet'.format(gs_dir=config['gs_dir'])
             )
     shell:
         'cp {input} {output}'

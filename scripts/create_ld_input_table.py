@@ -10,6 +10,7 @@ import argparse
 import pandas as pd
 import numpy as np
 import re
+from parquet_writer import write_parquet
 
 def main():
 
@@ -17,25 +18,21 @@ def main():
     args = parse_args()
 
     # Load top loci table
-    loci = pd.read_csv(args.in_loci, sep='\t', header=0,
-                       usecols=['study_id', 'variant_id_b37', 'rsid'])
-
-    # Explode lines
-    loci['variant_id_b37'] = loci['variant_id_b37'].astype(str).str.split(';')
-    loci['rsid'] = loci['rsid'].astype(str).str.split(';')
-    loci = explode(loci, ['variant_id_b37', 'rsid'])
-
-    # Split variant ID into parts
-    loci[['chrom', 'pos', 'ref', 'alt']] = (
-        loci.variant_id_b37.apply(lambda x: x.split('_'))
-              .apply(pd.Series) )
+    loci = pd.read_parquet(args.in_loci,
+                           engine='pyarrow',
+                           columns=['study_id', 'chrom', 'pos', 'ref', 'alt'])
 
     # Load study table
-    studies = pd.read_csv(args.in_study, sep='\t', header=0,
-                          usecols=['study_id', 'ancestry_initial', 'ancestry_replication'])
+    studies = pd.read_parquet(args.in_study,
+                           engine='pyarrow',
+                           columns=['study_id', 'ancestry_initial', 'ancestry_replication'])
+
+    # Convert numpy array to list
+    for col in ['ancestry_initial', 'ancestry_replication']:
+        studies[col] = studies[col].apply(numpya_to_list)
 
     # Merge
-    merged = pd.merge(loci, studies, on='study_id', how='left')
+    merged = pd.merge(loci, studies, on='study_id', how='inner')
 
     # Load population map
     pop_map = load_pop_map(args.in_popmap)
@@ -45,36 +42,52 @@ def main():
         merged.apply(to_superpopulation_proportions, pop_map=pop_map, axis=1)
               .apply(pd.Series) )
 
-    merged.to_csv(args.outf, sep='\t', index=None, compression='gzip')
+    # Write output to parquet
+    out_cols = ['study_id', 'chrom', 'pos', 'ref', 'alt', 'AFR_prop',
+                'AMR_prop', 'EAS_prop', 'EUR_prop', 'SAS_prop']
+    write_parquet(merged.loc[:, out_cols],
+                  args.outf,
+                  compression='snappy',
+                  flavor='spark')
 
-def to_superpopulation_proportions(row, pop_map):
+    # Write csv
+    # merged.to_csv(args.outf, sep='\t', index=None, compression='gzip')
+
+def to_superpopulation_proportions(row, pop_map, anc_sep=', '):
     ''' Parses GWAS Catalog ancestries,
         maps to 1000G superpopulations,
         returns the proportion of samples from each superpopulation,
+    params:
+        anc_sep (str): separator used to split ancesties by GWAS Catalog. Warning, this is due to change.
+
     '''
     # Parse GWAS cat ancestries
     gwas_anc = {}
     for col in ['ancestry_initial', 'ancestry_replication']:
-        if not pd.isnull(row[col]):
-            for entry in re.split(r',|;', row[col].replace(' ', '')):
+        for entry in row[col]:
+
+            # Extract ancestry and n
+            anc, n = entry.split('=')
+
+            # Split compounded ancestries into separate parts
+            sub_anc_parts = anc.split(', ')
+            for sub_anc in sub_anc_parts:
+
+                # Split sample size between them
+                sub_n = int(float(n) / len(sub_anc_parts))
+
+                # Add to dict
                 try:
-                    anc, n = entry.split('=')
-                except ValueError:
-                    continue
-                try:
-                    gwas_anc[anc] += int(n)
+                    gwas_anc[sub_anc] += int(sub_n)
                 except KeyError:
-                    gwas_anc[anc] = int(n)
-    # if row['study_id'] == 'GCST006208':
-    # # if row['study_id'] == 'GCST004132':
-    #     print(row)
-    #     print(gwas_anc)
-    #     sys.exit()
+                    gwas_anc[sub_anc] = int(sub_n)
+
     # Map to superpopulations
     superpop = {}
     for anc in gwas_anc:
         if anc in pop_map:
             superpop[pop_map[anc]] = gwas_anc[anc]
+
     # Make output row
     out_row = []
     total_n = sum(superpop.values())
@@ -83,8 +96,8 @@ def to_superpopulation_proportions(row, pop_map):
             out_row.append(float(superpop.get(pop, 0)) / total_n)
         else:
             out_row.append(np.nan)
-    return out_row
 
+    return out_row
 
 def load_pop_map(inf):
     ''' Load dictionary to map from GWAS ancestry to 1000G superpopulation
@@ -94,18 +107,16 @@ def load_pop_map(inf):
         dict(anc -> super pop)
     '''
     df = pd.read_csv(inf, sep='\t', header=0).dropna()
-    df.gwascat_population = df.gwascat_population.str.replace(' ', '')
     pop_map = dict(zip(df['gwascat_population'], df['1000g_superpopulation']))
     return pop_map
 
-def explode(df, columns):
-    ''' Explodes multiple columns
+def numpya_to_list(numpy_array):
+    ''' Converts a numpy array to a list
     '''
-    idx = np.repeat(df.index, df[columns[0]].str.len())
-    a = df.T.reindex_axis(columns).values
-    concat = np.concatenate([np.concatenate(a[i]) for i in range(a.shape[0])])
-    p = pd.DataFrame(concat.reshape(a.shape[0], -1).T, idx, columns)
-    return pd.concat([df.drop(columns, axis=1), p], axis=1).reset_index(drop=True)
+    try:
+        return numpy_array.tolist()
+    except AttributeError:
+        return []
 
 def parse_args():
     """ Load command line args """
