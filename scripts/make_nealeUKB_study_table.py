@@ -49,8 +49,6 @@ def main():
 
     # Load categories
     categ = load_categories(args.in_categories)
-    print(categ.head())
-    print(manifest.head())
     manifest = pd.merge(manifest, categ,
                         on='study_id',
                         how='left')

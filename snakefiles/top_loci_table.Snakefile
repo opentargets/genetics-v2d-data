@@ -66,6 +66,33 @@ rule convert_gwas_catalog_to_standard:
         '--outf {output.out_assoc} '
         '--log {output.log}'
 
+rule cluster_gwas_catalog:
+    ''' GWAS Catalog contains none independent loci from curation error result-
+        ing in summary statistics being bulk imported from supplementary tables.
+        To correct this, an additional clustering step has been added.
+
+        In addition to clustering, this script also filters by p-value.
+    '''
+    input:
+        tmpdir + '/{version}/gwas-catalog-associations_ot-format.tsv',
+    output:
+        out_assoc=tmpdir + '/{version}/gwas-catalog-associations_ot-format.clustered.tsv',
+        log='logs/{version}/gwas-cat-assocs_clustering.log'
+    params:
+        min_p=config['gwas_cat_min_pvalue'],
+        dist=config['gwas_cat_cluster_dist_kb'],
+        min_loci=config['gwas_cat_cluster_min_loci'],
+        multi_prop=config['gwas_cat_cluster_multi_proportion']
+    shell:
+        'python scripts/cluster_gwas_catalog_associations.py '
+        '--inf {input} '
+        '--outf {output.out_assoc} '
+        '--min_p {params.min_p} '
+        '--cluster_dist_kb {params.dist} '
+        '--cluster_min_loci {params.min_loci} '
+        '--cluster_multi_prop {params.multi_prop} '
+        '--log {output.log}'
+
 rule convert_nealeUKB_to_standard:
     ''' Converts the credible set results into a table of top loci in standard
         format.
@@ -85,7 +112,7 @@ rule merge_gwascat_and_nealeUKB_toploci:
     ''' Merges association files from gwas_cat and neale UKB
     '''
     input:
-        gwascat = tmpdir + '/{version}/gwas-catalog-associations_ot-format.tsv',
+        gwascat = tmpdir + '/{version}/gwas-catalog-associations_ot-format.clustered.tsv',
         neale = tmpdir + '/{version}/nealeUKB-associations_ot-format.tsv'
     output:
         'output/{version}/toploci.parquet'

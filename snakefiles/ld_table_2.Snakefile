@@ -94,7 +94,7 @@ rule weight_studies_to_final:
     input:
         tmpdir + '/{version}/ld/study_weighted.ld.gz'
     output:
-        'output/{version}/ld.tsv.gz'
+        'output/{version}/ld.parquet'
     params:
         min_r2=config['min_r2']
     shell:
@@ -107,10 +107,10 @@ rule ld_to_GCS:
     ''' Copy to GCS
     '''
     input:
-        'output/{version}/ld.tsv.gz'
+        'output/{version}/ld.parquet'
     output:
         GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/ld.tsv.gz'.format(gs_dir=config['gs_dir'])
+            '{gs_dir}/{{version}}/ld.parquet'.format(gs_dir=config['gs_dir'])
             )
     shell:
         'cp {input} {output}'

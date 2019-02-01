@@ -7,6 +7,7 @@ Makes:
 from snakemake.remote.FTP import RemoteProvider as FTPRemoteProvider
 from snakemake.remote.GS import RemoteProvider as GSRemoteProvider
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
+import pandas as pd
 
 from datetime import date
 
@@ -23,15 +24,13 @@ targets = []
 
 # Make targets for locus overlap table (pseudo-coloc)
 targets.append(
-    'output/{version}/locus_overlap.tsv.gz'.format(version=config['version']) )
-targets.append(
-    'output/{version}/locus_overlap.json.gz'.format(version=config['version']) )
+    'output/{version}/locus_overlap.parquet'.format(version=config['version']) )
 if UPLOAD:
     # targets.append(GSRemoteProvider().remote(
     # '{gs_dir}/{version}/locus_overlap.tsv.gz'.format(gs_dir=config['gs_dir'],
     #     version=config['version']) ))
     targets.append(GSRemoteProvider().remote(
-    '{gs_dir}/{version}/locus_overlap.json.gz'.format(gs_dir=config['gs_dir'],
+    '{gs_dir}/{version}/locus_overlap.parquet'.format(gs_dir=config['gs_dir'],
         version=config['version']) ))
 
 # Trigger making of targets
@@ -39,15 +38,28 @@ rule all:
     input:
         targets
 
+rule parquet_to_tsv:
+    input:
+        '{filename}.parquet'
+    output:
+        temp('{filename}.tsv.gz')
+        # '{filename}.tsv.gz'
+    run:
+        print(input)
+        (
+            pd.read_parquet(input[0], engine='pyarrow')
+              .to_csv(output[0], sep='\t', index=None)
+        )
+
 rule calculate_overlaps:
     ''' Calcs overlap between trait associated loci
     '''
     input:
-        top_loci='output/{version}/toploci.tsv',
+        top_loci='output/{version}/toploci.tsv.gz',
         ld='output/{version}/ld.tsv.gz',
         finemap='output/{version}/finemapping.tsv.gz'
     output:
-        'output/{version}/locus_overlap.tsv.gz'
+        tmpdir + '/{version}/locus_overlap.tsv.gz'
     shell:
         'pypy3 scripts/calculate_locus_set_overlaps.py '
         '--top_loci {input.top_loci} '
@@ -55,38 +67,26 @@ rule calculate_overlaps:
         '--finemap {input.finemap} '
         '--outf {output}'
 
-rule convert_to_json:
-    ''' Convert output tsv to json
+rule format_overlap:
+    ''' Formats the overlap table to parquets
     '''
     input:
-        'output/{version}/locus_overlap.tsv.gz'
+        tmpdir + '/{version}/locus_overlap.tsv.gz'
     output:
-        'output/{version}/locus_overlap.json.gz'
+        'output/{version}/locus_overlap.parquet'
     shell:
-        'python scripts/overlap_table_tsv2json.py '
-        '{input} '
-        '{output}'
+        'python scripts/format_overlap_table.py '
+        '--inf {input} '
+        '--outf {output}'
 
 rule overlap_to_GCS:
     ''' Copy to GCS
     '''
     input:
-        'output/{version}/locus_overlap.tsv.gz'
+        'output/{version}/locus_overlap.parquet'
     output:
         GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/locus_overlap.tsv.gz'.format(gs_dir=config['gs_dir'])
-            )
-    shell:
-        'cp {input} {output}'
-
-rule overlap_to_GCS_json:
-    ''' Copy json to GCS
-    '''
-    input:
-        'output/{version}/locus_overlap.json.gz'
-    output:
-        GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/locus_overlap.json.gz'.format(gs_dir=config['gs_dir'])
+            '{gs_dir}/{{version}}/locus_overlap.parquet'.format(gs_dir=config['gs_dir'])
             )
     shell:
         'cp {input} {output}'

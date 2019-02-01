@@ -5,12 +5,15 @@ This repositroy contains scripts to produce variant-to-disease (V2D) association
 
 Todo for v2:
 - Update readme, output columns
+- Update `scripts/format_ld_table.py` to output in parquet format
+- Add lead variant to tag variant in LD expansion
 
 Changes made (Jan 2019):
 - All outputs in Apache Parquet format
 - Top loci table contains harmonised effect size, 95% CI and direction
 - GWAS Catalog sub-phenotypes (in `P-VALUE (TEXT)` column) are split into separate `study_ids`
 - All `variant_id`s are decomposed into `chrom`, `pos`, `ref`, `alt`
+- GWAS Catalog curated associations are clustered to remove non-independent loci
 
 ### Contents
 
@@ -30,9 +33,6 @@ conda env create -n v2d_data --file environment.yaml
 
 # Activate environment
 source activate v2d_data
-
-# NOTE, pandas >= 0.24 is required for NaN Int64 support
-conda install -c conda-forge/label/rc pandas
 
 # Alter configuration file
 nano config.yaml

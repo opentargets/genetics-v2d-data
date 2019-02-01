@@ -45,10 +45,10 @@ targets = []
 
 # # Make targets for ld table
 targets.append(
-    'output/{version}/ld.tsv.gz'.format(version=config['version']) )
+    'output/{version}/ld.parquet'.format(version=config['version']) )
 if UPLOAD:
     targets.append(GSRemoteProvider().remote(
-    '{gs_dir}/{version}/ld.tsv.gz'.format(gs_dir=config['gs_dir'],
+    '{gs_dir}/{version}/ld.parquet'.format(gs_dir=config['gs_dir'],
         version=config['version']) ))
 
 # Trigger making of targets

@@ -4,7 +4,7 @@ Makes:
   1. Top loci table
   2. Study table
   3. Finemapping table
-  4. Input manifest for LD table
+  4. Input manifest for LD calculation table
 '''
 
 from snakemake.remote.FTP import RemoteProvider as FTPRemoteProvider

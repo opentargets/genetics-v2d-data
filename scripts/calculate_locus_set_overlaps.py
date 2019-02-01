@@ -24,10 +24,11 @@ def main():
 
     # Load set of valid (study, index) pairs
     study_index_set = set([])
-    with open(args.top_loci, 'r') as in_h:
+    with gzip.open(args.top_loci, 'r') as in_h:
         in_h.readline() # Skip header
         for line in in_h:
-            study_id, index_var = line.rstrip().split('\t')[:2]
+            study_id, chrom, pos, ref, alt = line.decode().rstrip().split('\t')[:5]
+            index_var = '_'.join([chrom, pos, ref, alt])
             study_index_set.add((study_id, index_var))
 
     # Load finemap data
@@ -37,7 +38,19 @@ def main():
         in_h.readline() # Skip header
         for line in in_h:
             line = line.decode()
-            study_id, index_var, tag_var, _, _ = line.rstrip().split('\t')
+            (
+                study_id,
+                index_chrom,
+                index_pos,
+                index_ref,
+                index_alt,
+                tag_chrom,
+                tag_pos,
+                tag_ref,
+                tag_alt
+            ) = line.rstrip().split('\t')[:9]
+            index_var = '_'.join([index_chrom, index_pos, index_ref, index_alt])
+            tag_var = '_'.join([tag_chrom, tag_pos, tag_ref, tag_alt])
             key = (study_id, index_var)
             # Skip (stid, index) pairs that are not in the top loci table
             if not key in study_index_set:
@@ -55,7 +68,20 @@ def main():
         in_h.readline() # Skip header
         for line in in_h:
             line = line.decode()
-            study_id, index_var, tag_var, r2, *_ = line.rstrip().split('\t')
+            (
+                study_id,
+                index_chrom,
+                index_pos,
+                index_ref,
+                index_alt,
+                tag_chrom,
+                tag_pos,
+                tag_ref,
+                tag_alt,
+                r2
+            ) = line.rstrip().split('\t')[:10]
+            index_var = '_'.join([index_chrom, index_pos, index_ref, index_alt])
+            tag_var = '_'.join([tag_chrom, tag_pos, tag_ref, tag_alt])
             key = (study_id, index_var)
             # Skip (stid, index) pairs that are not in the top loci table
             if not key in study_index_set:
