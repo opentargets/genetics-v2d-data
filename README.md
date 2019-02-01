@@ -206,6 +206,24 @@ Todo:
 
 Credible set analysis results used to link index variants to tag variants. Full finemapping methods can be seen here: https://github.com/opentargets/finemapping
 
+##### Parquet meta info
+
+```
+file schema:    schema 
+--------------------------------------------------------------------------------
+study_id:       OPTIONAL BINARY L:STRING R:0 D:1
+lead_chrom:     OPTIONAL BINARY L:STRING R:0 D:1
+lead_pos:       OPTIONAL INT64 R:0 D:1
+lead_ref:       OPTIONAL BINARY L:STRING R:0 D:1
+lead_alt:       OPTIONAL BINARY L:STRING R:0 D:1
+tag_chrom:      OPTIONAL BINARY L:STRING R:0 D:1
+tag_pos:        OPTIONAL INT64 R:0 D:1
+tag_ref:        OPTIONAL BINARY L:STRING R:0 D:1
+tag_alt:        OPTIONAL BINARY L:STRING R:0 D:1
+log10_ABF:      OPTIONAL DOUBLE R:0 D:1
+posterior_prob: OPTIONAL DOUBLE R:0 D:1
+```
+
 ##### Finemapping table columns
   - `study_id`: unique identifier for study
   - `index_variantid_b37`: unique variant identifier for index variant, chrom_pos_ref_alt (build 37)
@@ -226,6 +244,28 @@ Steps
 #### LD table
 
 Table of LD values linking index varaints to tag variants.
+
+##### Parquet meta info
+
+```
+file schema:    schema 
+--------------------------------------------------------------------------------
+study_id:       OPTIONAL BINARY L:STRING R:0 D:1
+lead_chrom:     OPTIONAL BINARY L:STRING R:0 D:1
+lead_pos:       OPTIONAL INT64 R:0 D:1
+lead_ref:       OPTIONAL BINARY L:STRING R:0 D:1
+lead_alt:       OPTIONAL BINARY L:STRING R:0 D:1
+tag_chrom:      OPTIONAL BINARY L:STRING R:0 D:1
+tag_pos:        OPTIONAL INT64 R:0 D:1
+tag_ref:        OPTIONAL BINARY L:STRING R:0 D:1
+tag_alt:        OPTIONAL BINARY L:STRING R:0 D:1
+overall_r2:     OPTIONAL DOUBLE R:0 D:1
+AFR_1000G_prop: OPTIONAL DOUBLE R:0 D:1
+AMR_1000G_prop: OPTIONAL DOUBLE R:0 D:1
+EAS_1000G_prop: OPTIONAL DOUBLE R:0 D:1
+EUR_1000G_prop: OPTIONAL DOUBLE R:0 D:1
+SAS_1000G_prop: OPTIONAL DOUBLE R:0 D:1
+```
 
 ##### LD table columns
   - `study_id`: unique identifier for study
