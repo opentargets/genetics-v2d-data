@@ -109,6 +109,33 @@ List of loci associated with disease. Currently this data comes from two sources
 
 Information about each study found in the top loci table.
 
+##### Parquet meta info
+```
+file schema:          schema 
+--------------------------------------------------------------------------------
+study_id:             OPTIONAL BINARY L:STRING R:0 D:1
+pmid:                 OPTIONAL BINARY L:STRING R:0 D:1
+pub_date:             OPTIONAL BINARY L:STRING R:0 D:1
+pub_journal:          OPTIONAL BINARY L:STRING R:0 D:1
+pub_title:            OPTIONAL BINARY L:STRING R:0 D:1
+pub_author:           OPTIONAL BINARY L:STRING R:0 D:1
+trait_reported:       OPTIONAL BINARY L:STRING R:0 D:1
+trait_efos:           OPTIONAL F:1 
+.list:                REPEATED F:1 
+..item:               OPTIONAL BINARY L:STRING R:1 D:3
+ancestry_initial:     OPTIONAL F:1 
+.list:                REPEATED F:1 
+..item:               OPTIONAL BINARY L:STRING R:1 D:3
+ancestry_replication: OPTIONAL F:1 
+.list:                REPEATED F:1 
+..item:               OPTIONAL BINARY L:STRING R:1 D:3
+n_initial:            OPTIONAL INT64 R:0 D:1
+n_replication:        OPTIONAL INT64 R:0 D:1
+n_cases:              OPTIONAL INT64 R:0 D:1
+trait_category:       OPTIONAL BINARY L:STRING R:0 D:1
+num_assoc_loci:       OPTIONAL INT64 R:0 D:1
+```
+
 ##### Study table columns
   - `study_id`: unique identifier for study
   - `pmid`: pubmed ID (GWAS Catalog studies only)
