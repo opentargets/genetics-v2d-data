@@ -45,6 +45,28 @@ gsutil -m rsync -rn gs://genetics-portal-staging/v2d/180904 gs://genetics-portal
 
 List of loci associated with disease. Currently this data comes from two sources: (i) [GWAS Catalog](https://www.ebi.ac.uk/gwas/docs/file-downloads), (ii) [Neale *et al.* UK Biobank summary statistics (version 1)](http://www.nealelab.is/uk-biobank).
 
+##### Parquet meta info
+
+```
+file schema:    schema 
+--------------------------------------------------------------------------------
+study_id:       OPTIONAL BINARY L:STRING R:0 D:1
+chrom:          OPTIONAL BINARY L:STRING R:0 D:1
+pos:            OPTIONAL INT64 R:0 D:1
+ref:            OPTIONAL BINARY L:STRING R:0 D:1
+alt:            OPTIONAL BINARY L:STRING R:0 D:1
+rsid:           OPTIONAL BINARY L:STRING R:0 D:1
+direction:      OPTIONAL BINARY L:STRING R:0 D:1
+beta:           OPTIONAL DOUBLE R:0 D:1
+beta_ci_lower:  OPTIONAL DOUBLE R:0 D:1
+beta_ci_upper:  OPTIONAL DOUBLE R:0 D:1
+odds_ratio:     OPTIONAL DOUBLE R:0 D:1
+oddsr_ci_lower: OPTIONAL DOUBLE R:0 D:1
+oddsr_ci_upper: OPTIONAL DOUBLE R:0 D:1
+pval_mantissa:  OPTIONAL DOUBLE R:0 D:1
+pval_exponent:  OPTIONAL INT64 R:0 D:1
+```
+
 ##### Top loci columns
 - `study_id`: unique identifier for study
 - `variant_id_b37`: chrom_pos_ref_alt (build 37) identifier for variant. RSID to variant ID mapping is non-unique, therefore multiple IDs may exist separated by ';'
