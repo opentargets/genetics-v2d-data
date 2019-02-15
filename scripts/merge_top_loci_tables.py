@@ -37,7 +37,7 @@ def main():
         ('pos', 'Int64'),
         ('ref', 'object'),
         ('alt', 'object'),
-        ('rsid', 'object'),
+        # ('rsid', 'object'),
         ('direction', 'object'),
         ('beta', 'float64'),
         ('beta_ci_lower', 'float64'),
