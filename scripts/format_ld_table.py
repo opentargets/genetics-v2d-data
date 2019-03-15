@@ -42,12 +42,12 @@ def main():
         ('tag_pos', 'tag_pos'),
         ('tag_ref', 'tag_ref'),
         ('tag_alt', 'tag_alt'),
-        ('overall_r2', 'overall_r2'),
-        ('AFR_1000G_prop', 'AFR_1000G_prop'),
-        ('AMR_1000G_prop', 'AMR_1000G_prop'),
-        ('EAS_1000G_prop', 'EAS_1000G_prop'),
-        ('EUR_1000G_prop', 'EUR_1000G_prop'),
-        ('SAS_1000G_prop', 'SAS_1000G_prop')
+        ('R2_overall', 'overall_r2'),
+        ('AFR_prop', 'AFR_1000G_prop'),
+        ('AMR_prop', 'AMR_1000G_prop'),
+        ('EAS_prop', 'EAS_1000G_prop'),
+        ('EUR_prop', 'EUR_1000G_prop'),
+        ('SAS_prop', 'SAS_1000G_prop')
     ])
     ld = ( ld.loc[:, list(cols.keys())]
              .rename(columns=cols) )
