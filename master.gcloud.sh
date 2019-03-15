@@ -3,7 +3,7 @@
 # set -euo pipefail
 
 # Set args
-cores=64
+cores=32
 version_date=`date +%y%m%d`
 
 # Load environment
