@@ -10,6 +10,7 @@ import argparse
 import pandas as pd
 from pprint import pprint
 from collections import OrderedDict
+from parquet_writer import write_parquet
 
 def main():
 
@@ -38,7 +39,11 @@ def main():
              .rename(columns=cols) )
 
     # Save
-    ld.to_csv(args.outf, sep='\t', index=None, compression='gzip')
+    write_parquet(
+        ld,
+        args.outf
+    )
+    # ld.to_csv(args.outf, sep='\t', index=None, compression='gzip')
 
 def parse_args():
     """ Load command line args """
