@@ -50,7 +50,7 @@ def main():
     #               compression='snappy',
     #               flavor='spark')
 
-    Write csv
+    # Write csv
     merged.loc[:, out_cols].to_csv(
         args.outf, sep='\t', index=None, compression='gzip')
 
