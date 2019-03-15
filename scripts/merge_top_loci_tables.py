@@ -28,7 +28,7 @@ def main():
     merged[['chrom', 'pos', 'ref', 'alt']] = \
         merged.variant_id_b37.str.split('_', expand=True)
     merged.pos = merged.pos.astype(int)
-    merged.drop('variant_id_b37', axis=1, inplace=True)
+    merged.drop(['variant_id_b37', 'rsid'], axis=1, inplace=True)
 
     # Fix data types
     dtypes = OrderedDict([
@@ -37,7 +37,6 @@ def main():
         ('pos', 'Int64'),
         ('ref', 'object'),
         ('alt', 'object'),
-        # ('rsid', 'object'),
         ('direction', 'object'),
         ('beta', 'float64'),
         ('beta_ci_lower', 'float64'),

@@ -15,11 +15,22 @@ def main():
 
     # Parse args
     inf = 'ld.tsv.gz'
+    instudies = '../../output/190219/studies.parquet'
     outf = 'ld.parquet'
 
     # Load
     df = pd.read_csv(inf, sep='\t', header=0)
+    studies = pd.read_parquet(instudies)
 
+    # Map new study ids to old study ids
+    studies['old_study_id'] = studies['study_id'].apply(new_to_old)
+    studies = studies.loc[:, ['study_id', 'old_study_id']]
+    df = (
+        df.rename(columns={'study_id': 'old_study_id'})
+          .merge(studies, on='old_study_id')
+          .drop('old_study_id', axis=1)
+    )
+    
     # Decompose variant IDs
     df[['lead_chrom', 'lead_pos', 'lead_ref', 'lead_alt']] = \
         df.index_variantid_b37.str.split('_', 3, expand=True)
@@ -88,6 +99,13 @@ def main():
     # Save csv
     # df.to_csv(args.outf, sep='\t', index=None, compression='gzip')
 
+def new_to_old(study_id):
+    ''' Returns the old study id given the new
+    '''
+    if study_id.startswith('GCST'):
+        return study_id.split('_')[0]
+    else:
+        return study_id
 
 if __name__ == '__main__':
 
