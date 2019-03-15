@@ -62,4 +62,4 @@ rule all:
         targets
 
 # Add workflows
-include: 'scripts/ld_table_2.Snakefile'
+include: 'snakefiles/ld_table_2.Snakefile'
