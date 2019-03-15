@@ -25,9 +25,9 @@ def main():
 
     # Decompose variant IDs
     ld[['lead_chrom', 'lead_pos', 'lead_ref', 'lead_alt']] = \
-        ld.index_variantid.str.split('_', 3, expand=True)
+        ld.index_variant_id.str.split('_', 3, expand=True)
     ld[['tag_chrom', 'tag_pos', 'tag_ref', 'tag_alt']] = \
-        ld.tag_variantid.str.split('_', 3, expand=True)
+        ld.tag_variant_id.str.split('_', 3, expand=True)
     ld['lead_pos'] = ld['lead_pos'].astype(int)
     ld['tag_pos'] = ld['tag_pos'].astype(int)
 
