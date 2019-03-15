@@ -24,12 +24,12 @@ def main():
     ld = ld.loc[ld.R2_overall >= args.min_r2, :]
 
     # Decompose variant IDs
-    df[['lead_chrom', 'lead_pos', 'lead_ref', 'lead_alt']] = \
-        df.index_variantid.str.split('_', 3, expand=True)
-    df[['tag_chrom', 'tag_pos', 'tag_ref', 'tag_alt']] = \
-        df.tag_variantid.str.split('_', 3, expand=True)
-    df['lead_pos'] = df['lead_pos'].astype(int)
-    df['tag_pos'] = df['tag_pos'].astype(int)
+    ld[['lead_chrom', 'lead_pos', 'lead_ref', 'lead_alt']] = \
+        ld.index_variantid.str.split('_', 3, expand=True)
+    ld[['tag_chrom', 'tag_pos', 'tag_ref', 'tag_alt']] = \
+        ld.tag_variantid.str.split('_', 3, expand=True)
+    ld['lead_pos'] = ld['lead_pos'].astype(int)
+    ld['tag_pos'] = ld['tag_pos'].astype(int)
 
     # Format
     cols = OrderedDict([
@@ -53,7 +53,7 @@ def main():
              .rename(columns=cols) )
     
     # Sort
-    df = df.sort_values(
+    ld = ld.sort_values(
         ['study_id', 'lead_chrom', 'lead_pos', 'lead_ref', 'lead_alt',
          'tag_chrom', 'tag_pos', 'tag_ref', 'tag_alt']
     )
