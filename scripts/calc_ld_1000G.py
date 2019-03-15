@@ -37,7 +37,7 @@ def main():
 
     # Merge results together
     merged = reduce(lambda left, right: pd.merge(left, right, how='outer'), results)
-    merged = merged.loc[:, ['index_variant_id_b37', 'tag_variant_id_b37', 'R_AFR', 'R_AMR', 'R_EAS', 'R_EUR', 'R_SAS']]
+    merged = merged.loc[:, ['index_variant_id', 'tag_variant_id', 'R_AFR', 'R_AMR', 'R_EAS', 'R_EUR', 'R_SAS']]
 
     # Caluclate R2 and remove rows where the max R2 < min_r2
     # This is needed to save storage space in the output files
@@ -86,17 +86,17 @@ def calc_ld(varid, bfile, pop, ld_window, outf):
         res_file = outf + '.ld.gz'
         res = pd.read_table(res_file, header=0, sep=r"\s+", engine='python')
         res = res.loc[:, ['SNP_A', 'SNP_B', 'R']]
-        res.columns = ['index_variant_id_b37', 'tag_variant_id_b37', 'R_{}'.format(pop)]
+        res.columns = ['index_variant_id', 'tag_variant_id', 'R_{}'.format(pop)]
         # Replace : with _ in variant fields
-        res.index_variant_id_b37 = res.index_variant_id_b37.str.replace(':', '_')
-        res.tag_variant_id_b37 = res.tag_variant_id_b37.str.replace(':', '_')
+        res.index_variant_id = res.index_variant_id.str.replace(':', '_')
+        res.tag_variant_id = res.tag_variant_id.str.replace(':', '_')
     except FileNotFoundError:
         '''
         TODO. I don't want this to pick up ANY missing. It should only create a
         file if the following error is in the plink log file:
             Error: No valid variants specified by --ld-snp/--ld-snps/--ld-snp-list.
         '''
-        res = pd.DataFrame(columns=['index_variant_id_b37', 'tag_variant_id_b37', 'R_{}'.format(pop)])
+        res = pd.DataFrame(columns=['index_variant_id', 'tag_variant_id', 'R_{}'.format(pop)])
 
     return res
 

@@ -41,10 +41,16 @@ def main():
     merged[['AFR_prop', 'AMR_prop', 'EAS_prop', 'EUR_prop', 'SAS_prop']] = (
         merged.apply(to_superpopulation_proportions, pop_map=pop_map, axis=1)
               .apply(pd.Series) )
+    
+    # Make variant ID
+    merged['variant_id'] = (
+        merged.loc[:, ['chrom', 'pos', 'ref', 'alt']]
+        .apply(lambda row: '_'.join([str(x) for x in row]), axis=1)
+    )
 
     # Write output to parquet
-    out_cols = ['study_id', 'chrom', 'pos', 'ref', 'alt', 'AFR_prop',
-                'AMR_prop', 'EAS_prop', 'EUR_prop', 'SAS_prop']
+    out_cols = ['study_id', 'variant_id', 'chrom', 'pos', 'ref', 'alt',
+                'AFR_prop', 'AMR_prop', 'EAS_prop', 'EUR_prop', 'SAS_prop']
     # write_parquet(merged.loc[:, out_cols],
     #               args.outf,
     #               compression='snappy',

@@ -24,7 +24,7 @@ def main():
 
     # Merge ld to manifest
     man_ld = pd.merge(manifest, ld,
-                      left_on='variant_id_b37', right_on='index_variant_id_b37',
+                      left_on='variant_id', right_on='index_variant_id',
                       how='inner')
     print(man_ld.head())
     print(man_ld.shape)

@@ -35,11 +35,6 @@ manifest.chrom = manifest.chrom.astype(str)
 manifest = manifest.loc[manifest.chrom.isin(valid_chroms), :]
 
 # Make variant id list
-manifest['variant_id'] = (
-    manifest.loc[:, ['chrom', 'pos', 'ref', 'alt']]
-    .apply(lambda row: '_'.join([str(x) for x in row]), axis=1)
-)
-
 varid_list = manifest.variant_id.unique().tolist()
 
 #
