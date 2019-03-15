@@ -45,13 +45,14 @@ def main():
     # Write output to parquet
     out_cols = ['study_id', 'chrom', 'pos', 'ref', 'alt', 'AFR_prop',
                 'AMR_prop', 'EAS_prop', 'EUR_prop', 'SAS_prop']
-    write_parquet(merged.loc[:, out_cols],
-                  args.outf,
-                  compression='snappy',
-                  flavor='spark')
+    # write_parquet(merged.loc[:, out_cols],
+    #               args.outf,
+    #               compression='snappy',
+    #               flavor='spark')
 
-    # Write csv
-    # merged.to_csv(args.outf, sep='\t', index=None, compression='gzip')
+    Write csv
+    merged.loc[:, out_cols].to_csv(
+        args.outf, sep='\t', index=None, compression='gzip')
 
 def to_superpopulation_proportions(row, pop_map, anc_sep=', '):
     ''' Parses GWAS Catalog ancestries,

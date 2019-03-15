@@ -12,7 +12,7 @@ rule make_ld_input_queries:
         study='output/{version}/studies.parquet',
         pop_map=config['gwascat_2_superpop']
     output:
-        'output/{version}/ld_analysis_input.parquet'
+        'output/{version}/ld_analysis_input.tsv.gz'
     shell:
         'python scripts/create_ld_input_table.py '
         '--in_loci {input.loci} '
@@ -24,10 +24,10 @@ rule ld_input_to_GCS:
     ''' Copy to GCS
     '''
     input:
-        'output/{version}/ld_analysis_input.parquet'
+        'output/{version}/ld_analysis_input.tsv.gz'
     output:
         GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/extras/ld_analysis_input.parquet'.format(gs_dir=config['gs_dir'])
+            '{gs_dir}/{{version}}/extras/ld_analysis_input.tsv.gz'.format(gs_dir=config['gs_dir'])
             )
     shell:
         'cp {input} {output}'
