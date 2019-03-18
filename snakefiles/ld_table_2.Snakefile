@@ -92,14 +92,16 @@ rule weight_studies_to_final:
     ''' Make finalised output of LD table
     '''
     input:
-        tmpdir + '/{version}/ld/study_weighted.ld.gz'
+        ld = tmpdir + '/{version}/ld/study_weighted.ld.gz',
+        manifest = in_manifest
     output:
         'output/{version}/ld.parquet'
     params:
         min_r2=config['min_r2']
     shell:
         'python scripts/format_ld_table.py '
-        '--inf {input} '
+        '--inf {input.ld} '
+        '--in_manifest {input.manifest} '
         '--outf {output} '
         '--min_r2 {params.min_r2}'
 

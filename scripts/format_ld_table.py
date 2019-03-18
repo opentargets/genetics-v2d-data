@@ -23,6 +23,21 @@ def main():
     # Filter
     ld = ld.loc[ld.R2_overall >= args.min_r2, :]
 
+    # For each lead variant, add a tag variant with R-squared == 1.0
+    # Need to do this using the manifest, as leads without LD have already been
+    # filtered out by this point
+    manifest = pd.read_csv(args.in_manifest, sep='\t', header=0)
+    manifest['index_variant_id'] = manifest['variant_id']
+    manifest['tag_variant_id'] = manifest['variant_id']
+    manifest['R2_overall'] = 1.0
+    manifest = manifest.drop(['chrom', 'pos', 'ref', 'alt', 'variant_id'], axis=1)
+    ld = pd.concat([ld, manifest], sort=False)
+    # Sort by overall R2 and then deduplicate on study, lead, tag
+    ld = (
+        ld.sort_values('R2_overall', ascending=False)
+        .drop_duplicates(subset=['study_id', 'index_variant_id', 'tag_variant_id'])
+    )
+
     # Decompose variant IDs
     ld[['lead_chrom', 'lead_pos', 'lead_ref', 'lead_alt']] = \
         ld.index_variant_id.str.split('_', 3, expand=True)
@@ -69,7 +84,8 @@ def main():
 def parse_args():
     """ Load command line args """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--inf', metavar="<file>", help=('GWAS Catalog input'), type=str, required=True)
+    parser.add_argument('--inf', metavar="<file>", help=('Study weighted LD file'), type=str, required=True)
+    parser.add_argument('--in_manifest', metavar="<file>", help=('Input manifest file'), type=str, required=True)
     parser.add_argument('--outf', metavar="<str>", help=("Output"), type=str, required=True)
     parser.add_argument('--min_r2', metavar="<str>", help=("Minimum R2 to be included"), type=float, required=True)
     args = parser.parse_args()
