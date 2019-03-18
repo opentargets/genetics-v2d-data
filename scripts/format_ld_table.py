@@ -20,6 +20,10 @@ def main():
     # Load
     ld = pd.read_csv(args.inf, sep='\t', header=0)
 
+    # Create table which tells us if LD is available for a given (study, lead)
+    ld_available = ld.loc[:, ['study_id', 'index_variant_id']].drop_duplicates()
+    ld_available['ld_available'] = True
+
     # Filter
     ld = ld.loc[ld.R2_overall >= args.min_r2, :]
 
@@ -32,11 +36,19 @@ def main():
     manifest['R2_overall'] = 1.0
     manifest = manifest.drop(['chrom', 'pos', 'ref', 'alt', 'variant_id'], axis=1)
     ld = pd.concat([ld, manifest], sort=False)
-    # Sort by overall R2 and then deduplicate on study, lead, tag
+
+    # Sort by overall R2 and then deduplicate on (study, lead, tag)
     ld = (
         ld.sort_values('R2_overall', ascending=False)
         .drop_duplicates(subset=['study_id', 'index_variant_id', 'tag_variant_id'])
     )
+
+    # Add column showing whether LD was available for each (study, lead)
+    ld = pd.merge(ld,
+                  ld_available,
+                  on=['study_id', 'index_variant_id'],
+                  how='left')
+    ld['ld_available'] = ld['ld_available'].fillna(False)
 
     # Decompose variant IDs
     ld[['lead_chrom', 'lead_pos', 'lead_ref', 'lead_alt']] = \
@@ -62,7 +74,8 @@ def main():
         ('AMR_prop', 'AMR_1000G_prop'),
         ('EAS_prop', 'EAS_1000G_prop'),
         ('EUR_prop', 'EUR_1000G_prop'),
-        ('SAS_prop', 'SAS_1000G_prop')
+        ('SAS_prop', 'SAS_1000G_prop'),
+        ('ld_available', 'ld_available')
     ])
     ld = ( ld.loc[:, list(cols.keys())]
              .rename(columns=cols) )

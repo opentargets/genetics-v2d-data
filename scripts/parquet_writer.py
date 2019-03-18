@@ -26,6 +26,7 @@ def main():
     # Set data types
     dtypes = { 'str':'object',
                'int':'Int64',
+               'bool':'bool',
                'float':'float64' }
     df = df.astype(dtype=dtypes)
 
@@ -79,6 +80,7 @@ def pd_dtype_to_pa_schema(dtypes, str_list_cols=None):
         'object': pa.string(),
         'Int64': pa.int64(),
         'int64': pa.int64(),
+        'bool': pa.bool_(),
         'float64': pa.float64()
     }
 
