@@ -57,6 +57,28 @@ gsutil -m rsync -rn gs://genetics-portal-staging/v2d/180904 gs://genetics-portal
 
 List of loci associated with disease. Currently this data comes from two sources: (i) [GWAS Catalog](https://www.ebi.ac.uk/gwas/docs/file-downloads), (ii) [Neale *et al.* UK Biobank summary statistics (version 1)](http://www.nealelab.is/uk-biobank).
 
+##### Parquet meta info
+
+```
+file schema:    schema 
+--------------------------------------------------------------------------------
+study_id:       OPTIONAL BINARY L:STRING R:0 D:1
+chrom:          OPTIONAL BINARY L:STRING R:0 D:1
+pos:            OPTIONAL INT64 R:0 D:1
+ref:            OPTIONAL BINARY L:STRING R:0 D:1
+alt:            OPTIONAL BINARY L:STRING R:0 D:1
+rsid:           OPTIONAL BINARY L:STRING R:0 D:1
+direction:      OPTIONAL BINARY L:STRING R:0 D:1
+beta:           OPTIONAL DOUBLE R:0 D:1
+beta_ci_lower:  OPTIONAL DOUBLE R:0 D:1
+beta_ci_upper:  OPTIONAL DOUBLE R:0 D:1
+odds_ratio:     OPTIONAL DOUBLE R:0 D:1
+oddsr_ci_lower: OPTIONAL DOUBLE R:0 D:1
+oddsr_ci_upper: OPTIONAL DOUBLE R:0 D:1
+pval_mantissa:  OPTIONAL DOUBLE R:0 D:1
+pval_exponent:  OPTIONAL INT64 R:0 D:1
+```
+
 ##### Top loci columns
 - `study_id`: unique identifier for study
 - `variant_id_b37`: chrom_pos_ref_alt (build 37) identifier for variant. RSID to variant ID mapping is non-unique, therefore multiple IDs may exist separated by ';'
@@ -120,6 +142,33 @@ List of loci associated with disease. Currently this data comes from two sources
 
 Information about each study found in the top loci table.
 
+##### Parquet meta info
+```
+file schema:          schema 
+--------------------------------------------------------------------------------
+study_id:             OPTIONAL BINARY L:STRING R:0 D:1
+pmid:                 OPTIONAL BINARY L:STRING R:0 D:1
+pub_date:             OPTIONAL BINARY L:STRING R:0 D:1
+pub_journal:          OPTIONAL BINARY L:STRING R:0 D:1
+pub_title:            OPTIONAL BINARY L:STRING R:0 D:1
+pub_author:           OPTIONAL BINARY L:STRING R:0 D:1
+trait_reported:       OPTIONAL BINARY L:STRING R:0 D:1
+trait_efos:           OPTIONAL F:1 
+.list:                REPEATED F:1 
+..item:               OPTIONAL BINARY L:STRING R:1 D:3
+ancestry_initial:     OPTIONAL F:1 
+.list:                REPEATED F:1 
+..item:               OPTIONAL BINARY L:STRING R:1 D:3
+ancestry_replication: OPTIONAL F:1 
+.list:                REPEATED F:1 
+..item:               OPTIONAL BINARY L:STRING R:1 D:3
+n_initial:            OPTIONAL INT64 R:0 D:1
+n_replication:        OPTIONAL INT64 R:0 D:1
+n_cases:              OPTIONAL INT64 R:0 D:1
+trait_category:       OPTIONAL BINARY L:STRING R:0 D:1
+num_assoc_loci:       OPTIONAL INT64 R:0 D:1
+```
+
 ##### Study table columns
   - `study_id`: unique identifier for study
   - `pmid`: pubmed ID (GWAS Catalog studies only)
@@ -169,6 +218,24 @@ Todo:
 
 Credible set analysis results used to link index variants to tag variants. Full finemapping methods can be seen here: https://github.com/opentargets/finemapping
 
+##### Parquet meta info
+
+```
+file schema:    schema 
+--------------------------------------------------------------------------------
+study_id:       OPTIONAL BINARY L:STRING R:0 D:1
+lead_chrom:     OPTIONAL BINARY L:STRING R:0 D:1
+lead_pos:       OPTIONAL INT64 R:0 D:1
+lead_ref:       OPTIONAL BINARY L:STRING R:0 D:1
+lead_alt:       OPTIONAL BINARY L:STRING R:0 D:1
+tag_chrom:      OPTIONAL BINARY L:STRING R:0 D:1
+tag_pos:        OPTIONAL INT64 R:0 D:1
+tag_ref:        OPTIONAL BINARY L:STRING R:0 D:1
+tag_alt:        OPTIONAL BINARY L:STRING R:0 D:1
+log10_ABF:      OPTIONAL DOUBLE R:0 D:1
+posterior_prob: OPTIONAL DOUBLE R:0 D:1
+```
+
 ##### Finemapping table columns
   - `study_id`: unique identifier for study
   - `index_variantid_b37`: unique variant identifier for index variant, chrom_pos_ref_alt (build 37)
@@ -189,6 +256,28 @@ Steps
 #### LD table
 
 Table of LD values linking index varaints to tag variants.
+
+##### Parquet meta info
+
+```
+file schema:    schema 
+--------------------------------------------------------------------------------
+study_id:       OPTIONAL BINARY L:STRING R:0 D:1
+lead_chrom:     OPTIONAL BINARY L:STRING R:0 D:1
+lead_pos:       OPTIONAL INT64 R:0 D:1
+lead_ref:       OPTIONAL BINARY L:STRING R:0 D:1
+lead_alt:       OPTIONAL BINARY L:STRING R:0 D:1
+tag_chrom:      OPTIONAL BINARY L:STRING R:0 D:1
+tag_pos:        OPTIONAL INT64 R:0 D:1
+tag_ref:        OPTIONAL BINARY L:STRING R:0 D:1
+tag_alt:        OPTIONAL BINARY L:STRING R:0 D:1
+overall_r2:     OPTIONAL DOUBLE R:0 D:1
+AFR_1000G_prop: OPTIONAL DOUBLE R:0 D:1
+AMR_1000G_prop: OPTIONAL DOUBLE R:0 D:1
+EAS_1000G_prop: OPTIONAL DOUBLE R:0 D:1
+EUR_1000G_prop: OPTIONAL DOUBLE R:0 D:1
+SAS_1000G_prop: OPTIONAL DOUBLE R:0 D:1
+```
 
 ##### LD table columns
   - `study_id`: unique identifier for study
