@@ -3,11 +3,6 @@ Variant-disease tables
 
 This repositroy contains scripts to produce variant-to-disease (V2D) association tables for Open Targets Genetics.
 
-Todo for v2:
-- Update readme, output columns
-- Update `scripts/format_ld_table.py` to output in parquet format
-- Add lead variant to tag variant in LD expansion
-
 Changes made (Jan 2019):
 - All outputs in Apache Parquet format
 - Top loci table contains harmonised effect size, 95% CI and direction
