@@ -87,7 +87,7 @@ List of loci associated with disease. Currently this data comes from two sources
       2. Where RSID starts with "chr", split into chrom and pos then join to VCF on these fields
     - Make variant IDs in the format chr_pos_ref_alt
     - Use "risk allele" from GWAS Catalog to see if it is concordant with alt and ref. Keep those that are concordant or ambiguous (missing), remove those that are not concordant.
-    - Collapse loci with multiple variant IDs into one row per locus
+    - Identify studies with an abnormally large number of reported loci compared to number of loci after distance-based clustering (±500kb). Criteria for "abnormal" are set to number of loci > 10, and decrease in loci count after clustering of >10%. For "abnormal" studies (N≈120), apply distance based clustering.
   - Notes:
     - Two associations don't have the same number of SNPs in SNPS, CHR_ID and
       CHR_POS. These have been dropped as they are ambiguous.
@@ -98,7 +98,6 @@ List of loci associated with disease. Currently this data comes from two sources
   Steps:
     - Remove rows with no mapped `variant_id_b37`
     - Extract p-value mantissa and exponenet
-    - GWAS Catalog sometimes enocodes subphenotypes as a sting under the "p-value (text)". Where there are multiple p-values when grouped by (study, variant), keep only the lowest p-value.
 4. Append UKB top loci from the finemapping conditional analysis
   Steps:
     - Download finemapping results from GCS (`gs://genetics-portal-input/uk_biobank_analysis/em21/neale_summary_statistics_20170915/finemapping/results/neale_ukb_uk10kref_180502.crediblesets.long.varids.tsv.gz`)
@@ -148,6 +147,7 @@ Steps:
 2. Combined ancestry information into a single field.
 3. Make trait_code hash using 16 characters from `hasher.hexdigest()[0:16]`
 4. Remove rows with no sample size information (see note below)
+5. For studies with multiple different values in `P-VALUE (TEXT)` (multi-trait studies), split each phenotype into its own study ID.
 
 Notes:
   - There are 18 studies where sample size == 0 because ancestry in API is null. Annalisa has recommended these studies be removed, as they are old curations that are not consistent with the rest of the catalog.
@@ -216,9 +216,9 @@ Methods:
     1. Download
     2. Normalise to reference genome
     3. Extract samples separately for each super population
-    4. Filter to remove MAF < 1% and genotypin-rate < 5%
+    4. Filter to remove MAF < 1% and genotyping-rate < 5%
     5. Convert to bed, bim, fam
-  3. Use plink to calculate correaltion coefficients (R) for each index study in each 1000 superpopulation.
+  3. Use plink to calculate correaltion coefficients (R) for each index study in each 1000G superpopulation.
   4. Merge index variant correlation tables to input manifest
   4. Fisher-Z transform R coefficients.
   5. For each study take weighted average across populations weighting by sample size.
@@ -247,3 +247,9 @@ Only loci with >=1 overlapping tag variants are stored.
 ##### Locus overlap methods
 
 Table showing the number of overlapping tag variants for each (study_id, index_variant) found within 5Mb of each other. This calculated using: (i) only finemapping sets, (ii) only LD sets, (iii) a combination of finemapping and LD, prefering finemapping over LD where available. The 'combined' set is used for the Genetics Portal.
+
+
+##### Effect directions to check in release
+- GCST006612 1_55505647_G_T rs11591147 effect allele=T -0.325
+- GCST002898 1_55505647_G_T rs11591147 effect allele=T -0.53
+- GCST005194_1 1_55505647_G_T rs11591147 effect allele=T -0.282

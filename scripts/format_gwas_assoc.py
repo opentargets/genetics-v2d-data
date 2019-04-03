@@ -146,6 +146,9 @@ def parse_harmonised_effect(row):
                'decrease' in str(row['95% CI (TEXT)']) )
     if is_beta:
         beta = float(row['OR or BETA'])
+        # Flip direction based on '95% CI (TEXT)' field
+        if 'decrease' in str(row['95% CI (TEXT)']):
+            beta = beta * -1
         if needs_harmonising:
             beta = beta * -1
         estimate = beta
