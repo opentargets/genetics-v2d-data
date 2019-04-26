@@ -58,16 +58,16 @@ def main():
     #
 
     # Drop rows with no variant ID
-    gwas = gwas.dropna(subset=['variant_id_b37'])
+    gwas = gwas.dropna(subset=['variant_id_b38'])
     logger.info('Total with variant ID: {0}'.format(gwas.shape[0]))
 
     # Extract pvalue mantissa and exponent from p-value string
     gwas[['pval_mantissa', 'pval_exponent']] = gwas['P-VALUE'].apply(parse_pval_mantissa_exponent).apply(pd.Series)
 
     # Explode lines
-    gwas['variant_id_b37'] = gwas['variant_id_b37'].astype(str).str.split(';')
+    gwas['variant_id_b38'] = gwas['variant_id_b38'].astype(str).str.split(';')
     gwas['rsid'] = gwas['rsid'].astype(str).str.split(';')
-    gwas = explode(gwas, ['variant_id_b37', 'rsid'])
+    gwas = explode(gwas, ['variant_id_b38', 'rsid'])
     logger.info('Total associations after exploding compound variant IDs: {0}'.format(gwas.shape[0]))
 
     # Extract harmonised effect sizes
@@ -76,7 +76,7 @@ def main():
     # Extract and rename required columns
     cols = OrderedDict([
         ('study_id', 'study_id'),
-        ('variant_id_b37', 'variant_id_b37'),
+        ('variant_id_b38', 'variant_id_b38'),
         ('rsid', 'rsid'),
         ('direction', 'direction'),
         ('beta', 'beta'),
@@ -92,11 +92,11 @@ def main():
 
     # Drop duplicates by study, variant and sub_phenotype
     gwas = gwas.sort_values(['pval_exponent', 'pval_mantissa'])
-    gwas = gwas.drop_duplicates(subset=['study_id', 'variant_id_b37'],
+    gwas = gwas.drop_duplicates(subset=['study_id', 'variant_id_b38'],
                                 keep='first')
     logger.info('Total after duplicates removed: {0}'.format(gwas.shape[0]))
 
-    gwas = gwas.sort_values(['study_id', 'variant_id_b37'])
+    gwas = gwas.sort_values(['study_id', 'variant_id_b38'])
 
     gwas.to_csv(args.outf, sep='\t', index=None)
 
@@ -115,7 +115,7 @@ def parse_harmonised_effect(row):
 
     # Extract risk allele, ref and alt
     risk = extract_risk_allele(row['STRONGEST SNP-RISK ALLELE'])
-    ref, alt = row['variant_id_b37'].split(';')[0].split('_')[2:4]
+    ref, alt = row['variant_id_b38'].split(';')[0].split('_')[2:4]
 
     # Stop if no effect is available, or there is no risk allele reported
     if pd.isnull(row['OR or BETA']) or not risk:
@@ -123,7 +123,7 @@ def parse_harmonised_effect(row):
 
     # Check if palindromic or ambiguous
     is_palin = (ref == revcomp(alt))
-    is_ambiguous = len(row['variant_id_b37'].split(';')) > 1
+    is_ambiguous = len(row['variant_id_b38'].split(';')) > 1
 
     # Only proceed if not palindromic and not ambiguous and is concordant
     if (is_palin or is_ambiguous):
@@ -217,7 +217,7 @@ def explode(df, columns):
     ''' Explodes multiple columns
     '''
     idx = np.repeat(df.index, df[columns[0]].str.len())
-    a = df.T.reindex_axis(columns).values
+    a = df.T.reindex(columns).values
     concat = np.concatenate([np.concatenate(a[i]) for i in range(a.shape[0])])
     p = pd.DataFrame(concat.reshape(a.shape[0], -1).T, idx, columns)
     return pd.concat([df.drop(columns, axis=1), p], axis=1).reset_index(drop=True)

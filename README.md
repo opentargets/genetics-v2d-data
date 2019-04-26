@@ -38,7 +38,7 @@ gcloud auth application-default login
 # Execute workflow (locally)
 version_date=`date +%y%m%d`
 cores=3
-snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores $cores
+snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores 1
 snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores
 snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores
 
@@ -334,6 +334,6 @@ Table showing the number of overlapping tag variants for each (study_id, index_v
 
 
 ##### Effect directions to check in release
-- GCST006612 1_55505647_G_T rs11591147 effect allele=T -0.325
-- GCST002898 1_55505647_G_T rs11591147 effect allele=T -0.53
-- GCST005194_1 1_55505647_G_T rs11591147 effect allele=T -0.282
+- GCST006612 1_55505647_G_T effect allele=T -0.325
+- GCST002898 1_55505647_G_T effect allele=T -0.53
+- GCST005194_1 1_55505647_G_T effect allele=T -0.282

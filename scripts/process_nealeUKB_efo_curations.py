@@ -77,7 +77,7 @@ def explode(df, columns):
     ''' Explodes multiple columns
     '''
     idx = np.repeat(df.index, df[columns[0]].str.len())
-    a = df.T.reindex_axis(columns).values
+    a = df.T.reindex(columns).values
     concat = np.concatenate([np.concatenate(a[i]) for i in range(a.shape[0])])
     p = pd.DataFrame(concat.reshape(a.shape[0], -1).T, idx, columns)
     return pd.concat([df.drop(columns, axis=1), p], axis=1).reset_index(drop=True)

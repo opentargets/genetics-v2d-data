@@ -36,7 +36,7 @@ def main():
 
     # Get chrom and pos from variant ID
     loci[['chrom', 'pos', 'alleles']] = (
-        loci.variant_id_b37
+        loci.variant_id_b38
             .str.split('_', 2, expand=True) )
     loci['pos'] = loci['pos'].astype(int)
 

@@ -25,10 +25,16 @@ def main():
     merged = pd.concat([gwas, neale], sort=False)
 
     # Split variant ID into chrom, pos, ref, alt
-    merged[['chrom', 'pos', 'ref', 'alt']] = \
-        merged.variant_id_b37.str.split('_', expand=True)
+    merged[['chrom', 'pos', 'ref', 'alt']] = (
+        merged['variant_id_b38'].str.split('_', expand=True)
+    )
+
+    # DEBUG
+    merged.loc[pd.isnull(merged['pos']), :].to_csv('temp.tsv', sep='\t', index=None)
+    sys.exit('STOPPING. Finemapping still has b37, can continue when b38')
+
     merged.pos = merged.pos.astype(int)
-    merged.drop(['variant_id_b37', 'rsid'], axis=1, inplace=True)
+    merged.drop(['variant_id_b38', 'rsid'], axis=1, inplace=True)
 
     # Fix data types
     dtypes = OrderedDict([

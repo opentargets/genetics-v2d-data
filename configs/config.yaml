@@ -24,4 +24,4 @@ ld_window: 500
 min_r2: 0.7
 
 # Variant index
-var_index_sitelist: 'genetics-portal-staging/variant-annotation/190118/variant-annotation.sitelist.tsv.gz'
+var_index_sitelist: 'genetics-portal-staging/variant-annotation/190129/variant-annotation.sitelist.tsv.gz'

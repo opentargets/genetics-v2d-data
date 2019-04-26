@@ -21,7 +21,14 @@ def main():
     #
 
     # Load gwas catalog data
-    gwas_raw = pd.read_csv(args.gwas, sep='\t', header=0, dtype={'P-VALUE':str})
+    gwas_raw = pd.read_csv(
+        args.gwas,
+        sep='\t',
+        header=0,
+        dtype={'P-VALUE':str},
+        low_memory=False,
+        # na_values=['']
+    )
 
     # Set a row (association) id
     gwas_raw['assoc_id'] = list(range(1, gwas_raw.shape[0] + 1))
@@ -42,16 +49,51 @@ def main():
     # Add column to flag that multiple variants were reported
     gwas['multi_SNPs_reported'] = np.where(gwas['CHR_ID'].apply(len) > 1, 1, 0)
 
-    # Explode multivars into different rows
+    # Explode multivars into separate rows
     gwas = explode(gwas, ['CHR_ID', 'CHR_POS', 'SNPS', 'STRONGEST SNP-RISK ALLELE'])
+
+    # Replace 'nan' with np.nan
+    gwas.loc[:, ['CHR_ID', 'CHR_POS', 'SNPS', 'STRONGEST SNP-RISK ALLELE']] = (
+        gwas
+        .loc[:, ['CHR_ID', 'CHR_POS', 'SNPS', 'STRONGEST SNP-RISK ALLELE']]
+        .replace({'nan': np.nan})
+    )
 
     #
     # Load variant index data
     #
 
     # Load
-    var_idx = pd.read_csv(args.invar, sep='\t', header=None).iloc[:, [2, 3, 8, 6, 7]]
-    var_idx.columns = ['chrom', 'pos', 'rsid', 'ref', 'alt']
+    var_idx = pd.read_csv(args.invar,
+        sep='\t',
+        header=None,
+        low_memory=False
+    )
+    var_idx.columns = ['locus', 'alleles', 'chrom_b37', 'pos_b37',
+                       'chrom_b38', 'pos_b38', 'ref', 'alt', 'rsid']
+    
+    # Drop locus, alleles
+    # Drop rows without variant info (will exist in b38 due to liftover)
+    # rsIDs can be null
+    var_idx = (
+        var_idx.drop(['locus', 'alleles'], axis=1)
+               .dropna(subset=['chrom_b37', 'pos_b37',
+                               'chrom_b38', 'pos_b38',
+                               'ref', 'alt'],
+                       how='any', axis=0)
+    )
+
+    # Coerce data types
+    dtypes ={
+        'chrom_b37': 'str',
+        'pos_b37': 'int',
+        'chrom_b38': 'str',
+        'pos_b38': 'int',
+        'ref': 'str',
+        'alt': 'str',
+        'rsid': 'str'
+    }
+    var_idx = var_idx.astype(dtype=dtypes)
 
     # Assert only 1 rsid per row
     assert((var_idx.rsid.str.split(',').apply(len_robust) == 1).all())
@@ -62,44 +104,89 @@ def main():
     var_idx = explode(var_idx, ['alt'])
 
     #
-    # Merge to variant index. First on rsids, then on chr:pos
+    # Merge to variant index. First on rsids, then on chr:pos build37,
+    # then on chr:pos build38
     #
 
-    # Make sure types match
-    var_idx['chrom'] = var_idx['chrom'].astype(str)
-    var_idx['pos'] = var_idx['pos'].astype(int)
-
+    ### Merge on rsID
+    
     # Make new rsid column based on either SNP_ID_CURRENT or SNPS
     gwas['best_rsid'] = gwas.apply(get_best_rsid, axis=1)
 
+    # Make input which only contains rows with valid rsids
+    left_input = gwas.loc[gwas['best_rsid'].str.startswith('rs'), :]
+
     # Merge on rsids
-    gwas_rs = gwas.loc[gwas.best_rsid.str.startswith('rs'), :]
-    merged_rs = pd.merge(gwas_rs, var_idx,
-                         how='left',
-                         left_on='best_rsid', right_on='rsid')
+    rsid_merge = pd.merge(
+        left_input, var_idx,
+        how='inner',
+        left_on='best_rsid', right_on='rsid'
+    )
 
-    # Merge on chr:pos
-    gwas_chr = gwas.loc[gwas.best_rsid.str.startswith('chr'), :]
-    gwas_chr[['chrom_37', 'pos_37']] = ( gwas_chr.best_rsid.apply(str_to_chrompos)
-                                                           .apply(pd.Series) )
-    merged_chr = pd.merge(gwas_chr, var_idx,
-                          how='left',
-                          left_on=['chrom_37', 'pos_37'],
-                          right_on=['chrom', 'pos'])
+    ### Merge on b37
 
-    # Combine
-    merged = pd.concat([merged_rs, merged_chr])
+    # Make input which only contains rows with valid b37
+    left_input = gwas.loc[gwas['best_rsid'].str.startswith('chr'), :]
 
-    # Drop rows without mapping in VCF
-    merged = merged.dropna(subset=['rsid'])
-    merged['pos'] = merged['pos'].astype(int)
+    # Make new chrom_b37 and pos_b37 columns
+    left_input[['gc_chrom_b37', 'gc_pos_b37']] = (
+        left_input['best_rsid']
+        .apply(str_to_chrompos)
+        .apply(pd.Series)
+    )
+
+    # Merge on b37
+    b37_merge = pd.merge(
+        left_input, var_idx,
+        how='inner',
+        left_on=['gc_chrom_b37', 'gc_pos_b37'],
+        right_on=['chrom_b37', 'pos_b37']
+    )
+
+    # Drop left merge cols
+    b37_merge = b37_merge.drop(['gc_chrom_b37', 'gc_pos_b37'], axis=1)
+
+    ### Merge on b38
+
+    # Make new chrom_b38 and pos_b38 columns
+    left_input = gwas
+    left_input['gc_chrom_b38'] = left_input['CHR_ID'].astype('str')
+    left_input['gc_pos_b38'] = left_input['CHR_POS'].apply(to_int_safe)
+
+    # Make input which only contains rows with valid b38
+    left_input = gwas.dropna(
+        subset=['gc_chrom_b38', 'gc_pos_b38'], how='any', axis=0)
+    left_input = left_input.astype(
+        dtype={'gc_chrom_b38': 'str', 'gc_pos_b38': 'int'}
+    )
+
+    # Merge on b38
+    b38_merge = pd.merge(
+        left_input, var_idx,
+        how='inner',
+        left_on=['gc_chrom_b38', 'gc_pos_b38'],
+        right_on=['chrom_b38', 'pos_b38']
+    )
+
+    # Drop left merge cols
+    b38_merge = b38_merge.drop(['gc_chrom_b38', 'gc_pos_b38'], axis=1)
+
+    ### Combine the 3 merges together then depulicate
+
+    # Concat
+    merged = pd.concat([rsid_merge, b37_merge, b38_merge])
+    merged.to_csv('temp_gwas.tsv', sep='\t', index=None)
+
+    # Drop duplicated rows (that merged on multiple join)
+    merged = merged.drop_duplicates()
+    
 
     #
     # Create variant IDs
     #
 
     # Make a variant_id
-    merged['variant_id_b37'] = merged.apply(make_var_id, axis=1)
+    merged['variant_id_b38'] = merged.apply(make_var_id, axis=1)
 
     #
     # For rows with a risk allele reported, see if concordant with ref or alt
@@ -114,32 +201,18 @@ def main():
     merged = merged.loc[merged['risk_allele_concordant'] != 'no', :]
 
     #
-    # Tidy
-    #
-
-    # Drop unneeded columns
-    merged = merged.drop(labels=[
-        'alt',
-        'best_rsid',
-        'chrom',
-        'chrom_37',
-        'pos',
-        'pos_37',
-        'risk_allele',
-        'risk_allele_concordant',
-        'ref'], axis=1)
-    merged = merged.drop_duplicates()
-
-
-    #
     # Collapse multiple variants into one row per locus
     #
 
     # Collapse multiple variants into a single row separated by ';'
-    multivar = merged.loc[:, ['assoc_id', 'rsid', 'variant_id_b37']]
+    multivar = (
+        merged
+        .loc[:, ['assoc_id', 'rsid', 'variant_id_b38']]
+        .drop_duplicates()
+    )
     multivar_collapsed = (
         multivar.groupby('assoc_id')
-                .agg({'rsid':combine_rows, 'variant_id_b37':combine_rows})
+                .agg({'rsid':combine_rows, 'variant_id_b38':combine_rows})
                 .reset_index() )
 
     # Merge collapsed variant IDs back to the raw gwas data
@@ -150,6 +223,14 @@ def main():
     out_df.to_csv(args.out, sep='\t', index=None)
 
     return 0
+
+def to_int_safe(value):
+    ''' Convert value to an int, if not possible return np.nan
+    '''
+    try:
+        return int(value)
+    except:
+        return np.nan
 
 def len_robust(val):
     try:
@@ -211,7 +292,7 @@ def make_var_id(row):
         str
     '''
     # print(row)
-    return '{chrom}_{pos}_{ref}_{alt}'.format(**row)
+    return '{chrom_b38}_{pos_b38}_{ref}_{alt}'.format(**row)
 
 def get_best_rsid(row):
     ''' Returns the best rsid from:
@@ -240,7 +321,6 @@ def str_to_chrompos(s):
     Returns:
         str, int
     '''
-
     chrom, pos = ( s.replace('chr', '')
                     .replace('_', ':')
                     .replace('.', ':')
@@ -252,7 +332,7 @@ def explode(df, columns):
     ''' Explodes multiple columns
     '''
     idx = np.repeat(df.index, df[columns[0]].str.len())
-    a = df.T.reindex_axis(columns).values
+    a = df.T.reindex(columns).values
     concat = np.concatenate([np.concatenate(a[i]) for i in range(a.shape[0])])
     p = pd.DataFrame(concat.reshape(a.shape[0], -1).T, idx, columns)
     return pd.concat([df.drop(columns, axis=1), p], axis=1).reset_index(drop=True)
