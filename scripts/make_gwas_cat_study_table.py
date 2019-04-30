@@ -13,6 +13,7 @@ from collections import OrderedDict
 import hashlib
 from numpy import nan
 from functools import reduce
+import re
 
 """
 Note to Monday Ed
@@ -37,9 +38,10 @@ def main():
 
     # Load study table from top loci table
     cols_to_keep = ['STUDY ACCESSION', 'PUBMEDID', 'DATE', 'JOURNAL', 'STUDY',
-    'FIRST AUTHOR', 'DISEASE/TRAIT', 'MAPPED_TRAIT_URI', 'P-VALUE (TEXT)']
+                    'INITIAL SAMPLE SIZE', 'FIRST AUTHOR', 'DISEASE/TRAIT',
+                    'MAPPED_TRAIT_URI', 'P-VALUE (TEXT)']
     studies = (
-        pd.read_csv(args.in_toploci, sep='\t', header=0)
+        pd.read_csv(args.in_toploci, sep='\t', header=0, low_memory=False)
           .loc[:, cols_to_keep]
           .drop_duplicates()
     )
@@ -47,27 +49,23 @@ def main():
     # Gorupby will drop null 'P-VALUE (TEXT)' fields
     studies['P-VALUE (TEXT)'] = studies['P-VALUE (TEXT)'].fillna('')
 
-    # # Output a table for GWAS Catalog to debug the duplications
-    # (
-    #     studies.groupby(['STUDY ACCESSION', 'P-VALUE (TEXT)'])
-    #            .agg({
-    #                   'PUBMEDID': lambda x: x.nunique(),
-    #                   'DATE': lambda x: x.nunique(),
-    #                   'JOURNAL': lambda x: x.nunique(),
-    #                   'STUDY': lambda x: x.nunique(),
-    #                   'FIRST AUTHOR': lambda x: x.nunique(),
-    #                   'DISEASE/TRAIT': lambda x: x.nunique(),
-    #                   'MAPPED_TRAIT_URI': lambda x: x.nunique()
-    #                 })
-    #            .reset_index()
-    #            .to_csv('gwas_cat_duplicated.tsv', sep='\t', index=None)
-    # )
-
     # Remove Sun et al pQTL study
     studies = studies.loc[studies['STUDY ACCESSION'] != 'GCST005806', :]
     # Remove Huang et al IBD study (GWAS Catalog should not have curated this)
     studies = studies.loc[studies['STUDY ACCESSION'] != 'GCST005837', :]
 
+    #
+    # Extract n info from 'INITIAL SAMPLE SIZE' -------------------------------
+    #
+
+    # Extract info
+    n_counts = studies['INITIAL SAMPLE SIZE'].apply(extract_sample_sizes)
+    # studies['n_initial'] = n_counts.apply(lambda x: x[0])
+    studies['n_cases'] = n_counts.apply(lambda x: x[1])
+    
+    # Drop 'INITIAL SAMPLE SIZE'
+    studies = studies.drop('INITIAL SAMPLE SIZE', axis=1)
+    
     #
     # Group EFO codes together -------------------------------------------------
     #
@@ -76,7 +74,7 @@ def main():
     # They must be grouped.
     studies['MAPPED_TRAIT_URI'] = studies['MAPPED_TRAIT_URI'].str.split(', ')
     group_cols = ['STUDY ACCESSION', 'PUBMEDID', 'DATE', 'JOURNAL', 'STUDY',
-    'FIRST AUTHOR', 'DISEASE/TRAIT', 'P-VALUE (TEXT)']
+                  'FIRST AUTHOR', 'DISEASE/TRAIT', 'P-VALUE (TEXT)', 'n_cases']
     studies = (
         studies.groupby(group_cols)
                .MAPPED_TRAIT_URI
@@ -161,15 +159,17 @@ def main():
         ['ancestry_initial', 'ancestry_initial'],
         ['ancestry_replication', 'ancestry_replication'],
         ['n_initial', 'n_initial'],
+        ['n_cases', 'n_cases'],
         ['n_replication', 'n_replication']
     ])
     df = merged.rename(columns=cols).loc[:, cols.values()]
 
-    # We don't have case numbers from GWAS Catalog
-    df['n_cases'] = nan
-
     # Add prefix to PMIDs
     df['pmid'] = 'PMID:' + df['pmid'].astype(str)
+
+    # Set sample size columns to NaN if they are 0
+    for colname in ['n_initial', 'n_cases', 'n_replication']:
+        df[colname] = df[colname].replace({0: nan})
 
     # Remove rows where n_initial == nan, these are old studies and their data is
     # inconsistent with the rest of GWAS Catalog (correspondance w Annalisa Buniello)
@@ -177,6 +177,35 @@ def main():
 
     # Write
     df.to_csv(args.outf, sep='\t', index=None)
+
+
+def extract_sample_sizes(s):
+    ''' Extracts sample size info from GWAS Catalog
+        "INITIAL SAMPLE SIZE" field
+    Returns:
+        total N, N cases
+    '''
+    n_cases = 0
+    n_controls = 0
+    n_quant = 0
+    for part in s.split(', '):
+        # Extract sample size
+        mtch = re.search('([0-9,]+)', part)
+        if mtch:
+            n = int(mtch.group(1).replace(',', ''))
+            # Add to correct counter
+            if 'cases' in part:
+                n_cases += n
+            elif 'controls' in part:
+                n_controls += n
+            else:
+                n_quant += n
+    
+    # Return n_total and n_cases
+    if n_quant > 0:
+        return n_quant, 0
+    else:
+        return n_cases + n_controls, n_cases
 
 def clean_efo(l, sep=';'):
     ''' Takes a list of EFO URIs, cleans them and returns a string
