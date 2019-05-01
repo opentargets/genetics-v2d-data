@@ -18,39 +18,54 @@ def main():
     # Parse args
     args = parse_args()
 
-    # Load credible set info
-    cred = pd.read_csv(args.inf, sep='\t', header=0)
+    # Load top loci
+    top_loci = pd.read_json(args.inf, orient='records', lines=True)
 
-    # Load study information, required for case-control information
+    # Only keep type == gwas
+    top_loci = top_loci.loc[top_loci['type'] == 'gwas', :]
+
+    # Add suffix to GWAS Catalog IDs
+    top_loci['study_id'] = top_loci['study_id'].apply(add_gwascat_suffix, suffix='_1')
+
+    # Load study information, required for case-control information GCST000964
     study = pd.read_csv(args.study_info, sep='\t', header=0)
     study['case_prop'] = study['n_cases'] / study['n_initial']
     study = study.loc[:, ['study_id', 'case_prop']]
-
-    # Keep rows where index == var
-    top_loci = cred.loc[cred.locus_index_varid == cred.varid, :]
-
-    # Make study id
-    top_loci.loc[:, 'study_id'] = 'NEALEUKB_' + top_loci['trait'].astype(str)
+    study = study.drop_duplicates()
 
     # Fix very low p-values
-    top_loci.loc[top_loci.p == 0, 'p'] = (1 / sys.float_info.max)
-
+    top_loci.loc[top_loci['pval'] == 0, 'pval'] = (1 / sys.float_info.max)
+    
     # Filter p-values
-    top_loci = top_loci.loc[top_loci.p < 1e-5, :]
+    top_loci = top_loci.loc[top_loci['pval'] <= 5e-8, :]
 
     # Get P mantissa and exponent
-    top_loci.loc[:, 'p_mantissa'] = top_loci.p.apply(fman)
-    top_loci.loc[:, 'p_exponent'] = top_loci.p.apply(fexp)
+    top_loci.loc[:, 'p_mantissa'] = top_loci['pval'].apply(fman)
+    top_loci.loc[:, 'p_exponent'] = top_loci['pval'].apply(fexp)
 
     # Extract effect size information
-    top_loci = pd.merge(top_loci, study, how='left')
-    top_loci[['direction', 'beta', 'beta_ci_lower', 'beta_ci_upper', 'oddsr', 'oddsr_ci_lower', 'oddsr_ci_upper']] = top_loci.apply(extract_effect_sizes, axis=1).apply(pd.Series)
+    top_loci = pd.merge(top_loci, study, on='study_id', how='left')
+    top_loci[['direction',
+              'beta',
+              'beta_ci_lower',
+              'beta_ci_upper',
+              'oddsr',
+              'oddsr_ci_lower',
+              'oddsr_ci_upper']] = top_loci.apply(extract_effect_sizes, axis=1).apply(pd.Series)
+
+    # Make a variant ID
+    top_loci['variant_id_b38'] = (
+        top_loci.loc[:, ['chrom', 'pos', 'ref', 'alt']].apply(
+            lambda row: '_'.join([str(x) for x in row.tolist()]),
+            axis=1
+        )
+    )
 
     # Extract and rename required columns
     cols = OrderedDict([
         ('study_id', 'study_id'),
-        ('locus_index_varid', 'variant_id_b37'),
-        ('locus_index_snp', 'rsid'),
+        ('variant_id_b38', 'variant_id_b38'),
+        # ('locus_index_snp', 'rsid'),
         ('direction', 'direction'),
         ('beta', 'beta'),
         ('beta_ci_lower', 'beta_ci_lower'),
@@ -61,11 +76,20 @@ def main():
         ('p_mantissa', 'pval_mantissa'),
         ('p_exponent', 'pval_exponent')
     ])
+    assert all([col in top_loci.columns for col in cols.keys()])
     top_loci = top_loci[list(cols.keys())].rename(columns=cols)
 
     # Sort and save
     top_loci = top_loci.sort_values(['study_id', 'pval_exponent', 'pval_mantissa'])
     top_loci.to_csv(args.outf, sep='\t', index=None)
+
+def add_gwascat_suffix(s, suffix="_1"):
+    ''' Adds gwas catalog suffix
+    '''
+    if s.startswith('GCST'):
+        return s + suffix
+    else:
+        return s
 
 def extract_effect_sizes(row):
     ''' Extract beta, oddsr, lower_ci, upper_ci
@@ -81,18 +105,18 @@ def extract_effect_sizes(row):
     # Check whether quantitative or binary
     is_beta = pd.isnull(row['case_prop'])
     # Estimate z-score
-    z = abs(st.norm.ppf((float(row['p']))/2))
+    z = abs(st.norm.ppf((float(row['pval']))/2))
     # Extract relevant stats
     if is_beta:
-        beta = row['b']
+        beta = row['beta']
         se = row['se']
         beta_ci_lower = beta - 1.96 * se
         beta_ci_upper = beta + 1.96 * se
         direction = '+' if beta >= 0 else '-'
     else:
         # Perform transformation: https://github.com/opentargets/sumstat_data#requirements-when-adding-new-datasets
-        log_or = row['b'] / (row['case_prop'] / (1 - row['case_prop']))
-        log_se = row['se'] / (row['case_prop'] / (1 - row['case_prop']))
+        log_or = row['beta']
+        log_se = row['se']
         oddsr = np.exp(log_or)
         oddsr_ci_lower = np.exp(log_or - 1.96 * log_se)
         oddsr_ci_upper = np.exp(log_or + 1.96 * log_se)

@@ -2,7 +2,7 @@ rule convert_finemapping_to_standard:
     ''' Extract required fields from credible set file
     '''
     input:
-        GSRemoteProvider().remote(config['credset'], keep_local=KEEP_LOCAL) # DEBUG
+        GSRemoteProvider().remote(config['credsets'], keep_local=KEEP_LOCAL) # DEBUG
     output:
         'output/{version}/finemapping.parquet'
     shell:

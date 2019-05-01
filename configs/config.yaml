@@ -1,6 +1,6 @@
 # Output config
 temp_dir: 'tmp'
-gs_dir: 'genetics-portal-staging/v2d'
+gs_dir: 'gs://genetics-portal-staging/v2d'
 
 # GWAS Catalog curated data
 gwas_cat_min_pvalue: 5e-8 # Minimum p-value to be included
@@ -9,14 +9,19 @@ gwas_cat_cluster_min_loci: 10 # Minimum number of reported loci for that study t
 gwas_cat_cluster_multi_proportion: 0.3 # For a given study, if more than this proportion of loci are multi-signals (>1 signal within gwas_cat_cluster_dist_kb), the study will be clustered
 
 # Finemapping files
-credset: 'genetics-portal-input/uk_biobank_analysis/em21/neale_summary_statistics_20170915/finemapping/results/neale_ukb_uk10kref_180502.crediblesets.long.varids.tsv.gz'
-variant_map: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/cleaned_data/clean/50.nealeUKB_20170915.assoc.clean.tsv.gz'
+gcs_sumstat_pattern: 'gs://genetics-portal-sumstats-b38/unfiltered/gwas/*.parquet'
+toploci: 'gs://genetics-portal-staging/finemapping/190430/top_loci.json.gz'
+credsets: ''
 
-# Neale et al UK Biobank manifest file
-neale_manifest: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/cleaned_data/phenosummary_final_11898_18597.fixed.curation_manifest.tsv'
-neale_efo_icd10: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/efo_curation/v1_2018_07_05/phenosummary_final_11898_18597.fixed.curation_manifest - QC of ICD10 traits - Iteration 1.csv'
-neale_efo_self: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/efo_curation/v1_2018_07_05/phenosummary_final_11898_18597.fixed.curation_manifest - QC of self-reported traits - Iteration 1.csv'
-neale_categories: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/PheWAS_categories/neale_cateogries.v2.tsv'
+# UK Biobank (Neale V2 and SAIGE) manifest files
+ukb_manifest: 'gs://genetics-portal-input/ukb_phenotypes/neale2_saige_study_manifest.190430.tsv'
+ukb_efo_curation: 'TODO'
+
+# # Neale et al UK Biobank manifest file
+# neale_manifest: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/cleaned_data/phenosummary_final_11898_18597.fixed.curation_manifest.tsv'
+# neale_efo_icd10: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/efo_curation/v1_2018_07_05/phenosummary_final_11898_18597.fixed.curation_manifest - QC of ICD10 traits - Iteration 1.csv'
+# neale_efo_self: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/efo_curation/v1_2018_07_05/phenosummary_final_11898_18597.fixed.curation_manifest - QC of self-reported traits - Iteration 1.csv'
+# neale_categories: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/PheWAS_categories/neale_cateogries.v2.tsv'
 
 # LD table
 gwascat_2_superpop: 'configs/gwascat_superpopulation_lut.curated.v2.tsv'
@@ -24,4 +29,4 @@ ld_window: 500
 min_r2: 0.7
 
 # Variant index
-var_index_sitelist: 'genetics-portal-staging/variant-annotation/190129/variant-annotation.sitelist.tsv.gz'
+var_index_sitelist: 'gs://genetics-portal-staging/variant-annotation/190129/variant-annotation.sitelist.tsv.gz'

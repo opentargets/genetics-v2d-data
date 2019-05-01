@@ -19,20 +19,38 @@ def main():
 
     # Load
     gwas = pd.read_csv(args.in_gwascat, sep='\t', header=0)
-    neale = pd.read_csv(args.in_neale, sep='\t', header=0)
+    sumstat = pd.read_csv(args.in_sumstat, sep='\t', header=0)
+    
+    #
+    # Remove GCST studies from gwas, that appear in sumstat -------------------
+    #
+
+    # Get set of GWAS Calaog IDs that have sumstat results
+    stid_in_sumstat = set([
+        return_original_gwascat_id(idx)
+        for idx in sumstat['study_id']
+    ])
+
+    # Identify rows to remove from gwas
+    to_remove = [
+        return_original_gwascat_id(idx) in stid_in_sumstat
+        for idx in gwas['study_id']
+    ]
+    
+    # Remove from gwas catalog results
+    gwas = gwas.loc[~pd.Series(to_remove), :]
+
+    #
+    # Merge -------------------------------------------------------------------
+    #
 
     # Merge
-    merged = pd.concat([gwas, neale], sort=False)
+    merged = pd.concat([gwas, sumstat], sort=False)
 
     # Split variant ID into chrom, pos, ref, alt
     merged[['chrom', 'pos', 'ref', 'alt']] = (
         merged['variant_id_b38'].str.split('_', expand=True)
     )
-
-    # DEBUG
-    merged.loc[pd.isnull(merged['pos']), :].to_csv('temp.tsv', sep='\t', index=None)
-    sys.exit('STOPPING. Finemapping still has b37, can continue when b38')
-
     merged.pos = merged.pos.astype(int)
     merged.drop(['variant_id_b38', 'rsid'], axis=1, inplace=True)
 
@@ -72,11 +90,19 @@ def main():
 
     return 0
 
+def return_original_gwascat_id(s):
+    ''' Strips suffix from gwascatalog IDs
+    '''
+    if s.startswith('GCST'):
+        return s.split('_')[0]
+    else:
+        return s
+
 def parse_args():
     """ Load command line args """
     parser = argparse.ArgumentParser()
     parser.add_argument('--in_gwascat', metavar="<str>", type=str, required=True)
-    parser.add_argument('--in_neale', metavar="<str>", type=str, required=True)
+    parser.add_argument('--in_sumstat', metavar="<str>", type=str, required=True)
     parser.add_argument('--output', metavar="<str>", help=("Output merged file"), type=str, required=True)
     args = parser.parse_args()
     return args

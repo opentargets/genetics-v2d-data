@@ -93,33 +93,48 @@ rule cluster_gwas_catalog:
         '--cluster_multi_prop {params.multi_prop} '
         '--log {output.log}'
 
-rule convert_nealeUKB_to_standard:
-    ''' Converts the credible set results into a table of top loci in standard
-        format.
+# rule convert_nealeUKB_to_standard:
+#     ''' Converts the credible set results into a table of top loci in standard
+#         format.
+#     '''
+#     input:
+#         credset=GSRemoteProvider().remote(config['credset'], keep_local=KEEP_LOCAL),
+#         study_info=tmpdir + '/{version}/nealeUKB_study_table.tsv'
+#     output:
+#         tmpdir + '/{version}/nealeUKB-associations_ot-format.tsv'
+#     shell:
+#         'python scripts/format_nealeUKB_assoc.py '
+#         '--inf {input.credset} '
+#         '--study_info {input.study_info} '
+#         '--outf {output}'
+
+rule make_summarystat_toploci_table:
+    ''' Converts the toploci table produce from the finemapping pipeline to
+        standardised format
     '''
     input:
-        credset=GSRemoteProvider().remote(config['credset'], keep_local=KEEP_LOCAL),
-        study_info=tmpdir + '/{version}/nealeUKB_study_table.tsv'
+        toploci=GSRemoteProvider().remote(config['toploci'], keep_local=KEEP_LOCAL),
+        study_info = tmpdir + '/{version}/merged_study_table.tsv'
     output:
-        tmpdir + '/{version}/nealeUKB-associations_ot-format.tsv'
+        tmpdir + '/{version}/sumstat-associations_ot-format.tsv'
     shell:
-        'python scripts/format_nealeUKB_assoc.py '
-        '--inf {input.credset} '
+        'python scripts/format_sumstat_toploci_assoc.py '
+        '--inf {input.toploci} '
         '--study_info {input.study_info} '
         '--outf {output}'
 
-rule merge_gwascat_and_nealeUKB_toploci:
-    ''' Merges association files from gwas_cat and neale UKB
+rule merge_gwascat_and_sumstat_toploci:
+    ''' Merges associations from gwas_cat and sumstat derived
     '''
     input:
         gwascat = tmpdir + '/{version}/gwas-catalog-associations_ot-format.clustered.tsv',
-        neale = tmpdir + '/{version}/nealeUKB-associations_ot-format.tsv'
+        sumstat = tmpdir + '/{version}/sumstat-associations_ot-format.tsv'
     output:
         'output/{version}/toploci.parquet'
     shell:
         'python scripts/merge_top_loci_tables.py '
         '--in_gwascat {input.gwascat} '
-        '--in_neale {input.neale} '
+        '--in_sumstat {input.sumstat} '
         '--output {output}'
 
 rule toploci_to_GCS:

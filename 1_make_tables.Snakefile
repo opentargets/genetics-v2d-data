@@ -32,30 +32,30 @@ targets.append(
 targets.append(
     'output/{version}/studies.parquet'.format(version=config['version']) )
 
-# Make targets for finemapping table
-targets.append(
-    'output/{version}/finemapping.parquet'.format(version=config['version']) )
+# # Make targets for finemapping table
+# targets.append(
+#     'output/{version}/finemapping.parquet'.format(version=config['version']) )
 
-# Make targets for LD input table
-targets.append(
-    'output/{version}/ld_analysis_input.tsv.gz'.format(version=config['version']) )
+# # Make targets for LD input table
+# targets.append(
+#     'output/{version}/ld_analysis_input.tsv.gz'.format(version=config['version']) )
 
-if UPLOAD:
-    targets.append(GSRemoteProvider().remote(
-    '{gs_dir}/{version}/toploci.parquet'.format(gs_dir=config['gs_dir'],
-        version=config['version']) ))
-    targets.append(GSRemoteProvider().remote(
-    '{gs_dir}/{version}/studies.parquet'.format(gs_dir=config['gs_dir'],
-        version=config['version']) ))
-    targets.append(GSRemoteProvider().remote(
-    '{gs_dir}/{version}/studies.parquet'.format(gs_dir=config['gs_dir'],
-        version=config['version']) ))
-    targets.append(GSRemoteProvider().remote(
-    '{gs_dir}/{version}/finemapping.parquet'.format(gs_dir=config['gs_dir'],
-        version=config['version']) ))
-    targets.append(GSRemoteProvider().remote(
-    '{gs_dir}/{version}/extras/ld_analysis_input.tsv.gz'.format(gs_dir=config['gs_dir'],
-        version=config['version']) ))
+# if UPLOAD:
+#     targets.append(GSRemoteProvider().remote(
+#     '{gs_dir}/{version}/toploci.parquet'.format(gs_dir=config['gs_dir'],
+#         version=config['version']) ))
+#     targets.append(GSRemoteProvider().remote(
+#     '{gs_dir}/{version}/studies.parquet'.format(gs_dir=config['gs_dir'],
+#         version=config['version']) ))
+#     targets.append(GSRemoteProvider().remote(
+#     '{gs_dir}/{version}/studies.parquet'.format(gs_dir=config['gs_dir'],
+#         version=config['version']) ))
+#     targets.append(GSRemoteProvider().remote(
+#     '{gs_dir}/{version}/finemapping.parquet'.format(gs_dir=config['gs_dir'],
+#         version=config['version']) ))
+#     targets.append(GSRemoteProvider().remote(
+#     '{gs_dir}/{version}/extras/ld_analysis_input.tsv.gz'.format(gs_dir=config['gs_dir'],
+#         version=config['version']) ))
 
 # Trigger making of targets
 rule all:
