@@ -110,7 +110,8 @@ rule cluster_gwas_catalog:
 
 rule make_summarystat_toploci_table:
     ''' Converts the toploci table produce from the finemapping pipeline to
-        standardised format
+        standardised format. Study table is need to know if a study is
+        case-control or not.
     '''
     input:
         toploci=GSRemoteProvider().remote(config['toploci'], keep_local=KEEP_LOCAL),

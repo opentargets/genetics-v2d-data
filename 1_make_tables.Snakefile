@@ -24,17 +24,17 @@ if 'version' not in config:
 
 targets = []
 
-# Make targets for top loci table
-targets.append(
-    'output/{version}/toploci.parquet'.format(version=config['version']) )
-
-# Make targets for study table
-targets.append(
-    'output/{version}/studies.parquet'.format(version=config['version']) )
-
-# # Make targets for finemapping table
+# # Make targets for top loci table
 # targets.append(
-#     'output/{version}/finemapping.parquet'.format(version=config['version']) )
+#     'output/{version}/toploci.parquet'.format(version=config['version']) )
+
+# # Make targets for study table
+# targets.append(
+#     'output/{version}/studies.parquet'.format(version=config['version']) )
+
+# Make targets for finemapping table
+targets.append(
+    'output/{version}/finemapping.parquet'.format(version=config['version']) )
 
 # # Make targets for LD input table
 # targets.append(

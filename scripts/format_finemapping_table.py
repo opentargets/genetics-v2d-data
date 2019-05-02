@@ -17,22 +17,12 @@ def main():
     # Parse args
     args = parse_args()
 
-    # Load
-    credset = pd.read_csv(args.inf, sep='\t', header=0)
-
-    # Make study id
-    credset.loc[:, 'study_id'] = 'NEALEUKB_' + credset['trait'].astype(str)
+    # Load json, only keep type == gwas
+    credset = pd.read_json(args.inf, orient='records', lines=True)
+    credset = credset.loc[credset['type'] == 'gwas', :]
 
     # Filter to remove rows not in a 95% credible set
-    credset = credset.loc[credset.is95_credset == 1, :]
-
-    # Decompose variant IDs
-    credset[['lead_chrom', 'lead_pos', 'lead_ref', 'lead_alt']] = \
-        credset.locus_index_varid.str.split('_', expand=True)
-    credset[['tag_chrom', 'tag_pos', 'tag_ref', 'tag_alt']] = \
-        credset.varid.str.split('_', expand=True)
-    credset['lead_pos'] = credset['lead_pos'].astype(int)
-    credset['tag_pos'] = credset['tag_pos'].astype(int)
+    credset = credset.loc[credset.is95_credset == True, :]
 
     # Rename and select columns
     cols = OrderedDict([
@@ -53,15 +43,15 @@ def main():
 
     # Coerce data types
     dtypes = OrderedDict([
-        ('study_id', 'object'),
-        ('lead_chrom', 'object'),
+        ('study_id', 'str'),
+        ('lead_chrom', 'str'),
         ('lead_pos', 'Int64'),
-        ('lead_ref', 'object'),
-        ('lead_alt', 'object'),
-        ('tag_chrom', 'object'),
+        ('lead_ref', 'str'),
+        ('lead_alt', 'str'),
+        ('tag_chrom', 'str'),
         ('tag_pos', 'Int64'),
-        ('tag_ref', 'object'),
-        ('tag_alt', 'object'),
+        ('tag_ref', 'str'),
+        ('tag_alt', 'str'),
         ('log10_ABF', 'float64'),
         ('posterior_prob', 'float64')
     ])
@@ -83,13 +73,10 @@ def main():
                   compression='snappy',
                   flavor='spark')
 
-    # Save csv
-    # credset.to_csv(args.outf, sep='\t', index=None, compression='gzip')
-
 def parse_args():
     """ Load command line args """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--inf', metavar="<file>", help=('GWAS Catalog input'), type=str, required=True)
+    parser.add_argument('--inf', metavar="<file>", help=('Credible set json'), type=str, required=True)
     parser.add_argument('--outf', metavar="<str>", help=("Output"), type=str, required=True)
     args = parser.parse_args()
     return args

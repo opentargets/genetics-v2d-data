@@ -8,12 +8,12 @@ gwas_cat_cluster_dist_kb: 500 # ± Distance in Kb
 gwas_cat_cluster_min_loci: 10 # Minimum number of reported loci for that study to be included in the clustering analysis
 gwas_cat_cluster_multi_proportion: 0.3 # For a given study, if more than this proportion of loci are multi-signals (>1 signal within gwas_cat_cluster_dist_kb), the study will be clustered
 
-# Finemapping files
+# Summary statistics finemapping pipeline output files
 gcs_sumstat_pattern: 'gs://genetics-portal-sumstats-b38/unfiltered/gwas/*.parquet'
 toploci: 'gs://genetics-portal-staging/finemapping/190430/top_loci.json.gz'
-credsets: ''
+credsets: 'gs://genetics-portal-staging/finemapping/190430/credset/_SUCCESS' # Need the whole directory, so passing the _SUCCSS file instead to trick snakemake
 
-# UK Biobank (Neale V2 and SAIGE) manifest files
+# UK Biobank (Neale V2 and SAIGE) sumstat manifest files
 ukb_manifest: 'gs://genetics-portal-input/ukb_phenotypes/neale2_saige_study_manifest.190430.tsv'
 ukb_efo_curation: 'TODO'
 

@@ -77,6 +77,7 @@ def pd_dtype_to_pa_schema(dtypes, str_list_cols=None):
     # https://arrow.apache.org/docs/python/api/datatypes.html
     #
     type_map = {
+        'str': pa.string(),
         'object': pa.string(),
         'Int64': pa.int64(),
         'int64': pa.int64(),
