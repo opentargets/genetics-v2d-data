@@ -15,18 +15,6 @@ from numpy import nan
 from functools import reduce
 import re
 
-"""
-Note to Monday Ed
-
-- You're creating new study IDs for each sub phenotype using the top loci intermediate
-- This will then need to be merged to the top loci final table
-- Don't need trait code
-- This script will be where the LD bug is fixed also
-    https://github.com/opentargets/genetics/issues/158
-
-"""
-
-
 def main():
 
     # Parse args
@@ -36,18 +24,43 @@ def main():
     # Load study table from association table ----------------------------------
     #
 
-    # Load study table from top loci table
+    # We need to join GWAS Catalog's study table with the top loci
+    # (association) table in order to get subphenotype in the
+    # "P-VALUE (TEXT)" field.
+    # We can't use the top loci table by itself as this would only include
+    # studies with > 0 associations(may not be valid for phewas studies).
+
+    # Load GWAS Catalog's study table
     cols_to_keep = ['STUDY ACCESSION', 'PUBMEDID', 'DATE', 'JOURNAL', 'STUDY',
                     'INITIAL SAMPLE SIZE', 'FIRST AUTHOR', 'DISEASE/TRAIT',
-                    'MAPPED_TRAIT_URI', 'P-VALUE (TEXT)']
-    studies = (
+                    'MAPPED_TRAIT_URI']
+    
+    # Load GWAS Catalog's study table
+    gwascat_studies = pd.read_csv(
+        args.in_gwascat_study,
+        sep='\t',
+        header=0,
+        low_memory=False
+    ).loc[:, cols_to_keep]
+
+    # Load study table from top loci table
+    toploci_studies = (
         pd.read_csv(args.in_toploci, sep='\t', header=0, low_memory=False)
-          .loc[:, cols_to_keep]
+          .loc[:, cols_to_keep + ['P-VALUE (TEXT)']]
           .drop_duplicates()
     )
 
     # Gorupby will drop null 'P-VALUE (TEXT)' fields
-    studies['P-VALUE (TEXT)'] = studies['P-VALUE (TEXT)'].fillna('')
+    toploci_studies['P-VALUE (TEXT)'] = toploci_studies['P-VALUE (TEXT)'].fillna('')
+
+    # Merge gwascat_studies with toploci_studies
+    studies = pd.merge(
+        gwascat_studies, toploci_studies,
+        on=cols_to_keep,
+        how='outer'
+    )
+
+    studies.to_csv('tmp/studies.tsv', sep='\t', index=None)
 
     # Remove Sun et al pQTL study
     studies = studies.loc[studies['STUDY ACCESSION'] != 'GCST005806', :]
@@ -314,6 +327,7 @@ def parse_ancestry_info(inf):
 def parse_args():
     """ Load command line args """
     parser = argparse.ArgumentParser()
+    parser.add_argument('--in_gwascat_study', metavar="<str>", type=str, required=True)
     parser.add_argument('--in_toploci', metavar="<str>", type=str, required=True)
     parser.add_argument('--in_ancestries', metavar="<str>", type=str, required=True)
     parser.add_argument('--outf', metavar="<str>", help=("Output"), type=str, required=True)

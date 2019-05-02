@@ -87,6 +87,9 @@ def main():
     # Sort output
     merged = merged.sort_values(['study_id'])
 
+    # DEBUG output study table
+    # merged.to_csv('tmp/study_table.tsv', sep='\t', index=None)
+
     # Save as parquet
     write_parquet(merged,
                   args.output,
