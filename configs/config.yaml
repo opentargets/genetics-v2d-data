@@ -24,6 +24,7 @@ ukb_efo_curation: 'TODO'
 # neale_categories: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/PheWAS_categories/neale_cateogries.v2.tsv'
 
 # LD table
+url_1000G: 'gs://genetics-portal-input/1000Genomes_phase3/plink_format_b38'
 gwascat_2_superpop: 'configs/gwascat_superpopulation_lut.curated.v2.tsv'
 ld_window: 500
 min_r2: 0.7

@@ -16,9 +16,10 @@ rule get_1000G_from_GCS:
                ext=['bed', 'bim', 'fam'],
                version=config['version'])
     params:
+        url_1000G = config['url_1000G'],
         outdir=tmpdir + '/{version}/ld/1000Genomep3'.format(version=config['version'])
     shell:
-        'gsutil -m rsync -r gs://genetics-portal-input/1000Genomes_phase3/plink_format_b38 {params.outdir}'
+        'gsutil -m rsync -r {params.url_1000G} {params.outdir}'
 
 #
 # Calculate LD using plink -----------------------------------------------------
