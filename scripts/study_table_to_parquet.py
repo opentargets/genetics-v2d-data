@@ -45,7 +45,7 @@ def main():
                 from_sumstats.add(stid)
     
     # Annotate study table with field showing if there are sumstats
-    merged['from_sumstats'] = [
+    merged['has_sumstats'] = [
         stid in from_sumstats for stid in merged['study_id']
     ]    
 
@@ -70,7 +70,7 @@ def main():
         ('n_cases', 'Int64'),
         ('trait_category', 'object'),
         ('num_assoc_loci', 'Int64'),
-        ('from_sumstats', 'bool')
+        ('has_sumstats', 'bool')
         
     ])
     assert(set(dtypes.keys()) == set(merged.columns))
