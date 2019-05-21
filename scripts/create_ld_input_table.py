@@ -135,7 +135,14 @@ def numpya_to_list(numpy_array):
     ''' Converts a numpy array to a list
     '''
     try:
-        return numpy_array.tolist()
+        l = numpy_array.tolist()
+
+        # If list contains only an empty string
+        if not l[0]:
+            return []
+        
+        # Else return list
+        return l
     except AttributeError:
         return []
 
