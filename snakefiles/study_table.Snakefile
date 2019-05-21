@@ -21,7 +21,7 @@ rule make_gwas_cat_studies_table:
         ancestries=HTTPRemoteProvider().remote(
             'https://www.ebi.ac.uk/gwas/api/search/downloads/ancestry', keep_local=KEEP_LOCAL)
     output:
-        main=tmpdir + '/{version}/gwas-catalog_study_table.tsv',
+        main=tmpdir + '/{version}/gwas-catalog_study_table.json',
         lut=tmpdir + '/{version}/gwas-catalog_study_id_lut.tsv'
     shell:
         'python scripts/make_gwas_cat_study_table.py '
@@ -51,14 +51,14 @@ rule make_UKB_studies_table:
     '''
     input:
         manifest=GSRemoteProvider().remote(config['ukb_manifest'], keep_local=KEEP_LOCAL),
-        # efos=GSRemoteProvider().remote(config['ukb_efo_curation'], keep_local=KEEP_LOCAL)
+        efos=GSRemoteProvider().remote(config['ukb_efo_curation'], keep_local=KEEP_LOCAL)
     output:
-        study_table=tmpdir + '/{version}/UKB_study_table.tsv',
+        study_table = tmpdir + '/{version}/UKB_study_table.json',
         prefix_counts=tmpdir + '/{version}/UKB_prefix_counts.tsv'
     shell:
         'python scripts/make_UKB_study_table.py '
         '--in_manifest {input.manifest} '
-        # '--in_efos {input.efos} '
+        '--in_efos {input.efos} '
         '--prefix_counts {output.prefix_counts} '
         '--outf {output.study_table}'
 
@@ -66,14 +66,28 @@ rule merge_study_tables:
     ''' Merges the GWAS Catalog and Neale UK Biobank study tables together
     '''
     input:
-        gwas=tmpdir + '/{version}/gwas-catalog_study_table.tsv',
-        ukb=tmpdir + '/{version}/UKB_study_table.tsv'
+        gwas = tmpdir + '/{version}/gwas-catalog_study_table.json',
+        ukb=tmpdir + '/{version}/UKB_study_table.json'
     output:
-        tmpdir + '/{version}/merged_study_table.tsv'
+        tmpdir + '/{version}/merged_study_table.json'
     shell:
         'python scripts/merge_study_tables.py '
         '--in_gwascat {input.gwas} '
         '--in_ukb {input.ukb} '
+        '--output {output}'
+
+rule get_efo_categories:
+    ''' Uses OLS API to get "therapeutic area" / category for each EFO
+    '''
+    input:
+        study_table = tmpdir + '/{version}/merged_study_table.json',
+        therapeutic_areas = config['efo_therapeutic_areas']
+    output:
+        tmpdir + '/{version}/efo_categories.json'
+    shell:
+        'python scripts/get_therapeutic_areas.py '
+        '--in_study {input.study_table} '
+        '--in_ta {input.therapeutic_areas} '
         '--output {output}'
 
 rule list_studies_with_sumstats:
@@ -90,16 +104,23 @@ rule study_table_to_parquet:
     ''' Converts study table to final parquet
     '''
     input:
-        study_table = tmpdir + '/{version}/merged_study_table.tsv',
+        study_table = tmpdir + '/{version}/merged_study_table.json',
         sumstat_studies = tmpdir + '/{version}/studies_with_sumstats.tsv',
-        top_loci='output/{version}/toploci.parquet'
+        efo_anno = tmpdir + '/{version}/efo_categories.json',
+        top_loci='output/{version}/toploci.parquet',
+        therapeutic_areas = config['efo_therapeutic_areas']
     output:
         'output/{version}/studies.parquet'
+    params:
+        unknown_label = config['therapeutic_area_unknown_label']
     shell:
         'python scripts/study_table_to_parquet.py '
         '--in_study_table {input.study_table} '
         '--in_toploci {input.top_loci} '
         '--sumstat_studies {input.sumstat_studies} '
+        '--efo_categories {input.efo_anno} '
+        '--in_ta {input.therapeutic_areas} '
+        '--unknown_label {params.unknown_label} '
         '--output {output}'
 
 rule study_to_GCS:

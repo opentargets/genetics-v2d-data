@@ -183,13 +183,16 @@ def main():
     # Set sample size columns to NaN if they are 0
     for colname in ['n_initial', 'n_cases', 'n_replication']:
         df[colname] = df[colname].replace({0: nan})
+    
+    # Split the efos into a list
+    df['trait_efos'] = df['trait_efos'].str.split(';')
 
     # Remove rows where n_initial == nan, these are old studies and their data is
     # inconsistent with the rest of GWAS Catalog (correspondance w Annalisa Buniello)
     df = df.loc[~pd.isnull(df.n_initial), :]
 
     # Write
-    df.to_csv(args.outf, sep='\t', index=None)
+    df.to_json(args.outf, orient='records', lines=True)
 
 
 def extract_sample_sizes(s):

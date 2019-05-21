@@ -15,7 +15,11 @@ credsets: 'gs://genetics-portal-staging/finemapping/190430/credset/_SUCCESS' # N
 
 # UK Biobank (Neale V2 and SAIGE) sumstat manifest files
 ukb_manifest: 'gs://genetics-portal-input/ukb_phenotypes/neale2_saige_study_manifest.190430.tsv'
-ukb_efo_curation: 'TODO'
+ukb_efo_curation: 'gs://genetics-portal-input/ukb_phenotypes/ukb_efo_annotation.json'
+
+# Trait category / therapeutic area
+efo_therapeutic_areas: 'configs/therapeutic_areas.tsv' # List of therapeutic area labels
+therapeutic_area_unknown_label: 'Uncategorised'
 
 # # Neale et al UK Biobank manifest file
 # neale_manifest: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/cleaned_data/phenosummary_final_11898_18597.fixed.curation_manifest.tsv'

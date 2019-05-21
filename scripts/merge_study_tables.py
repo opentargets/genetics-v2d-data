@@ -19,14 +19,14 @@ def main():
     args = parse_args()
 
     # Load
-    gwas = pd.read_csv(args.in_gwascat, sep='\t', header=0, dtype='object')
-    ukb = pd.read_csv(args.in_ukb, sep='\t', header=0, dtype='object')
+    gwas = pd.read_json(args.in_gwascat, orient='records', lines=True)
+    ukb = pd.read_json(args.in_ukb, orient='records', lines=True)
 
     # Merge
     merged = pd.concat([gwas, ukb], sort=False)
 
     # Write
-    merged.to_csv(args.output, sep='\t', index=None)
+    merged.to_json(args.output, orient='records', lines=True)
 
     return 0
 
