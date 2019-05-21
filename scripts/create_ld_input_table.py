@@ -81,8 +81,11 @@ def to_superpopulation_proportions(row, pop_map, anc_sep=', '):
                 print('col:', col)
                 print('row:', row)
                 print('entry:', entry)
-                print('entry:', str(entry))
-                print('entry:', type(entry))
+                print('str(entry):', str(entry))
+                print('type(entry):', type(entry))
+                print('entry == "":', entry == '')
+                if not entry:
+                    print('skip')
 
             # Extract ancestry and n
             anc, n = entry.split('=')
