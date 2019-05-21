@@ -10,3 +10,4 @@ dependencies:
   - scipy
   - numpy
   - pyarrow
+  - requests>=2.18.0

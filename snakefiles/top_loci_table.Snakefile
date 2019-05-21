@@ -115,7 +115,7 @@ rule make_summarystat_toploci_table:
     '''
     input:
         toploci=GSRemoteProvider().remote(config['toploci'], keep_local=KEEP_LOCAL),
-        study_info = tmpdir + '/{version}/merged_study_table.tsv'
+        study_info = tmpdir + '/{version}/merged_study_table.json'
     output:
         tmpdir + '/{version}/sumstat-associations_ot-format.tsv'
     shell:

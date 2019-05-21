@@ -27,7 +27,7 @@ Changes made (Jan 2019):
 conda env create -n v2d_data --file environment.yaml
 
 # Activate environment
-source activate v2d_data
+conda activate v2d_data
 
 # Alter configuration file
 nano config.yaml

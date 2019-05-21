@@ -28,7 +28,7 @@ def main():
     top_loci['study_id'] = top_loci['study_id'].apply(add_gwascat_suffix, suffix='_1')
 
     # Load study information, required for case-control information GCST000964
-    study = pd.read_csv(args.study_info, sep='\t', header=0)
+    study = pd.read_json(args.study_info, orient='records', lines=True)
     study['case_prop'] = study['n_cases'] / study['n_initial']
     study = study.loc[:, ['study_id', 'case_prop']]
     study = study.drop_duplicates()
