@@ -4,7 +4,7 @@ channels:
 dependencies:
   - python=3
   - snakemake
-  - pandas=0.24
+  - pandas>=0.24
   - pypy3.5
   - plink
   - scipy
