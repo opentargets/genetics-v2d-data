@@ -68,14 +68,17 @@ def to_superpopulation_proportions(row, pop_map, anc_sep=', '):
         anc_sep (str): separator used to split ancesties by GWAS Catalog. Warning, this is due to change.
 
     '''
-    print(row) # DEBUG
-    
+
     # Parse GWAS cat ancestries
     gwas_anc = {}
     for col in ['ancestry_initial', 'ancestry_replication']:
         for entry in row[col]:
             
-            print(entry)  #  DEBUG
+            # DEBUG
+            try:
+                anc, n = entry.split('=')
+            except:
+                print(row, entry)
 
             # Extract ancestry and n
             anc, n = entry.split('=')
