@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# set -euo pipefail
+set -euo pipefail
 
 # Set args
 cores=32
