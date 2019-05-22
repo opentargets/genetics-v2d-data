@@ -36,8 +36,16 @@ rule write_variant_list:
         tmpdir + '/{version}/ld/variant_list.txt'.format(version=config['version'])
     params:
         varlist = varid_list
-    shell:
-        "zcat < {input} | tail -n +2 | cut -f 2 | sed 's/_/:/g' | sort | uniq > {output}"
+    run:
+        print(params['varlist'])
+        with open(output[0]) as out_h:
+            for var in params['varlist']:
+                out_h.write(
+                    var.replace('_', ':') + '\n'
+                )
+
+    # shell:
+    #     "zcat < {input} | tail -n +2 | cut -f 2 | sed 's/_/:/g' | sort | uniq > {output}"
 
 rule calculate_r_using_plink:
     ''' Uses plink to calculate LD for an input list of variant IDs
