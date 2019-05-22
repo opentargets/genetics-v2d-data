@@ -63,7 +63,6 @@ rule all:
         targets
 
 # Add workflows
-include: 'snakefiles/top_loci_table.Snakefile'
-include: 'snakefiles/study_table.Snakefile'
+include: 'snakefiles/study_and_top_loci_tables.Snakefile'
 include: 'snakefiles/finemapping_table.Snakefile'
 include: 'snakefiles/ld_table_1.Snakefile'
