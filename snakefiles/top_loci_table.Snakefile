@@ -25,8 +25,8 @@ rule extract_gwascat_rsids_from_variant_index:
         these from the variant index. Takes ~2 mins.
     '''
     input:
-        gwascat= tmpdir + '/{version}/gwas-catalog-associations_ontology-annotated.tsv',
-        invar= tmpdir + '/variant-annotation.sitelist.tsv.gz'
+        gwascat = rules.get_gwas_cat_assoc.output,
+        invar = rules.get_variant_index.output
     output:
         tmpdir + '/{version}/variant-annotation.sitelist.GWAScat.tsv.gz'
     shell:
@@ -40,8 +40,8 @@ rule annotate_gwas_cat_with_variant_ids:
         a VCF
     '''
     input:
-        gwascat= tmpdir + '/{version}/gwas-catalog-associations_ontology-annotated.tsv',
-        invar= tmpdir + '/{version}/variant-annotation.sitelist.GWAScat.tsv.gz'
+        gwascat = rules.get_gwas_cat_assoc.output,
+        invar = rules.extract_gwascat_rsids_from_variant_index.output
     output:
         tmpdir + '/{version}/gwas-catalog-associations_ontology_variantID-annotated.tsv'
     shell:
@@ -54,8 +54,8 @@ rule convert_gwas_catalog_to_standard:
     ''' Outputs the GWAS Catalog association data into a standard format
     '''
     input:
-        gwas=tmpdir + '/{version}/gwas-catalog-associations_ontology_variantID-annotated.tsv',
-        id_lut=tmpdir + '/{version}/gwas-catalog_study_id_lut.tsv'
+        gwas = rules.annotate_gwas_cat_with_variant_ids.output,
+        id_lut = rule.make_gwas_cat_studies_table.output.lut
     output:
         out_assoc = tmpdir + '/{version}/gwas-catalog-associations_ot-format.tsv',
         log = 'logs/{version}/gwas-cat-assocs.log'
@@ -74,7 +74,7 @@ rule cluster_gwas_catalog:
         In addition to clustering, this script also filters by p-value.
     '''
     input:
-        tmpdir + '/{version}/gwas-catalog-associations_ot-format.tsv',
+        rules.convert_gwas_catalog_to_standard.output.out_assoc
     output:
         out_assoc=tmpdir + '/{version}/gwas-catalog-associations_ot-format.clustered.tsv',
         log='logs/{version}/gwas-cat-assocs_clustering.log'
@@ -93,21 +93,6 @@ rule cluster_gwas_catalog:
         '--cluster_multi_prop {params.multi_prop} '
         '--log {output.log}'
 
-# rule convert_nealeUKB_to_standard:
-#     ''' Converts the credible set results into a table of top loci in standard
-#         format.
-#     '''
-#     input:
-#         credset=GSRemoteProvider().remote(config['credset'], keep_local=KEEP_LOCAL),
-#         study_info=tmpdir + '/{version}/nealeUKB_study_table.tsv'
-#     output:
-#         tmpdir + '/{version}/nealeUKB-associations_ot-format.tsv'
-#     shell:
-#         'python scripts/format_nealeUKB_assoc.py '
-#         '--inf {input.credset} '
-#         '--study_info {input.study_info} '
-#         '--outf {output}'
-
 rule make_summarystat_toploci_table:
     ''' Converts the toploci table produce from the finemapping pipeline to
         standardised format. Study table is need to know if a study is
@@ -115,7 +100,7 @@ rule make_summarystat_toploci_table:
     '''
     input:
         toploci=GSRemoteProvider().remote(config['toploci'], keep_local=KEEP_LOCAL),
-        study_info = tmpdir + '/{version}/merged_study_table.json'
+        study_info = rules.merge_study_tables.output
     output:
         tmpdir + '/{version}/sumstat-associations_ot-format.tsv'
     shell:
@@ -128,8 +113,8 @@ rule merge_gwascat_and_sumstat_toploci:
     ''' Merges associations from gwas_cat and sumstat derived
     '''
     input:
-        gwascat = tmpdir + '/{version}/gwas-catalog-associations_ot-format.clustered.tsv',
-        sumstat = tmpdir + '/{version}/sumstat-associations_ot-format.tsv'
+        gwascat = rules.cluster_gwas_catalog.output.out_assoc,
+        sumstat = rules.make_summarystat_toploci_table.output
     output:
         'output/{version}/toploci.parquet'
     shell:
@@ -142,7 +127,7 @@ rule toploci_to_GCS:
     ''' Copy to GCS
     '''
     input:
-        'output/{version}/toploci.parquet'
+        rules.merge_gwascat_and_sumstat_toploci.output
     output:
         GSRemoteProvider().remote(
             '{gs_dir}/{{version}}/toploci.parquet'.format(gs_dir=config['gs_dir'])

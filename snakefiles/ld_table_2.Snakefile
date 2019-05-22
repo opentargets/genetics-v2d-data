@@ -123,7 +123,7 @@ rule ld_to_GCS:
     ''' Copy to GCS
     '''
     input:
-        'output/{version}/ld.parquet'
+        rules.weight_studies_to_final.output
     output:
         GSRemoteProvider().remote(
             '{gs_dir}/{{version}}/ld.parquet'.format(gs_dir=config['gs_dir'])

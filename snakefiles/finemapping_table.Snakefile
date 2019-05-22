@@ -38,7 +38,7 @@ rule convert_finemapping_to_standard:
     ''' Extract required fields from credible set file
     '''
     input:
-        'tmp/finemapping/{version}/credset.gwas_only.json.gz'
+        rules.filter_credible_sets.output
     output:
         'output/{version}/finemapping.parquet'
     shell:
@@ -50,7 +50,7 @@ rule finemap_to_GCS:
     ''' Copy to GCS
     '''
     input:
-        'output/{version}/finemapping.parquet'
+        rules.convert_finemapping_to_standard.output
     output:
         GSRemoteProvider().remote(
             '{gs_dir}/{{version}}/finemapping.parquet'.format(gs_dir=config['gs_dir'])
