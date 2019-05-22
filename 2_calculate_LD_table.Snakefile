@@ -27,12 +27,20 @@ if 'version' not in config:
 in_manifest = 'output/{version}/ld_analysis_input.tsv.gz'.format(version=config['version'])
 
 # Load manifest
-manifest = pd.read_csv(in_manifest, sep='\t', header=0) #.iloc[:100, :]
+manifest = pd.read_csv(
+    in_manifest,
+    sep='\t',
+    header=0,
+    low_memory=False
+)
 
 # Ony keep chromosomes in 1000G
-valid_chroms = [str(x) for x in range(1, 23)] + ['X']
+valid_chroms = [str(x) for x in range(1, 23)] + ['X'] # DEBUG
+# valid_chroms = ['22']
 manifest.chrom = manifest.chrom.astype(str)
 manifest = manifest.loc[manifest.chrom.isin(valid_chroms), :]
+
+# manifest = manifest.iloc[:20, :] # DEBUG
 
 # Make variant id list
 varid_list = manifest.variant_id.unique().tolist()
