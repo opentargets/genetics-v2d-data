@@ -22,6 +22,10 @@ def main():
     manifest = pd.read_csv(args.in_manifest, sep='\t', header=0)
     ld = pd.read_csv(args.in_ld, sep='\t', header=0)
 
+    # Replace ":" with "_" in ld to match manifest
+    for col in ['index_variant_id', 'tag_variant_id']:
+        ld[col] = ld[col].str.replace(':', '_')
+
     # Merge ld to manifest
     man_ld = pd.merge(manifest, ld,
                       left_on='variant_id', right_on='index_variant_id',
