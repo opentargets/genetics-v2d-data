@@ -31,21 +31,6 @@ rule make_gwas_cat_studies_table:
         '--outf {output.main} '
         '--out_id_lut {output.lut}'
 
-# rule process_efo_curation:
-#     ''' Downloads EFO curation, applies filters, merges
-#     Finally, maps EFOs to mapped trait names using ? API.
-#     '''
-#     input:
-#         icd10=GSRemoteProvider().remote(config['neale_efo_icd10'], keep_local=KEEP_LOCAL),
-#         selfrep=GSRemoteProvider().remote(config['neale_efo_self'], keep_local=KEEP_LOCAL)
-#     output:
-#         tmpdir + '/{version}/nealeUKB_efo_curation.tsv'
-#     shell:
-#         'python scripts/process_nealeUKB_efo_curations.py '
-#         '--in_icd10 "{input.icd10}" '
-#         '--in_self "{input.selfrep}" '
-#         '--outf {output}'
-
 rule make_UKB_studies_table:
     ''' Makes study table for UKB summary statistics (Neale v2 and SAIGE)
     '''
@@ -66,8 +51,8 @@ rule merge_study_tables:
     ''' Merges the GWAS Catalog and Neale UK Biobank study tables together
     '''
     input:
-        gwas = tmpdir + '/{version}/gwas-catalog_study_table.json',
-        ukb=tmpdir + '/{version}/UKB_study_table.json'
+        gwas = rules.make_gwas_cat_studies_table.output.main,
+        ukb = rules.make_UKB_studies_table.output.study_table
     output:
         tmpdir + '/{version}/merged_study_table.json'
     shell:
@@ -80,7 +65,7 @@ rule get_efo_categories:
     ''' Uses OLS API to get "therapeutic area" / category for each EFO
     '''
     input:
-        study_table = tmpdir + '/{version}/merged_study_table.json',
+        study_table = rules.merge_study_tables.output,
         therapeutic_areas = config['efo_therapeutic_areas']
     output:
         tmpdir + '/{version}/efo_categories.json'
@@ -104,10 +89,10 @@ rule study_table_to_parquet:
     ''' Converts study table to final parquet
     '''
     input:
-        study_table = tmpdir + '/{version}/merged_study_table.json',
-        sumstat_studies = tmpdir + '/{version}/studies_with_sumstats.tsv',
-        efo_anno = tmpdir + '/{version}/efo_categories.json',
-        top_loci='output/{version}/toploci.parquet',
+        study_table = rules.merge_study_tables.output,
+        sumstat_studies = rules.list_studies_with_sumstats.output,
+        efo_anno = rules.get_efo_categories.output,
+        top_loci = rules.merge_gwascat_and_sumstat_toploci.output,
         therapeutic_areas = config['efo_therapeutic_areas']
     output:
         'output/{version}/studies.parquet'
@@ -127,7 +112,7 @@ rule study_to_GCS:
     ''' Copy to GCS
     '''
     input:
-        'output/{version}/studies.parquet'
+        rules.study_table_to_parquet.output
     output:
         GSRemoteProvider().remote(
             '{gs_dir}/{{version}}/studies.parquet'.format(gs_dir=config['gs_dir'])
