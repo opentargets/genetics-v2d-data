@@ -38,7 +38,7 @@ rule write_variant_list:
         varlist = varid_list
     run:
         print(params['varlist'])
-        with open(output[0]) as out_h:
+        with open(output[0], 'w') as out_h:
             for var in params['varlist']:
                 out_h.write(
                     var.replace('_', ':') + '\n'
