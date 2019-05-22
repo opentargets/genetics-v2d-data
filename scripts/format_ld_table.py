@@ -18,7 +18,7 @@ def main():
     args = parse_args()
 
     # Load
-    ld = pd.read_csv(args.inf, sep='\t', header=0)
+    ld = pd.read_csv(args.inf, sep='\t', header=0, low_memory=False)
 
     # Create table which tells us if LD is available for a given (study, lead)
     ld_available = ld.loc[:, ['study_id', 'index_variant_id']].drop_duplicates()

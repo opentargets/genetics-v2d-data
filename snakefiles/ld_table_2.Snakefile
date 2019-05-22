@@ -46,12 +46,8 @@ rule calculate_r_using_plink:
     ''' Uses plink to calculate LD for an input list of variant IDs
     '''
     input:
-        bfiles = expand(tmpdir + '/{version}/ld/1000Genomep3/{pop}/{pop}.{chrom}.1000Gp3.20130502.{ext}',
-                        pop=hap1000G_pops,
-                        chrom=hap1000G_chroms,
-                        ext=['bed', 'bim', 'fam'],
-                        version=config['version']),
-        varfile = tmpdir + '/{version}/ld/variant_list.txt'.format(version=config['version'])
+        bfiles = rules.get_1000G_from_GCS.output,
+        varfile = rules.write_variant_list.output
     output:
         expand(tmpdir + '/' + str(config['version']) + '/ld/ld_each_variant/{varid}.ld.tsv.gz',
                varid=varid_list)
@@ -77,8 +73,7 @@ rule concat_ld_scores:
     ''' Concat LD caluclated using plink to a single table
     '''
     input:
-        expand(tmpdir + '/' + str(config['version']) + '/ld/ld_each_variant/{varid}.ld.tsv.gz',
-               varid=varid_list)
+        rules.calculate_r_using_plink.output
     output:
         tmpdir + '/{version}/ld/top_loci_variants.ld.gz'
     params:
@@ -92,7 +87,7 @@ rule calc_study_specific_weighted_r2:
     ''' Merge LD to manifest and calculate overall weighted R2
     '''
     input:
-        ld=tmpdir + '/{version}/ld/top_loci_variants.ld.gz',
+        ld = rules.concat_ld_scores.output,
         manifest=in_manifest
     output:
         tmpdir + '/{version}/ld/study_weighted.ld.gz'
@@ -106,7 +101,7 @@ rule weight_studies_to_final:
     ''' Make finalised output of LD table
     '''
     input:
-        ld = tmpdir + '/{version}/ld/study_weighted.ld.gz',
+        ld = rules.calc_study_specific_weighted_r2.output,
         manifest = in_manifest
     output:
         'output/{version}/ld.parquet'
