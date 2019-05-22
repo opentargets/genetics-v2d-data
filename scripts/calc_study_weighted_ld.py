@@ -30,9 +30,9 @@ def main():
     man_ld = pd.merge(manifest, ld,
                       left_on='variant_id', right_on='index_variant_id',
                       how='inner')
-    print(man_ld.head())
-    print(man_ld.shape)
-    print(man_ld.columns)
+    # print(man_ld.head())
+    # print(man_ld.shape)
+    # print(man_ld.columns)
 
     # Convert correlations and weights to numpy arrays
     r = man_ld.loc[:, ['R_AFR', 'R_AMR', 'R_EAS', 'R_EUR', 'R_SAS']].values

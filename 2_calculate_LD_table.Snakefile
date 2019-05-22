@@ -40,7 +40,7 @@ valid_chroms = [str(x) for x in range(1, 23)] + ['X'] # DEBUG
 manifest.chrom = manifest.chrom.astype(str)
 manifest = manifest.loc[manifest.chrom.isin(valid_chroms), :]
 
-manifest = manifest.iloc[:20, :] # DEBUG
+# manifest = manifest.iloc[:20, :] # DEBUG
 
 # Make variant id list
 varid_list = manifest.variant_id.unique().tolist()
