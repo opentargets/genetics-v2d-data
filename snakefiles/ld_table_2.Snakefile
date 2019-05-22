@@ -30,17 +30,14 @@ rule write_variant_list:
     ''' Write list variants to a file. Variants must be in the same format as
         in the bim files chrom:pos:ref:alt
     '''
+    input:
+        in_manifest
     output:
         tmpdir + '/{version}/ld/variant_list.txt'.format(version=config['version'])
     params:
         varlist = varid_list
-    run:
-        with open(output[0], 'w') as out_h:
-            for variant in params['varlist']:
-                out_h.write(
-                    variant.replace('_', ':') + '\n'
-                )
-
+    shell:
+        "zcat < {input} | tail -n +2 | cut -f 2 | sed 's/_/:/g' | sort | uniq > {output}"
 
 rule calculate_r_using_plink:
     ''' Uses plink to calculate LD for an input list of variant IDs
