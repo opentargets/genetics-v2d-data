@@ -1,3 +1,11 @@
+'''
+Contains Snakemake rules to make the study and top loci tables.
+
+The rules for each table are interspersed with each other due to
+inter-dependencies.
+
+'''
+
 import pandas as pd
 import numpy as np
 import json
