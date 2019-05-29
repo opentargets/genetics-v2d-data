@@ -163,7 +163,7 @@ rule make_UKB_studies_table:
 
 # "Study table" rule that need to be above `make_summarystat_toploci_table`
 rule merge_study_tables:
-    ''' Merges the GWAS Catalog and Neale UK Biobank study tables together
+    ''' Merges the GWAS Catalog and Neale UK Biobank study tables together.
     '''
     input:
         gwas = rules.make_gwas_cat_studies_table.output.main,
@@ -236,7 +236,11 @@ rule list_studies_with_sumstats:
         'gsutil -m ls -d "{params.url}" > {output}'
 
 rule study_table_to_parquet:
-    ''' Converts study table to final parquet
+    ''' Converts study table to final parquet.
+        
+        It is here that GWAS Catalog study accessions will have their suffixes
+        stripped if the study comes from summary statistics!
+        
     '''
     input:
         study_table = rules.merge_study_tables.output,

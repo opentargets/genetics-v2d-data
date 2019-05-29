@@ -24,9 +24,6 @@ def main():
     # Only keep type == gwas
     top_loci = top_loci.loc[top_loci['type'] == 'gwas', :]
 
-    # Add suffix to GWAS Catalog IDs
-    top_loci['study_id'] = top_loci['study_id'].apply(add_gwascat_suffix, suffix='_1')
-
     # Load study information, required for case-control information GCST000964
     study = pd.read_json(args.study_info, orient='records', lines=True)
     study['case_prop'] = study['n_cases'] / study['n_initial']
@@ -82,14 +79,6 @@ def main():
     # Sort and save
     top_loci = top_loci.sort_values(['study_id', 'pval_exponent', 'pval_mantissa'])
     top_loci.to_csv(args.outf, sep='\t', index=None)
-
-def add_gwascat_suffix(s, suffix="_1"):
-    ''' Adds gwas catalog suffix
-    '''
-    if s.startswith('GCST'):
-        return s + suffix
-    else:
-        return s
 
 def extract_effect_sizes(row):
     ''' Extract beta, oddsr, lower_ci, upper_ci

@@ -256,8 +256,13 @@ def make_new_study_id(df):
             cache[accession]['counter'] += 1
             cache[accession][trait] = cache[accession]['counter']
 
-        # Create new id
-        new_id = '{0}_{1}'.format(accession, cache[accession][trait])
+        # Create new id. only add suffix if counter > 1
+        if cache[accession][trait] == 1:
+            new_id = accession
+        elif cache[accession][trait] > 1:
+            new_id = '{0}_{1}'.format(accession, cache[accession][trait])
+        else:
+            sys.exit('Error: counter < 1')
         new_ids.append(new_id)
 
     return new_ids

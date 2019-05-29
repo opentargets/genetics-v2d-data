@@ -43,16 +43,10 @@ def main():
             # Get study_id
             line = line.rstrip().rstrip('/')
             stid = os.path.basename(line).replace('.parquet', '')
-            # If GCST id, add "_1" suffix
-            if stid.startswith('GCST'):
-                from_sumstats.add(stid + '_1')
-            else:
-                from_sumstats.add(stid)
+            from_sumstats.add(stid)
     
     # Annotate study table with field showing if there are sumstats
-    merged['has_sumstats'] = [
-        stid in from_sumstats for stid in merged['study_id']
-    ]
+    merged['has_sumstats'] = merged['study_id'].isin(from_sumstats)
 
     #
     # Annotate EFOs with therapeutic area (trait category) --------------------
@@ -90,7 +84,6 @@ def main():
     #
     # Format output parquet ---------------------------------------------------
     #
-
 
     # # Debug
     # merged.to_csv('tmp_study_table.tsv', sep='\t', index=None)
