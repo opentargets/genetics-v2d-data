@@ -28,7 +28,7 @@ def main():
     # (association) table in order to get subphenotype in the
     # "P-VALUE (TEXT)" field.
     # We can't use the top loci table by itself as this would only include
-    # studies with > 0 associations(may not be valid for phewas studies).
+    # studies with > 0 associations (may not be valid for phewas studies).
 
     # Load GWAS Catalog's study table
     cols_to_keep = ['STUDY ACCESSION', 'PUBMEDID', 'DATE', 'JOURNAL', 'STUDY',
@@ -58,8 +58,9 @@ def main():
         gwascat_studies, toploci_studies,
         on=cols_to_keep,
         how='outer'
-    )
+    ).fillna('')
 
+    # DEBUG
     studies.to_csv('tmp/studies.tsv', sep='\t', index=None)
 
     # Remove Sun et al pQTL study

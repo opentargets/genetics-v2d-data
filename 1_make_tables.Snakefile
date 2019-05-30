@@ -16,7 +16,7 @@ from datetime import date
 # Load configuration
 configfile: "configs/config.yaml"
 tmpdir = config['temp_dir']
-KEEP_LOCAL = False
+KEEP_LOCAL = True
 UPLOAD = True
 
 if 'version' not in config:

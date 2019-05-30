@@ -238,9 +238,16 @@ rule list_studies_with_sumstats:
 rule study_table_to_parquet:
     ''' Converts study table to final parquet.
         
-        It is here that GWAS Catalog study accessions will have their suffixes
-        stripped if the study comes from summary statistics!
+        study_table: merged study table
+        sumstat_studies: list of study IDs with sumstats
+        top_loci: top loci table (needed to add number of associated loci)
+        efo_anno: EFO to therapeautic area mapping json
+        therapeutic_areas: list of "therapeutic areas", needed to sort the
+                           efo_anno
         
+        This task will fail if there are any study IDs with summary stats
+        that are not found in the merged study table, this is required
+        because of https://github.com/opentargets/genetics/issues/354 
     '''
     input:
         study_table = rules.merge_study_tables.output,

@@ -23,15 +23,6 @@ def main():
     # Load
     merged = pd.read_json(args.in_study_table, orient='records', lines=True)
 
-    # Load the number of associated loci per study
-    top_loci = pd.read_parquet(args.in_toploci, engine='pyarrow')
-    num_loci = ( top_loci
-                   .groupby('study_id')
-                   .size().reset_index(name='counts')
-                   .rename(columns={'counts': 'num_assoc_loci'}) )
-    merged = pd.merge(merged, num_loci, how='left', on='study_id')
-    merged['num_assoc_loci'] = merged['num_assoc_loci'].fillna(value=0).astype(int)
-
     #
     # Annotate whether summary stats are available ----------------------------
     #
@@ -47,6 +38,111 @@ def main():
     
     # Annotate study table with field showing if there are sumstats
     merged['has_sumstats'] = merged['study_id'].isin(from_sumstats)
+
+    #
+    # Fail if there are any sumstat studies not in table ----------------------
+    #
+
+    # Get list of study IDs that are in the sumstats but not the study table
+    from_sumstats_series = pd.Series(list(from_sumstats))
+    missing_ids = from_sumstats_series[
+        ~from_sumstats_series.isin(merged['study_id'])
+    ]
+
+    # Add missing studies manually (we shouldn't have to do this but
+    # occasionally GWAS Catalog will remove studies without warning due to
+    # a curation error being detected)
+    manual_additions = pd.DataFrame([
+        {'ancestry_initial': 'European=360063',
+        'ancestry_replication': None,
+        'n_cases': 108473,
+        'n_initial': 360063,
+        'n_replication': None,
+        'pmid': None,
+        'pub_author': 'UKB Neale v2',
+        'pub_date': '2018-08-01',
+        'pub_journal': '',
+        'pub_title': '',
+        'study_id': 'NEALE2_6160_1',
+        'trait_efos': None,
+         'trait_reported': 'Leisure/social activities: Sports club or gym',
+        'has_sumstats': True},
+        {'ancestry_initial': 'European=360088',
+        'ancestry_replication': None,
+        'n_cases': 326854,
+        'n_initial': 360088,
+        'n_replication': None,
+        'pmid': None,
+        'pub_author': 'UKB Neale v2',
+        'pub_date': '2018-08-01',
+        'pub_journal': '',
+        'pub_title': '',
+         'study_id': 'NEALE2_670_1',
+        'trait_efos': None,
+        'trait_reported': 'Type of accommodation lived in: A house or bungalow',
+        'has_sumstats': True},
+        {'ancestry_initial': 'European=359931',
+        'ancestry_replication': None,
+        'n_cases': 2818,
+        'n_initial': 359931,
+        'n_replication': None,
+        'pmid': None,
+        'pub_author': 'UKB Neale v2',
+        'pub_date': '2018-08-01',
+        'pub_journal': '',
+        'pub_title': '',
+        'study_id': 'NEALE2_6142_7',
+        'trait_efos': None,
+         'trait_reported': 'Current employment status: Full or part-time student',
+        'has_sumstats': True},
+        {'ancestry_initial': 'European=20883',
+         'ancestry_replication': 'European=41309;Greater Middle Eastern (Middle Eastern / North African / Persian)=493;South Asian=1174;East Asian=5409',
+         'n_cases': 5956,
+         'n_initial': 20883,
+         'n_replication': 48385,
+         'pmid': 'PMID:26192919',
+         'pub_author': 'Liu JZ',
+         'pub_date': '2015-07-20',
+         'pub_journal': 'Nat Genet',
+         'pub_title': 'Association analyses identify 38 susceptibility loci for inflammatory bowel disease and highlight shared genetic risk across populations.',
+         'study_id': 'GCST003044',
+         'trait_efos': ['EFO_0000384'],
+         'trait_reported': "Crohn's disease"}
+    ])
+
+    # Only keep manual additions if they are missing (when GWAS Catalog re-add
+    # them at a later I won't have to do anything)
+    manual_additions = manual_additions.loc[
+        manual_additions['study_id'].isin(missing_ids)
+    ]
+    
+    # Merge manual additions
+    merged = pd.concat([merged, manual_additions], axis=0, sort=True)
+
+    # Assert that there are no longer any missing studies
+    missing_ids = from_sumstats_series[
+        ~from_sumstats_series.isin(merged['study_id'])
+    ]
+    if len(missing_ids) > 0:
+        sys.exit(
+            'ERROR: the {0} following study IDs are in the summary statistics '
+            'but are missing from the study table, they will need adding '
+            'manually:\n{1}'.format(len(missing_ids), missing_ids)
+        )
+
+    #
+    # Annotate number of associated loci from top loci table ------------------
+    #
+
+    # Load the number of associated loci per study
+    top_loci = pd.read_parquet(args.in_toploci, engine='pyarrow')
+    num_loci = (top_loci
+                .groupby('study_id')
+                .size().reset_index(name='counts')
+                .rename(columns={'counts': 'num_assoc_loci'}))
+    merged = pd.merge(merged, num_loci, how='left', on='study_id')
+    merged['num_assoc_loci'] = merged['num_assoc_loci'].fillna(
+        value=0).astype(int)
 
     #
     # Annotate EFOs with therapeutic area (trait category) --------------------
