@@ -58,6 +58,9 @@ You can use the key file with Google CLI commands by specifying `GOOGLE_APPLICAT
 #### 3. Activate conda environment
 
 ##### a. On your machine
+
+**NOTE:** If you use your local environment you need to install Conda and Google Cloud SDK.
+
 ```
     # Install dependencies into isolated environment
     conda env create -n v2d_data --file environment.yaml
