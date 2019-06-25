@@ -141,8 +141,6 @@ def make_trait_reported_string(s_raw):
     
     return trait
 
-
-
 def count_prefixes(l, sep=': '):
     ''' Counts the occurence of prefixes based on sep
     '''
