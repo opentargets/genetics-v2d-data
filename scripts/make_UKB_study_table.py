@@ -132,9 +132,16 @@ def make_trait_reported_string(s_raw):
 
     # Move prefix to end if exists
     if len(parts) == 2:
-        return " | ".join([parts[1], parts[0]])
+        trait = " | ".join([parts[1], parts[0]])
     else:
-        return s_raw
+        trait = s_raw
+
+    # Capitalise the frist letter
+    trait = trait.capitalize()
+    
+    return trait
+
+
 
 def count_prefixes(l, sep=': '):
     ''' Counts the occurence of prefixes based on sep
