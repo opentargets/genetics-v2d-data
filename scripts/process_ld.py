@@ -38,6 +38,7 @@ def main():
     global spark
     spark = (
         pyspark.sql.SparkSession.builder
+        .config("spark.master", "local[*]")
         .getOrCreate()
     )
     print('Spark version: ', spark.version)
