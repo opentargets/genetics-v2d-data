@@ -31,7 +31,7 @@ therapeutic_area_unknown_label: 'Uncategorised'
 url_1000G: 'gs://genetics-portal-input/1000Genomes_phase3/plink_format_b38'
 gwascat_2_superpop: 'configs/gwascat_superpopulation_lut.curated.v2.tsv'
 ld_window: 500
-min_r2: 0.01
+min_r2: 0.5
 
 # Variant index
 var_index_sitelist: 'gs://genetics-portal-staging/variant-annotation/190129/variant-annotation.sitelist.tsv.gz'

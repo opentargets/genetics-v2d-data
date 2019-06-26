@@ -74,59 +74,39 @@ rule calculate_r_using_plink:
         '--outdir {params.outdir} '
         '--delete_temp'
 
-rule concat_ld_scores:
-    ''' Concat LD caluclated using plink to a single table
+rule process_ld:
+    ''' Process the LD table, including:
+        - study/population specific weighting
+        - PICS LD fine mapping metho
+        - output parquet
     '''
     input:
-        rules.calculate_r_using_plink.output
+        ld_files=rules.calculate_r_using_plink.output,
+        manifest=in_manifest,
+        toploci='output/{version}/toploci.parquet'
     output:
-        tmpdir + '/{version}/ld/top_loci_variants.ld.gz'
+        directory('output/{version}/ld.parquet')
     params:
-        in_pattern = tmpdir + '/' + str(config['version']) + '/ld/ld_each_variant/\*.ld.tsv.gz'
+        in_ld_pattern = tmpdir + '/{version}/ld/ld_each_variant/*.ld.tsv.gz'.format(version=config['version']),
+        min_r2 = config['min_r2']
     shell:
-        'python scripts/merge_ld_outputs.py '
-        '--inpattern {params.in_pattern} '
-        '--output {output}'
-
-rule calc_study_specific_weighted_r2:
-    ''' Merge LD to manifest and calculate overall weighted R2
-    '''
-    input:
-        ld = rules.concat_ld_scores.output,
-        manifest=in_manifest
-    output:
-        tmpdir + '/{version}/ld/study_weighted.ld.gz'
-    shell:
-        'python scripts/calc_study_weighted_ld.py '
-        '--in_ld {input.ld} '
-        '--in_manifest {input.manifest} '
-        '--out {output}'
-
-rule weight_studies_to_final:
-    ''' Make finalised output of LD table
-    '''
-    input:
-        ld = rules.calc_study_specific_weighted_r2.output,
-        manifest = in_manifest
-    output:
-        'output/{version}/ld.parquet'
-    params:
-        min_r2=config['min_r2']
-    shell:
-        'python scripts/format_ld_table.py '
-        '--inf {input.ld} '
-        '--in_manifest {input.manifest} '
-        '--outf {output} '
+        'python scripts/process '
+        '--in_ld_pattern {params.in_ld_pattern} '
+        '--in_manifest {input.manifest}'
+        '--in_top_loci {input.toploci}'
         '--min_r2 {params.min_r2}'
+        '--out {output}'
 
 rule ld_to_GCS:
     ''' Copy to GCS
     '''
     input:
-        rules.weight_studies_to_final.output
+        rules.process_ld.output
     output:
         GSRemoteProvider().remote(
             '{gs_dir}/{{version}}/ld.parquet'.format(gs_dir=config['gs_dir'])
             )
+    params:
+        outgs = config['gs_dir'] + '/{version}/ld.parquet'
     shell:
-        'cp {input} {output}'
+        'gsutil -m cp -r {input} {params}'
