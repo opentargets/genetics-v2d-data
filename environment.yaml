@@ -12,3 +12,4 @@ dependencies:
   - pyarrow
   - requests>=2.18.0
   - parallel
+  - pyspark

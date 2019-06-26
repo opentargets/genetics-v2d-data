@@ -24,7 +24,7 @@ if 'version' not in config:
 # Load LD manifest and variant ID LUT
 #
 
-in_manifest = 'output/{version}/ld_analysis_input.tsv.gz'.format(version=config['version'])
+in_manifest = 'output/{version}/ld_analysis_input.tsv'.format(version=config['version'])
 
 # Load manifest
 manifest = pd.read_csv(

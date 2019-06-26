@@ -12,7 +12,7 @@ rule make_ld_input_queries:
         study = rules.study_table_to_parquet.output,
         pop_map=config['gwascat_2_superpop']
     output:
-        'output/{version}/ld_analysis_input.tsv.gz'
+        'output/{version}/ld_analysis_input.tsv'
     shell:
         'python scripts/create_ld_input_table.py '
         '--in_loci {input.loci} '

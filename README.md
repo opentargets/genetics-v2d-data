@@ -23,6 +23,9 @@ Changes made (Jan 2019):
 ### Usage
 
 ```
+# Install java 8 e.g.
+sudo apt install -yf openjdk-8-jre-headless openjdk-8-jdk
+
 # Install dependencies into isolated environment
 conda env create -n v2d_data --file environment.yaml
 
