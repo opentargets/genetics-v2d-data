@@ -71,12 +71,19 @@ def main():
         on='index_variant_id'
     )
 
-    # Replace all R values == 1 with 0.9999995, otherwise we get error
-    # This is reverted later by rounding to 6 dp
+    # Replace R fields
     for coln in ['R_AFR', 'R_AMR', 'R_EAS', 'R_EUR', 'R_SAS']:
-        data = data.withColumn(
-            coln, 
-            when(col(coln) == 1, 0.9999995).otherwise(col(coln))
+        data = (
+            data
+            # Replace all R values == 1 with 0.9999995, otherwise we get error
+            # This is reverted later by rounding to 6 dp
+            .withColumn(coln,
+                when(col(coln) == 1, 0.9999995).otherwise(col(coln))
+            )
+            # Fill nulls with 0
+            .withColumn(coln,
+                when(col(coln).isNull(), 0).otherwise(col(coln))
+            )
         )
 
     # Fisher transform correlations to z-scores
