@@ -49,6 +49,13 @@ def main():
     gwas = pd.merge(gwas, id_lut,
                     on=['STUDY ACCESSION', 'P-VALUE (TEXT)'],
                     how='left')
+    
+    # DEBUG, had duplicated study, pvalue text
+    # print(prerowcount)
+    # print(gwas.shape)
+    # print(id_lut.shape)
+    # print(id_lut.drop_duplicates(subset=['STUDY ACCESSION', 'P-VALUE (TEXT)']).shape)
+    # id_lut.loc[id_lut.duplicated(subset=['STUDY ACCESSION', 'P-VALUE (TEXT)'], keep=False), :].to_csv('tmp/duplicated.tsv', sep='\t', index=None)
 
     assert(gwas.study_id.isna().sum() == 0) # Assert no missing study IDs
     assert(gwas.shape[0] == prerowcount)    # Assert no duplicated rows

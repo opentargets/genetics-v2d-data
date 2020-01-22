@@ -50,9 +50,9 @@ def main():
           .drop_duplicates()
     )
 
-    # Gorupby will drop null 'P-VALUE (TEXT)' fields
+    # Groupby will drop null 'P-VALUE (TEXT)' fields
     toploci_studies['P-VALUE (TEXT)'] = toploci_studies['P-VALUE (TEXT)'].fillna('')
-
+     
     # Merge gwascat_studies with toploci_studies
     studies = pd.merge(
         gwascat_studies, toploci_studies,
@@ -60,8 +60,21 @@ def main():
         how='outer'
     ).fillna('')
 
-    # DEBUG
-    studies.to_csv('tmp/studies.tsv', sep='\t', index=None)
+    # Sometimes GWAS Catalog "DISEASE/TRAIT" information does not match between
+    # their study and association table.
+    # HACK: deduplicate by study_id and pval text
+    studies = studies.drop_duplicates(
+        subset=['STUDY ACCESSION', 'P-VALUE (TEXT)']
+    )
+
+    # # DEBUG
+    # studies.loc[studies['STUDY ACCESSION'] == 'GCST009066', :].to_csv('tmp/studies_GCST009066.tsv', sep='\t', index=None)
+    # studies.to_csv('tmp/studies.tsv', sep='\t', index=None)
+    # toploci_studies.to_csv('tmp/toploci_studies.tsv', sep='\t', index=None)
+    # print(gwascat_studies.loc[gwascat_studies['STUDY ACCESSION'] == 'GCST009066', :].shape)
+    # print(toploci_studies.loc[toploci_studies['STUDY ACCESSION'] == 'GCST009066', :].shape)
+    # print(studies.loc[studies['STUDY ACCESSION'] == 'GCST009066', :].shape)
+    # sys.exit()
 
     # Remove Sun et al pQTL study
     studies = studies.loc[studies['STUDY ACCESSION'] != 'GCST005806', :]
@@ -300,7 +313,7 @@ def parse_ancestry_info(inf):
     '''
     anc_dict = {}
     df = pd.read_csv(inf, sep='\t', header=0, index_col=False)
-    grouped = df.groupby(['STUDY ACCCESSION', 'STAGE'])
+    grouped = df.groupby(['STUDY ACCESSION', 'STAGE'])
     for name, group in grouped:
         # Add study id to output dict
         study_id, stage = name

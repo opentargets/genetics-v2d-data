@@ -27,7 +27,7 @@ rule ld_input_to_GCS:
         rules.make_ld_input_queries.output
     output:
         GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/extras/ld_analysis_input.tsv.gz'.format(gs_dir=config['gs_dir'])
+            '{gs_dir}/{{version}}/extras/ld_analysis_input.tsv'.format(gs_dir=config['gs_dir'])
             )
     shell:
         'cp {input} {output}'
