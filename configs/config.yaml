@@ -10,8 +10,8 @@ gwas_cat_cluster_multi_proportion: 0.3 # For a given study, if more than this pr
 
 # Summary statistics finemapping pipeline output files
 gcs_sumstat_pattern: 'gs://genetics-portal-sumstats-b38/unfiltered/gwas/*.parquet'
-toploci: 'gs://genetics-portal-staging/finemapping/190430/top_loci.json.gz'
-credsets: 'gs://genetics-portal-staging/finemapping/190430/credset/_SUCCESS' # Need the whole directory, so passing the _SUCCSS file instead to trick snakemake
+toploci: 'gs://genetics-portal-staging/finemapping/190612/top_loci/part-00000-5e9aef09-9aea-4fab-898f-0725f0bbf865-c000.json.gz'
+credsets: 'gs://genetics-portal-staging/finemapping/190612/credset/_SUCCESS' # Need the whole directory, so passing the _SUCCSS file instead to trick snakemake
 
 # UK Biobank (Neale V2 and SAIGE) sumstat manifest files
 ukb_manifest: 'gs://genetics-portal-input/ukb_phenotypes/neale2_saige_study_manifest.190430.tsv'
