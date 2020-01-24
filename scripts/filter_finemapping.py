@@ -13,8 +13,8 @@ import argparse
 import pyspark.sql
 from pyspark.sql.types import *
 from pyspark.sql.functions import *
-from shutil import copyfile
 from glob import glob
+import gzip
 
 def main():
 
@@ -34,20 +34,19 @@ def main():
     (
         spark.read.json(args.in_path)
         .filter(col('type') == 'gwas')
-        .coalesce(1)
+        # .coalesce(1)
         .write.json(
             args.intermediate_path,
-            mode='overwrite',
-            compression='gzip'
+            mode='overwrite'
         )
     )
 
     # Copy intermediate file to final output
-    src_files = glob(os.path.join(args.intermediate_path), '*.json.gz')
-    assert len(src_files) == 1
-    src_file = src_files[0]
-    copyfile(src_file, args.out_path)
-
+    with gzip.open(args.out_path, 'w') as out_h:
+        for inf in glob(os.path.join(args.intermediate_path), '*.json.gz'):
+            with open(inf, 'r') as in_h:
+                for line in in_h:
+                    out_h.write(line)
     
     return 0
 
