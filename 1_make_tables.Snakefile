@@ -42,17 +42,20 @@ targets.append(
 
 if UPLOAD:
     targets.append(GSRemoteProvider().remote(
-    '{gs_dir}/{version}/toploci.parquet'.format(gs_dir=config['gs_dir'],
-        version=config['version']) ))
+        '{gs_dir}/{version}/toploci.parquet'.format(gs_dir=config['gs_dir'],
+            version=config['version'])
+    ))
     targets.append(GSRemoteProvider().remote(
-    '{gs_dir}/{version}/studies.parquet'.format(gs_dir=config['gs_dir'],
-        version=config['version']) ))
+        '{gs_dir}/{version}/studies.parquet'.format(gs_dir=config['gs_dir'],
+            version=config['version'])
+    ))
+    targets.append(
+        'tmp/finemapping.parquet/{version}/_SUCCESS'.format(version=config['version'])
+    )
     targets.append(GSRemoteProvider().remote(
-    '{gs_dir}/{version}/finemapping.parquet/_SUCCESS'.format(gs_dir=config['gs_dir'],
-        version=config['version']) ))
-    targets.append(GSRemoteProvider().remote(
-    '{gs_dir}/{version}/extras/ld_analysis_input.tsv'.format(gs_dir=config['gs_dir'],
-        version=config['version']) ))
+        '{gs_dir}/{version}/extras/ld_analysis_input.tsv'.format(gs_dir=config['gs_dir'],
+            version=config['version'])
+    ))
 
 # Trigger making of targets
 rule all:
