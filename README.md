@@ -53,8 +53,9 @@ snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores 1
 snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores
 snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores
 
-# Dry-run gsutil rsync to copy from staging to live
-gsutil -m rsync -rn gs://genetics-portal-staging/v2d/180904 gs://genetics-portal-data/v2d
+# Upload output dir to google cloud storage
+gsutil -m rsync -r output/$version_date gs://genetics-portal-staging/v2d/$version_date
+
 ```
 
 ### Tables
