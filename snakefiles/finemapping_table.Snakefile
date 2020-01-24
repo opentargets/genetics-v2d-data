@@ -44,5 +44,7 @@ rule finemap_to_GCS:
         GSRemoteProvider().remote(
             '{gs_dir}/{{version}}/finemapping.parquet'.format(gs_dir=config['gs_dir'])
         )
+    params:
+        outgs = config['gs_dir'] + '/{version}/finemapping.parquet'
     shell:
-        'gsutil -m rsync -r {input} {output}'
+        'gsutil -m rsync -r {input} {params}'
