@@ -55,7 +55,7 @@ def main():
     # Repartition and save
     (
         credset
-        .repartitionByRane('lead_chrom', 'lead_pos')
+        .repartitionByRange('lead_chrom', 'lead_pos')
         .write.parquet(
             args.outf,
             mode='overwrite'
