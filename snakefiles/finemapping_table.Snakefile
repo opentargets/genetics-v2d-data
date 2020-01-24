@@ -45,4 +45,4 @@ rule finemap_to_GCS:
             '{gs_dir}/{{version}}/finemapping.parquet'.format(gs_dir=config['gs_dir'])
             )
     shell:
-        'cp {input} {output}'
+        'cp -r {input} {output}'
