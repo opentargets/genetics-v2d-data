@@ -16,7 +16,6 @@ import pandas as pd
 configfile: "configs/config.yaml"
 tmpdir = config['temp_dir']
 KEEP_LOCAL = False
-UPLOAD = True
 if 'version' not in config:
     config['version'] = date.today().strftime("%y%m%d")
 
@@ -54,10 +53,6 @@ targets = []
 # # Make targets for ld table
 targets.append(
     'output/{version}/ld.parquet'.format(version=config['version']) )
-if UPLOAD:
-    targets.append(GSRemoteProvider().remote(
-    '{gs_dir}/{version}/ld.parquet'.format(gs_dir=config['gs_dir'],
-        version=config['version']) ))
 
 # Trigger making of targets
 rule all:

@@ -97,16 +97,3 @@ rule process_ld:
         '--min_r2 {params.min_r2}'
         '--out {output}'
 
-rule ld_to_GCS:
-    ''' Copy to GCS
-    '''
-    input:
-        rules.process_ld.output
-    output:
-        GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/ld.parquet'.format(gs_dir=config['gs_dir'])
-            )
-    params:
-        outgs = config['gs_dir'] + '/{version}/ld.parquet'
-    shell:
-        'gsutil -m rsync -r {input} {params}'

@@ -270,32 +270,3 @@ rule study_table_to_parquet:
         '--in_ta {input.therapeutic_areas} '
         '--unknown_label {params.unknown_label} '
         '--output {output}'
-
-#
-# Copy to GCS -----------------------------------------------------------------
-#
-
-rule study_to_GCS:
-    ''' Copy to GCS
-    '''
-    input:
-        rules.study_table_to_parquet.output
-    output:
-        GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/studies.parquet'.format(gs_dir=config['gs_dir'])
-            )
-    shell:
-        'cp {input} {output}'
-
-rule toploci_to_GCS:
-    ''' Copy to GCS
-    '''
-    input:
-        rules.merge_gwascat_and_sumstat_toploci.output
-    output:
-        GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/toploci.parquet'.format(
-                gs_dir=config['gs_dir'])
-        )
-    shell:
-        'cp {input} {output}'

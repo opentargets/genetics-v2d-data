@@ -15,7 +15,6 @@ from datetime import date
 configfile: "configs/config.yaml"
 tmpdir = config['temp_dir']
 KEEP_LOCAL = False
-UPLOAD = True
 
 if 'version' not in config:
     config['version'] = date.today().strftime("%y%m%d")
@@ -24,14 +23,8 @@ targets = []
 
 # Make targets for locus overlap table (pseudo-coloc)
 targets.append(
-    'output/{version}/locus_overlap.parquet'.format(version=config['version']) )
-if UPLOAD:
-    # targets.append(GSRemoteProvider().remote(
-    # '{gs_dir}/{version}/locus_overlap.tsv.gz'.format(gs_dir=config['gs_dir'],
-    #     version=config['version']) ))
-    targets.append(GSRemoteProvider().remote(
-    '{gs_dir}/{version}/locus_overlap.parquet'.format(gs_dir=config['gs_dir'],
-        version=config['version']) ))
+    'output/{version}/locus_overlap.parquet'.format(version=config['version'])
+)
 
 # Trigger making of targets
 rule all:
@@ -79,14 +72,3 @@ rule format_overlap:
         '--inf {input} '
         '--outf {output}'
 
-rule overlap_to_GCS:
-    ''' Copy to GCS
-    '''
-    input:
-        'output/{version}/locus_overlap.parquet'
-    output:
-        GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/locus_overlap.parquet'.format(gs_dir=config['gs_dir'])
-            )
-    shell:
-        'cp {input} {output}'

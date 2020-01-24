@@ -19,15 +19,3 @@ rule make_ld_input_queries:
         '--in_study {input.study} '
         '--in_popmap {input.pop_map} '
         '--outf {output}'
-
-rule ld_input_to_GCS:
-    ''' Copy to GCS
-    '''
-    input:
-        rules.make_ld_input_queries.output
-    output:
-        GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/extras/ld_analysis_input.tsv'.format(gs_dir=config['gs_dir'])
-            )
-    shell:
-        'cp {input} {output}'

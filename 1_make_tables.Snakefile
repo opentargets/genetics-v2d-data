@@ -17,7 +17,6 @@ from datetime import date
 configfile: "configs/config.yaml"
 tmpdir = config['temp_dir']
 KEEP_LOCAL = True
-UPLOAD = True
 
 if 'version' not in config:
     config['version'] = date.today().strftime("%y%m%d")
@@ -39,23 +38,6 @@ targets.append(
 # Make targets for LD input table
 targets.append(
     'output/{version}/ld_analysis_input.tsv'.format(version=config['version']) )
-
-if UPLOAD:
-    targets.append(GSRemoteProvider().remote(
-        '{gs_dir}/{version}/toploci.parquet'.format(gs_dir=config['gs_dir'],
-            version=config['version'])
-    ))
-    targets.append(GSRemoteProvider().remote(
-        '{gs_dir}/{version}/studies.parquet'.format(gs_dir=config['gs_dir'],
-            version=config['version'])
-    ))
-    targets.append(
-        'tmp/finemapping/{version}/_SUCCESS'.format(version=config['version'])
-    )
-    targets.append(GSRemoteProvider().remote(
-        '{gs_dir}/{version}/extras/ld_analysis_input.tsv'.format(gs_dir=config['gs_dir'],
-            version=config['version'])
-    ))
 
 # Trigger making of targets
 rule all:
