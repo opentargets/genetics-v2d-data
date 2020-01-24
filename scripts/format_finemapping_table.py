@@ -29,7 +29,7 @@ def main():
     
     # Load data
     credset = (
-        spark.read.json(arg.inf)
+        spark.read.json(args.inf)
         .filter(col('type') == 'gwas')
         .filter(col('is95_credset'))
     )
