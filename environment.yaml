@@ -9,7 +9,7 @@ dependencies:
   - plink
   - scipy
   - numpy
-  - pyarrow
+  - pyarrow=0.9
   - requests>=2.18.0
   - parallel
   - pyspark

@@ -20,6 +20,11 @@ Changes made (Jan 2019):
   4. [LD table](#ld-table)
   5. [Locus overlap table](#locus-overlap-table)
 
+
+### Notes
+
+Spark UDFs currently [only supports pyarrow version 0.8](https://spark.apache.org/docs/latest/sql-pyspark-pandas-with-arrow.html#ensure-pyarrow-installed). The pipeline fails with later versions. With spark v3 release. This should be revisited.
+
 ### Usage
 
 ```
@@ -42,7 +47,7 @@ gcloud auth application-default login
 version_date=`date +%y%m%d`
 cores=3
 snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores 1
-export PYSPARK_SUBMIT_ARGS="--driver-memory 80g pyspark-shell"
+export PYSPARK_SUBMIT_ARGS="--driver-memory 50g pyspark-shell"
 snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores
 snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores
 

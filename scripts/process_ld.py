@@ -110,7 +110,6 @@ def main():
     # Round R_overall to 6 dp
     data = data.withColumn('R_overall', round6dp(col('R_overall')))
 
-
     # Convert R to R2
     data = data.withColumn('R2_overall',
         pow(col('R_overall'), 2)
@@ -319,7 +318,7 @@ def arctanh(x):
     ''' Wrap np.arctanh in a UDF'''
     try:
         return float(np.arctanh(x))
-    except AttributeError:
+    except TypeError:
         return None
 
 @udf(DoubleType())
@@ -327,7 +326,7 @@ def tanh(x):
     ''' Wrap np.tanh in a UDF'''
     try:
         return float(np.tanh(x))
-    except AttributeError:
+    except TypeError:
         return None
 
 def load_manifest(inf):
