@@ -4,74 +4,65 @@
 # Ed Mountjoy
 #
 
-import sys
 import os
+import sys
 import argparse
-import pandas as pd
-from pprint import pprint
-from collections import OrderedDict
-from parquet_writer import write_parquet
+import pyspark.sql
+from pyspark.sql.types import *
+from pyspark.sql.functions import *
+from glob import glob
+import gzip
 
 def main():
 
-    # Parse args
+    # Args
     args = parse_args()
 
-    # Load json, only keep type == gwas
-    credset = pd.read_json(args.inf, orient='records', lines=True)
-    credset = credset.loc[credset['type'] == 'gwas', :]
-
-    # Filter to remove rows not in a 95% credible set
-    credset = credset.loc[credset.is95_credset == True, :]
-
-    # Rename and select columns
-    cols = OrderedDict([
-        ('study_id', 'study_id'),
-        ('lead_chrom', 'lead_chrom'),
-        ('lead_pos', 'lead_pos'),
-        ('lead_ref', 'lead_ref'),
-        ('lead_alt', 'lead_alt'),
-        ('tag_chrom', 'tag_chrom'),
-        ('tag_pos', 'tag_pos'),
-        ('tag_ref', 'tag_ref'),
-        ('tag_alt', 'tag_alt'),
-        ('logABF', 'log10_ABF'),
-        ('postprob', 'posterior_prob')
-        ])
-    credset = ( credset.loc[:, list(cols.keys())]
-                       .rename(columns=cols) )
-
-    # Coerce data types
-    dtypes = OrderedDict([
-        ('study_id', 'str'),
-        ('lead_chrom', 'str'),
-        ('lead_pos', 'Int64'),
-        ('lead_ref', 'str'),
-        ('lead_alt', 'str'),
-        ('tag_chrom', 'str'),
-        ('tag_pos', 'Int64'),
-        ('tag_ref', 'str'),
-        ('tag_alt', 'str'),
-        ('log10_ABF', 'float64'),
-        ('posterior_prob', 'float64')
-    ])
-    assert(set(dtypes.keys()) == set(credset.columns))
+    # Make spark session
+    global spark
+    spark = (
+        pyspark.sql.SparkSession.builder
+        .config("spark.master", "local[*]")
+        .getOrCreate()
+    )
+    print('Spark version: ', spark.version)
+    
+    # Load data
     credset = (
-        credset.loc[:, dtypes.keys()]
-        .astype(dtype=dtypes)
+        spark.read.json(arg.inf)
+        .filter(col('type') == 'gwas')
+        .filter(col('is95_credset'))
     )
 
-    # Sort
-    credset = credset.sort_values(
-        ['study_id', 'lead_chrom', 'lead_pos', 'lead_ref', 'lead_alt',
-         'tag_chrom', 'tag_pos', 'tag_ref', 'tag_alt']
+    # Rename columns and cast types
+    credset = (
+        credset
+        .select(
+            col('study_id').cast('str').alias('study_id'),
+            col('lead_chrom').cast('str').alias('lead_chrom'),
+            col('lead_pos').cast('int').alias('lead_pos'),
+            col('lead_ref').cast('str').alias('lead_ref'),
+            col('lead_alt').cast('str').alias('lead_alt'),
+            col('tag_chrom').cast('str').alias('tag_chrom'),
+            col('tag_pos').cast('int').alias('tag_pos'),
+            col('tag_ref').cast('str').alias('tag_ref'),
+            col('tag_alt').cast('str').alias('tag_alt'),
+            col('logABF').cast('float').alias('log10_ABF'),
+            col('postprob').cast('float').alias('posterior_prob'),
+        )
     )
 
-    # Save as parquet
-    write_parquet(credset,
-                  args.outf,
-                  compression='snappy',
-                  flavor='spark')
+    # Repartition and save
+    (
+        credset
+        .repartitionByRane('lead_chrom', 'lead_pos')
+        .write.parquet(
+            args.outf,
+            mode='overwrite'
+        )
+    )
+
+    return 0
 
 def parse_args():
     """ Load command line args """

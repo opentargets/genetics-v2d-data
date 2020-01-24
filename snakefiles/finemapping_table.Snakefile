@@ -23,39 +23,13 @@ rule download_credible_set_directory:
             )
         )
 
-rule filter_credible_sets:
-    ''' Use grep to filter credset jsons, to keep only lines of type gwas
-    '''
-    input:
-        'tmp/finemapping/{version}/credset'
-    output:
-        'tmp/finemapping/{version}/credset.gwas_only.json.gz' # ~ 200 MB
-    params:
-        intermediate='tmp/finemapping/{version}/credset.gwas_only'
-    shell:
-        'python scripts/filter_finemapping.py '
-        '--in_path {input} '
-        '--intermediate_path {params.intermediate} '
-        '--out_path {output}'
-
-# rule filter_credible_sets:
-#     ''' Use grep to filter credset jsons, to keep only lines of type gwas
-#     '''
-#     input:
-#         'tmp/finemapping/{version}/credset'
-#     output:
-#         'tmp/finemapping/{version}/credset.gwas_only.json.gz' # ~ 200 MB
-#     shell:
-#         # Need -h flag to not show filename in grep output
-#         'zgrep -h gwas {input}/*.json.gz | gzip -c > {output}'
-
 rule convert_finemapping_to_standard:
     ''' Extract required fields from credible set file
     '''
     input:
-        rules.filter_credible_sets.output
+        rules.download_credible_set_directory.output
     output:
-        'output/{version}/finemapping.parquet'
+        directory('output/{version}/finemapping.parquet')
     shell:
         'python scripts/format_finemapping_table.py '
         '--inf {input} '

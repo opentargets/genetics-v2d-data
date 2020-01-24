@@ -109,4 +109,4 @@ rule ld_to_GCS:
     params:
         outgs = config['gs_dir'] + '/{version}/ld.parquet'
     shell:
-        'gsutil -m cp -r {input} {params}'
+        'gsutil -m rsync -r {input} {params}'
