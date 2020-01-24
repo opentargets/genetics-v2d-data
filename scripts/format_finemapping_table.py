@@ -38,17 +38,17 @@ def main():
     credset = (
         credset
         .select(
-            col('study_id').cast('str').alias('study_id'),
-            col('lead_chrom').cast('str').alias('lead_chrom'),
-            col('lead_pos').cast('int').alias('lead_pos'),
-            col('lead_ref').cast('str').alias('lead_ref'),
-            col('lead_alt').cast('str').alias('lead_alt'),
-            col('tag_chrom').cast('str').alias('tag_chrom'),
-            col('tag_pos').cast('int').alias('tag_pos'),
-            col('tag_ref').cast('str').alias('tag_ref'),
-            col('tag_alt').cast('str').alias('tag_alt'),
-            col('logABF').cast('float').alias('log10_ABF'),
-            col('postprob').cast('float').alias('posterior_prob'),
+            col('study_id').cast('StringType').alias('study_id'),
+            col('lead_chrom').cast('StringType').alias('lead_chrom'),
+            col('lead_pos').cast('IntegerType').alias('lead_pos'),
+            col('lead_ref').cast('StringType').alias('lead_ref'),
+            col('lead_alt').cast('StringType').alias('lead_alt'),
+            col('tag_chrom').cast('StringType').alias('tag_chrom'),
+            col('tag_pos').cast('IntegerType').alias('tag_pos'),
+            col('tag_ref').cast('StringType').alias('tag_ref'),
+            col('tag_alt').cast('StringType').alias('tag_alt'),
+            col('logABF').cast('DoubleType').alias('log10_ABF'),
+            col('postprob').cast('DoubleType').alias('posterior_prob'),
         )
     )
 
