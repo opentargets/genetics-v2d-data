@@ -90,7 +90,7 @@ rule process_ld:
         in_ld_pattern = tmpdir + '/{version}/ld/ld_each_variant/*.ld.tsv.gz'.format(version=config['version']),
         min_r2 = config['min_r2']
     shell:
-        'python scripts/process '
+        'python scripts/process_ld.py '
         '--in_ld_pattern {params.in_ld_pattern} '
         '--in_manifest {input.manifest}'
         '--in_top_loci {input.toploci}'
