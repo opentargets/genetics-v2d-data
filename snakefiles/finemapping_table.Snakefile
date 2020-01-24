@@ -42,7 +42,9 @@ rule finemap_to_GCS:
         rules.convert_finemapping_to_standard.output
     output:
         GSRemoteProvider().remote(
-            '{gs_dir}/{{version}}/finemapping.parquet'.format(gs_dir=config['gs_dir'])
+            directory(
+                '{gs_dir}/{{version}}/finemapping.parquet'.format(gs_dir=config['gs_dir'])
+            )
         )
     params:
         outgs = config['gs_dir'] + '/{version}/finemapping.parquet'
