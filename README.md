@@ -37,17 +37,19 @@ conda env create -n v2d_data --file environment.yaml
 # Activate environment
 conda activate v2d_data
 
+# Set core ands RAM available
+cores=15
+export PYSPARK_SUBMIT_ARGS="--driver-memory 50g pyspark-shell"
+
 # Alter configuration file
 nano config.yaml
 
 # Authenticate google cloud storage
 gcloud auth application-default login
 
-# Execute workflow (locally)
+# Execute workflow
 version_date=`date +%y%m%d`
-cores=3
 snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores 1
-export PYSPARK_SUBMIT_ARGS="--driver-memory 50g pyspark-shell"
 snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores
 snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores
 
