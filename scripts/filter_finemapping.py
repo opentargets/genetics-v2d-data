@@ -42,10 +42,10 @@ def main():
 
     # Copy intermediate file to final output
     with gzip.open(args.out_path, 'w') as out_h:
-        for inf in glob(os.path.join(args.intermediate_path, '*.json.gz')):
+        for inf in glob(os.path.join(args.intermediate_path, '*.json')):
             with open(inf, 'r') as in_h:
                 for line in in_h:
-                    out_h.write(line)
+                    out_h.write(line.encode())
     
     return 0
 
