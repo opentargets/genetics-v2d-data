@@ -30,20 +30,19 @@ def main():
     )
     print('Spark version: ', spark.version)
     
-    # Write intermediate file
-    (
-        spark.read.json(args.in_path)
-        .filter(col('type') == 'gwas')
-        # .coalesce(1)
-        .write.json(
-            args.intermediate_path,
-            mode='overwrite'
-        )
-    )
+    # # Write intermediate file
+    # (
+    #     spark.read.json(args.in_path)
+    #     .filter(col('type') == 'gwas')
+    #     .write.json(
+    #         args.intermediate_path,
+    #         mode='overwrite'
+    #     )
+    # )
 
     # Copy intermediate file to final output
     with gzip.open(args.out_path, 'w') as out_h:
-        for inf in glob(os.path.join(args.intermediate_path), '*.json.gz'):
+        for inf in glob(os.path.join(args.intermediate_path, '*.json.gz')):
             with open(inf, 'r') as in_h:
                 for line in in_h:
                     out_h.write(line)
