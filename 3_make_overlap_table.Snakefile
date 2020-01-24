@@ -53,11 +53,14 @@ rule calculate_overlaps:
         finemap='output/{version}/finemapping.tsv.gz'
     output:
         tmpdir + '/{version}/locus_overlap.tsv.gz'
+    params:
+        min_r2=config['overlap_min_r2']
     shell:
         'pypy3 scripts/calculate_locus_set_overlaps.py '
         '--top_loci {input.top_loci} '
         '--ld {input.ld} '
         '--finemap {input.finemap} '
+        '--min_r2 {params.min_r2} '
         '--outf {output}'
 
 rule format_overlap:

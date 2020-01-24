@@ -15,7 +15,6 @@ def main():
     # Parse args
     args = parse_args()
     window = 5 * 1e6 # plus/minus 5Mb
-    min_r2 = 0.7
     only_save_overlapping = True
 
     #
@@ -88,7 +87,7 @@ def main():
             if not key in study_index_set:
                 continue
             # Skip low R2
-            if float(r2) < min_r2:
+            if float(r2) < args.min_r2:
                 continue
             # Add to dict
             try:
@@ -208,6 +207,7 @@ def parse_args():
     parser.add_argument('--top_loci', metavar="<file>", type=str, required=True)
     parser.add_argument('--ld', metavar="<file>", type=str, required=True)
     parser.add_argument('--finemap', metavar="<file>", type=str, required=True)
+    parser.add_argument('--min_r2', metavar="<float>", type=float, required=True)
     parser.add_argument('--outf', metavar="<str>", type=str, required=True)
     args = parser.parse_args()
     return args
