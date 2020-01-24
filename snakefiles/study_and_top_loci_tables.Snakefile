@@ -20,8 +20,10 @@ rule get_gwas_cat_assoc:
     ''' Download GWAS catalog association file
     '''
     input:
-        FTPRemoteProvider().remote(
-            'ftp://ftp.ebi.ac.uk/pub/databases/gwas/releases/latest/gwas-catalog-associations_ontology-annotated.tsv')
+        HTTPRemoteProvider().remote(
+            'https://www.ebi.ac.uk/gwas/api/search/downloads/alternative')
+        # FTPRemoteProvider().remote(
+        #     'ftp://ftp.ebi.ac.uk/pub/databases/gwas/releases/latest/gwas-catalog-associations_ontology-annotated.tsv')
     output:
         tmpdir + '/{version}/gwas-catalog-associations_ontology-annotated.tsv'
     shell:
