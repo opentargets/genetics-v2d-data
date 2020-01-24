@@ -50,7 +50,7 @@ if UPLOAD:
             version=config['version'])
     ))
     targets.append(
-        'tmp/finemapping.parquet/{version}/_SUCCESS'.format(version=config['version'])
+        'tmp/finemapping/{version}/_SUCCESS'.format(version=config['version'])
     )
     targets.append(GSRemoteProvider().remote(
         '{gs_dir}/{version}/extras/ld_analysis_input.tsv'.format(gs_dir=config['gs_dir'],
