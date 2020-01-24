@@ -48,10 +48,7 @@ if UPLOAD:
     '{gs_dir}/{version}/studies.parquet'.format(gs_dir=config['gs_dir'],
         version=config['version']) ))
     targets.append(GSRemoteProvider().remote(
-    '{gs_dir}/{version}/studies.parquet'.format(gs_dir=config['gs_dir'],
-        version=config['version']) ))
-    targets.append(GSRemoteProvider().remote(
-    '{gs_dir}/{version}/finemapping.parquet'.format(gs_dir=config['gs_dir'],
+    '{gs_dir}/{version}/finemapping.parquet/_SUCCESS'.format(gs_dir=config['gs_dir'],
         version=config['version']) ))
     targets.append(GSRemoteProvider().remote(
     '{gs_dir}/{version}/extras/ld_analysis_input.tsv'.format(gs_dir=config['gs_dir'],
