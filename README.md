@@ -27,7 +27,7 @@ Spark UDFs currently [only supports pyarrow version 0.8](https://spark.apache.or
 
 ### Usage
 
-```
+```bash
 # Install java 8 e.g.
 sudo apt install -yf openjdk-8-jre-headless openjdk-8-jdk
 

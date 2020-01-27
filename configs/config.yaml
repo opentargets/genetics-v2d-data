@@ -21,12 +21,6 @@ ukb_efo_curation: 'gs://genetics-portal-input/ukb_phenotypes/ukb_efo_annotation.
 efo_therapeutic_areas: 'configs/therapeutic_areas.tsv' # List of therapeutic area labels
 therapeutic_area_unknown_label: 'Uncategorised'
 
-# # Neale et al UK Biobank manifest file
-# neale_manifest: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/cleaned_data/phenosummary_final_11898_18597.fixed.curation_manifest.tsv'
-# neale_efo_icd10: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/efo_curation/v1_2018_07_05/phenosummary_final_11898_18597.fixed.curation_manifest - QC of ICD10 traits - Iteration 1.csv'
-# neale_efo_self: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/efo_curation/v1_2018_07_05/phenosummary_final_11898_18597.fixed.curation_manifest - QC of self-reported traits - Iteration 1.csv'
-# neale_categories: 'genetics-portal-input/uk_biobank_data/em21/neale_summary_statistics_20170915/PheWAS_categories/neale_cateogries.v2.tsv'
-
 # LD table
 url_1000G: 'gs://genetics-portal-input/1000Genomes_phase3/plink_format_b38'
 gwascat_2_superpop: 'configs/gwascat_superpopulation_lut.curated.v2.tsv'

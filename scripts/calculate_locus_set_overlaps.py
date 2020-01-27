@@ -63,7 +63,6 @@ def main():
     # Load LD data
     print('Loading LD...')
     tag_dict_ld = {}
-    sys.exit('ERROR: this need changing to use the latest LD table')
     with gzip.open(args.ld, 'r') as in_h:
         in_h.readline() # Skip header
         for line in in_h:
