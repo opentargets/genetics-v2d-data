@@ -20,11 +20,6 @@ Changes made (Jan 2019):
   4. [LD table](#ld-table)
   5. [Locus overlap table](#locus-overlap-table)
 
-
-### Notes
-
-Spark UDFs currently [only supports pyarrow version 0.8](https://spark.apache.org/docs/latest/sql-pyspark-pandas-with-arrow.html#ensure-pyarrow-installed). The pipeline fails with later versions. With spark v3 release. This should be revisited.
-
 ### Usage
 
 ```bash
