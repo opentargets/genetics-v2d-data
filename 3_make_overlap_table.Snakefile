@@ -1,7 +1,9 @@
 #!/usr/bin/env snakemake
 '''
-Makes:
-    1. Locus overlap table
+Makes locus overlap table
+
+Note: I convert the parquet to tsv to support the existing locus overlap
+script (uses pypy, therefore can't use pandas).
 '''
 
 from snakemake.remote.FTP import RemoteProvider as FTPRemoteProvider
@@ -36,7 +38,6 @@ rule parquet_to_tsv:
         '{filename}.parquet'
     output:
         temp('{filename}.tsv.gz')
-        # '{filename}.tsv.gz'
     run:
         print(input)
         (

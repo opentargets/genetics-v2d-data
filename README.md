@@ -31,23 +31,21 @@ Spark UDFs currently [only supports pyarrow version 0.8](https://spark.apache.or
 # Install java 8 e.g.
 sudo apt install -yf openjdk-8-jre-headless openjdk-8-jdk
 
+# Authenticate google cloud storage
+gcloud auth application-default login
+
 # Install dependencies into isolated environment
 conda env create -n v2d_data --file environment.yaml
 
-# Activate environment
+# Activate environment, set core and RAM availability
 conda activate v2d_data
-
-# Set core ands RAM available
 cores=15
 export PYSPARK_SUBMIT_ARGS="--driver-memory 50g pyspark-shell"
 
 # Alter configuration file
 nano config.yaml
 
-# Authenticate google cloud storage
-gcloud auth application-default login
-
-# Execute workflow
+# Execute workflows
 version_date=`date +%y%m%d`
 snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores 1
 snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores
@@ -55,7 +53,6 @@ snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cor
 
 # Upload output dir to google cloud storage
 gsutil -m rsync -r output/$version_date gs://genetics-portal-staging/v2d/$version_date
-
 ```
 
 ### Tables
@@ -262,28 +259,31 @@ Steps
 
 #### LD table
 
-Table of LD values linking index varaints to tag variants.
+Table of LD values linking index varaints to tag variants. I
 
 ##### Parquet meta info
 
 ```
-file schema:    schema 
---------------------------------------------------------------------------------
-study_id:       OPTIONAL BINARY L:STRING R:0 D:1
-lead_chrom:     OPTIONAL BINARY L:STRING R:0 D:1
-lead_pos:       OPTIONAL INT64 R:0 D:1
-lead_ref:       OPTIONAL BINARY L:STRING R:0 D:1
-lead_alt:       OPTIONAL BINARY L:STRING R:0 D:1
-tag_chrom:      OPTIONAL BINARY L:STRING R:0 D:1
-tag_pos:        OPTIONAL INT64 R:0 D:1
-tag_ref:        OPTIONAL BINARY L:STRING R:0 D:1
-tag_alt:        OPTIONAL BINARY L:STRING R:0 D:1
-overall_r2:     OPTIONAL DOUBLE R:0 D:1
-AFR_1000G_prop: OPTIONAL DOUBLE R:0 D:1
-AMR_1000G_prop: OPTIONAL DOUBLE R:0 D:1
-EAS_1000G_prop: OPTIONAL DOUBLE R:0 D:1
-EUR_1000G_prop: OPTIONAL DOUBLE R:0 D:1
-SAS_1000G_prop: OPTIONAL DOUBLE R:0 D:1
+root
+ |-- study_id: string (nullable = true)
+ |-- lead_chrom: string (nullable = true)
+ |-- lead_pos: integer (nullable = true)
+ |-- lead_ref: string (nullable = true)
+ |-- lead_alt: string (nullable = true)
+ |-- tag_chrom: string (nullable = true)
+ |-- tag_pos: integer (nullable = true)
+ |-- tag_ref: string (nullable = true)
+ |-- tag_alt: string (nullable = true)
+ |-- overall_r2: double (nullable = true)
+ |-- pics_mu: double (nullable = true)
+ |-- pics_postprob: double (nullable = true)
+ |-- pics_95perc_credset: boolean (nullable = true)
+ |-- pics_99perc_credset: boolean (nullable = true)
+ |-- AFR_1000G_prop: double (nullable = true)
+ |-- AMR_1000G_prop: double (nullable = true)
+ |-- EAS_1000G_prop: double (nullable = true)
+ |-- EUR_1000G_prop: double (nullable = true)
+ |-- SAS_1000G_prop: double (nullable = true)
 ```
 
 ##### LD table columns
@@ -291,13 +291,17 @@ SAS_1000G_prop: OPTIONAL DOUBLE R:0 D:1
   - `index_variantid_b37`: unique variant identifier for index variant, chrom_pos_ref_alt (build 37)
   - `tag_variantid_b37`: unique variant identifier for tagging variant, chrom_pos_ref_alt (build 37)
   - `overall_r2`: overall R<sup>2</sup> averaged of superpopulations
+  - `pics_mu`: Mu statistic from PICS calculation
+  - `pics_postprob`: PICS posterior probability that this variant is causal
+  - `pics_95perc_credset`: If this variant is in 95% credible set
+  - `pics_99perc_credset`: If this variant is in 99% credible set
   - `AFR_1000G_prop`: proportion of sample from AFR superpopulation
   - `AMR_1000G_prop`: proportion of sample from AMR superpopulation
   - `EAS_1000G_prop`: proportion of sample from EAS superpopulation
   - `EUR_1000G_prop`: proportion of sample from EUR superpopulation
   - `SAS_1000G_prop`: proportion of sample from SAS superpopulation
 
-Table is pre-filtered to only contain R<sup>2</sup> > 0.7.
+Table is pre-filtered to only contain R<sup>2</sup> > 0.5.
 
 ##### LD table methods
 
@@ -319,7 +323,7 @@ Methods:
   4. Fisher-Z transform R coefficients.
   5. For each study take weighted average across populations weighting by sample size.
   6. Inverse-Fisher-Z transform to get R values
-  7. Take R-squared and filter rows for overall R2 < 0.7.
+  7. Conduct [PICS finemapping analysis](https://www.ncbi.nlm.nih.gov/pubmed/25363779)
 
 Notes:
   - Studies with missing or NR ancestries will be assumed to be European
