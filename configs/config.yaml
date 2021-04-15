@@ -1,6 +1,6 @@
 # Output config
 temp_dir: 'tmp'
-gs_dir: 'gs://genetics-portal-staging/v2d'
+gs_dir: 'gs://genetics-portal-dev-staging/v2d'
 
 # GWAS Catalog curated data
 gwas_cat_min_pvalue: 5e-8 # Minimum p-value to be included

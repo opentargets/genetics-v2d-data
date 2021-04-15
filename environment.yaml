@@ -13,3 +13,5 @@ dependencies:
   - requests>=2.18.0
   - parallel
   - pyspark
+  - httplib2  
+  - crcmod

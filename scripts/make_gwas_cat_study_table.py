@@ -105,7 +105,7 @@ def main():
     studies = (
         studies.groupby(group_cols)
                .MAPPED_TRAIT_URI
-               .agg({'trait_efos': sum})
+               .agg(trait_efos=sum)
                .reset_index()
     )
 
