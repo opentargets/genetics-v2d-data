@@ -87,11 +87,11 @@ rule process_ld:
     output:
         directory('output/{version}/ld.parquet')
     params:
-        in_ld_pattern = tmpdir + '/{version}/ld/ld_each_variant/*.ld.tsv.gz'.format(version=config['version']),
+        in_ld_folder = f"{tmpdir}/{version=config['version']}/ld/ld_each_variant/",
         min_r2 = config['min_r2']
     shell:
         'python scripts/process_ld.py '
-        '--in_ld_pattern {params.in_ld_pattern} '
+        '--in_ld_folder {params.in_ld_folder} '
         '--in_manifest {input.manifest} '
         '--in_top_loci {input.toploci} '
         '--min_r2 {params.min_r2} '
