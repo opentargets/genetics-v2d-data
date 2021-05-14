@@ -92,8 +92,8 @@ rule process_ld:
     shell:
         'python scripts/process_ld.py '
         '--in_ld_pattern {params.in_ld_pattern} '
-        '--in_manifest {input.manifest}'
-        '--in_top_loci {input.toploci}'
-        '--min_r2 {params.min_r2}'
+        '--in_manifest {input.manifest} '
+        '--in_top_loci {input.toploci} '
+        '--min_r2 {params.min_r2} '
         '--out {output}'
 

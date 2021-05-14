@@ -28,7 +28,7 @@ def main():
 
     # Args
     args = parse_args()
-    # args.in_ld_pattern = 'input_data/ld_each_variant/*.ld.tsv.gz'
+    # args.in_ld_folder = 'input_data/ld_each_variant'
     # args.in_manifest = 'input_data/190625/ld_analysis_input.tsv'
     # args.in_top_loci = 'input_data/190625/toploci.parquet'
     # args.out = 'output/ld_w_crediblesets.parquet'
@@ -49,7 +49,7 @@ def main():
 
     # Load LD
     ld = (
-        load_ld(args.in_ld_pattern)
+        load_ld(args.in_ld_folder)
         .withColumn('index_variant_id', regexp_replace(col('index_variant_id'), ':', '_'))
         .withColumn('tag_variant_id', regexp_replace(col('tag_variant_id'), ':', '_'))
         # .limit(10000) # Debug
@@ -358,7 +358,7 @@ def load_manifest(inf):
 
     return df
 
-def load_ld(in_pattern):
+def load_ld(in_ld_folder):
     ''' Loads all LD information from individual files
     '''
     # Specify schema
@@ -374,7 +374,7 @@ def load_ld(in_pattern):
     )
     # Load
     df = (
-        spark.read.csv(in_pattern,
+        spark.read.csv(in_ld_folder,
                        sep='\t',
                        schema=import_schema,
                        enforceSchema=True,
@@ -386,7 +386,7 @@ def load_ld(in_pattern):
 def parse_args():
     """ Load command line args """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--in_ld_pattern', metavar="<str>", help=("Pattern to match all individual variant LD files"), type=str, required=True)
+    parser.add_argument('--in_ld_folder', metavar="<str>", help=("Folder with gzip compressed tsv files with LD information"), type=str, required=True)
     parser.add_argument('--in_manifest', metavar="<str>", help=("Input manifest file"), type=str, required=True)
     parser.add_argument('--in_top_loci', metavar="<str>", help=("Input top loci table"), type=str, required=True)
     parser.add_argument('--min_r2', metavar="<float>", help=("Minimum R2"), type=float, required=True)
