@@ -171,12 +171,26 @@ rule merge_study_tables:
         gwas = rules.make_gwas_cat_studies_table.output.main,
         ukb = rules.make_UKB_studies_table.output.study_table
     output:
-        tmpdir + '/{version}/merged_study_table.json'
+        tmpdir + '/{version}/merged_study_table.old.json'
     shell:
         'python scripts/merge_study_tables.py '
         '--in_gwascat {input.gwas} '
         '--in_ukb {input.ukb} '
         '--output {output}'
+
+rule merge_FINNGEN_study_tables:
+    input:
+        old_table=rules.merge_study_tables.output,
+        finn_manifest=config['FINNGEN_manifest'],
+        finn_efo=config['FINNGEN_efo_curation']
+    output:
+        tmpdir + '/{version}/merged_study_table.json'
+    shell:
+        'python scripts/Make_FINNGEN_entries.py '
+        '--in_manifest {input.finn_manifest} '
+        '--in_EFO {input.finn_efo} '
+        '--in_study_table {input.old_table}'
+        '--outf {output} '
 
 rule make_summarystat_toploci_table:
     ''' Converts the toploci table produce from the finemapping pipeline to
@@ -186,7 +200,7 @@ rule make_summarystat_toploci_table:
     input:
         toploci = GSRemoteProvider().remote(
             config['toploci'], keep_local=KEEP_LOCAL),
-        study_info = rules.merge_study_tables.output
+        study_info = rules.merge_FINNGEN_study_tables.output
     output:
         tmpdir + '/{version}/sumstat-associations_ot-format.tsv'
     shell:
@@ -217,7 +231,7 @@ rule get_efo_categories:
     ''' Uses OLS API to get "therapeutic area" / category for each EFO
     '''
     input:
-        study_table = rules.merge_study_tables.output,
+        study_table = rules.merge_FINNGEN_study_tables.output,
         therapeutic_areas = config['efo_therapeutic_areas']
     output:
         tmpdir + '/{version}/efo_categories.json'
@@ -231,11 +245,13 @@ rule list_studies_with_sumstats:
     ''' Makes a list of files with sumstats
     '''
     params:
-        url=config['gcs_sumstat_pattern']
+        url=config['gcs_sumstat_pattern'],
+        prev_url=config['prev_gcs_sumstat_pattern']
     output:
         tmpdir + '/{version}/studies_with_sumstats.tsv'
-    shell:
-        'gsutil -m ls -d "{params.url}" > {output}'
+    run:
+        shell('gsutil -m ls -d "{params.url}" > {output}')
+	shell('gsutil -m ls -d "{params.prev_url}" >> {output}')
 
 rule study_table_to_parquet:
     ''' Converts study table to final parquet.
@@ -252,7 +268,7 @@ rule study_table_to_parquet:
         because of https://github.com/opentargets/genetics/issues/354 
     '''
     input:
-        study_table = rules.merge_study_tables.output,
+        study_table = rules.merge_FINNGEN_study_tables.output,
         sumstat_studies = rules.list_studies_with_sumstats.output,
         efo_anno = rules.get_efo_categories.output,
         top_loci = rules.merge_gwascat_and_sumstat_toploci.output,
