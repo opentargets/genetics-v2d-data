@@ -40,6 +40,31 @@ rule get_variant_index:
     shell:
         'cp {input} {output}'
 
+rule build_disease_mappings_lut:
+    ''' Build LUT that integrates all the disease mappings
+        study_table: merged study table in parquet format
+        finngen-mappings: curation recorded in Google Sheets
+        ukbb-mappings: updated mappings resulting from upgrading to EFO3
+        disease-index: parquet files that stores the OT disease index to extract the therapeutic areas
+    '''
+    input:
+        study_table = rules.study_table_to_parquet.output,
+        finngen-mappings = HTTPRemoteProvider().remote(
+            'https://docs.google.com/spreadsheets/d/1yrQPpsRi-mijs_BliKFZjeoxP6kGIs9Bz-02_0WDvAA/edit?usp=sharing'),
+        ukbb-mappings = HTTPRemoteProvider().remote(
+            'https://docs.google.com/spreadsheets/d/1PotmUEirkV36dh-vpZ3GgxQg_LcOefZKbyTq0PNQ6NY/edit?usp=sharing')
+        disease-index = FTPRemoteProvider().remote(
+            'ftp://ftp.ebi.ac.uk/pub/databases/opentargets/platform/21.06/output/etl/parquet/diseases')    
+    output:
+        'output/{version}/trait_efo.parquet'
+    shell:
+        'python scripts/make_disease_mapping_lut.py '
+        '--in_studies {input.study_table} '
+        '--in_finngen-mappings {input.finngen-mappings} '
+        '--in_ukbb-mappings {input.ukbb-mappings} '
+        '--in_disease-index {input.disease-index} '
+        '--out_disease-lut {output} '
+
 rule extract_gwascat_rsids_from_variant_index:
     ''' Makes set of GWAS Catalog rsids and chrom:pos strings. Then reads
         these from the variant index. Takes ~2 mins.
