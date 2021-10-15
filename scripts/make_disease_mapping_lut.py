@@ -168,9 +168,9 @@ def get_more_relevant_ta(
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--in_studies', help='Directory of parquet files that stores the study index.', required=True)
+    parser.add_argument('--in_studies', help='Directory of parquet files that stores the study index.', default='https://docs.google.com/spreadsheets/d/1yrQPpsRi-mijs_BliKFZjeoxP6kGIs9Bz-02_0WDvAA/edit?usp=sharing', required=True)
     parser.add_argument('--in_finngen-mappings', help='URL of the spreadsheet that contains all Finngen disease mappings', required=True)
-    parser.add_argument('--in_ukbb-mappings', help='URL of the spreadsheet that contains the updated UK Biobank disease mappings resulting from upgrading to EFO3', required=True)
+    parser.add_argument('--in_ukbb-mappings', help='URL of the spreadsheet that contains the updated UK Biobank disease mappings resulting from upgrading to EFO3', default='https://docs.google.com/spreadsheets/d/1iTGRVPXsHizNXdDnj0on9zfURjTLP8A73mn7CNZiVw8/edit?usp=sharing', required=True)
     parser.add_argument('--in_disease-index', help='Directory of parquet files that stores the OT disease index to extract the therapeutic areas', required=True)
     parser.add_argument('--out_disease-lut', help='Parquet file that stores all disease mappings present in the Genetics Portal studies', required=True)
     args = parser.parse_args()
