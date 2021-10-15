@@ -6,12 +6,9 @@
 # Merge top loci table
 #
 
-import sys
 import argparse
+
 import pandas as pd
-from collections import OrderedDict
-from parquet_writer import write_parquet
-import datetime
 
 def main():
 
@@ -32,13 +29,16 @@ def main():
     return 0
 
 def parse_args():
-    """ Load command line args """
+    """
+    Load command line args.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('--in_gwascat', metavar="<str>", type=str, required=True)
     parser.add_argument('--in_ukb', metavar="<str>", type=str, required=True)
     parser.add_argument('--in_finngen', metavar="<str>", type=str, required=True)
     parser.add_argument('--output', metavar="<str>", help=("Output merged file"), type=str, required=True)
     args = parser.parse_args()
+    
     return args
 
 if __name__ == '__main__':
