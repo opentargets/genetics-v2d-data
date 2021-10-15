@@ -211,7 +211,7 @@ rule merge_FINNGEN_study_tables:
     output:
         tmpdir + '/{version}/merged_study_table.json'
     shell:
-        'python scripts/Make_FINNGEN_entries.py '
+        'python scripts/make_FINNGEN_study_table.py '
         '--in_manifest {input.finn_manifest} '
         '--in_EFO {input.finn_efo} '
         '--in_study_table {input.old_table}'
