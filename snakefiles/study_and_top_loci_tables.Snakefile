@@ -203,18 +203,14 @@ rule merge_study_tables:
         '--in_ukb {input.ukb} '
         '--output {output}'
 
-rule merge_FINNGEN_study_tables:
+rule make_FINNGEN_studies_table:
     input:
-        old_table=rules.merge_study_tables.output,
-        finn_manifest=config['FINNGEN_manifest'],
-        finn_efo=config['FINNGEN_efo_curation']
+        finn_manifest=config['FINNGEN_manifest']
     output:
-        tmpdir + '/{version}/merged_study_table.json'
+        tmpdir + '/{version}/FINNGEN_study_table.json'
     shell:
         'python scripts/make_FINNGEN_study_table.py '
         '--in_manifest {input.finn_manifest} '
-        '--in_EFO {input.finn_efo} '
-        '--in_study_table {input.old_table}'
         '--outf {output} '
 
 rule make_summarystat_toploci_table:
