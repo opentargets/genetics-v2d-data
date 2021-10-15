@@ -176,15 +176,12 @@ rule make_UKB_studies_table:
     input:
         manifest = GSRemoteProvider().remote(
             config['ukb_manifest'], keep_local=KEEP_LOCAL),
-        efos = GSRemoteProvider().remote(
-            config['ukb_efo_curation'], keep_local=KEEP_LOCAL)
     output:
         study_table = tmpdir + '/{version}/UKB_study_table.json',
         prefix_counts = tmpdir + '/{version}/UKB_prefix_counts.tsv'
     shell:
         'python scripts/make_UKB_study_table.py '
         '--in_manifest {input.manifest} '
-        '--in_efos {input.efos} '
         '--prefix_counts {output.prefix_counts} '
         '--outf {output.study_table}'
 
