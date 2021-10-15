@@ -8,6 +8,7 @@ import re
 import sys
 import os
 import argparse
+import numpy as np
 import pandas as pd
 from pprint import pprint
 from collections import OrderedDict
@@ -75,18 +76,7 @@ def main():
     manifest.loc[:, 'n_replication'] = 0
     manifest.loc[:, 'ancestry_initial'] = 'European=' + manifest['n_initial'].astype(str)
     manifest.loc[:, 'ancestry_replication'] = ''
-
-    # Load efos annotations
-    efo_mapper = {}
-    with open(args.in_efos, 'r') as in_h:
-        for line in in_h:
-            parts = json.loads(line)
-            efo_mapper[parts['study_id']] = parts['efos']
-    
-    # Map efos
-    manifest['trait_efos'] = manifest['study_id'].apply(
-        lambda stid: efo_mapper.get(stid, None)
-    )
+    manifest.loc[:, 'trait_efos'] = np.nan
 
     # Ouput required columns
     cols = OrderedDict([
@@ -98,7 +88,6 @@ def main():
         ('pub_author', 'pub_author'),
         ('trait_reported', 'trait_reported'),
         ('trait_efos', 'trait_efos'),
-        # ('trait_category', 'trait_category'),
         ('ancestry_initial', 'ancestry_initial'),
         ('ancestry_replication', 'ancestry_replication'),
         ('n_initial', 'n_initial'),
@@ -167,7 +156,6 @@ def parse_args():
     """ Load command line args """
     parser = argparse.ArgumentParser()
     parser.add_argument('--in_manifest', metavar="<str>", help=("Input"), type=str, required=True)
-    parser.add_argument('--in_efos', metavar="<str>", help=("EFO mapping file"), type=str, required=True)
     parser.add_argument('--prefix_counts', metavar="<str>", help=("File to output prefix counts to"), type=str, required=True)
     parser.add_argument('--outf', metavar="<str>", help=("Output"), type=str, required=True)
     args = parser.parse_args()
