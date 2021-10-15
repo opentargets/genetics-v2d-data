@@ -105,8 +105,9 @@ def to_int_safe(i):
         return None
 
 def make_trait_reported_string(s_raw):
-    ''' Takes the raw trait name and outputs trnasformed name
-    '''
+    """
+    Takes the raw trait name and outputs trnasformed name.
+    """
 
     # Replace any double spaces with single
     s_raw = re.sub(r' +', r' ', s_raw)
@@ -129,8 +130,10 @@ def make_trait_reported_string(s_raw):
     return trait
 
 def count_prefixes(l, sep=': '):
-    ''' Counts the occurence of prefixes based on sep
-    '''
+    """ 
+    Counts the occurence of prefixes based on sep.
+    """
+
     # Extract prefixes
     prefixes = []
     for entry in l:
@@ -151,12 +154,16 @@ def combine_rows(items):
     return ';'.join(items)
 
 def parse_args():
-    """ Load command line args """
+    """
+    Load command line args.
+    """
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--in_manifest', metavar="<str>", help=("Input"), type=str, required=True)
     parser.add_argument('--prefix_counts', metavar="<str>", help=("File to output prefix counts to"), type=str, required=True)
     parser.add_argument('--outf', metavar="<str>", help=("Output"), type=str, required=True)
     args = parser.parse_args()
+
     return args
 
 if __name__ == '__main__':
