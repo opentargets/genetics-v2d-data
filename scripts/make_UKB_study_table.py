@@ -4,16 +4,14 @@
 # Ed Mountjoy
 #
 
-import re
-import sys
-import os
 import argparse
-import numpy as np
-import pandas as pd
-from pprint import pprint
 from collections import OrderedDict
 from operator import itemgetter
-import json
+import re
+
+import numpy as np
+import pandas as pd
+
 
 def main():
 
