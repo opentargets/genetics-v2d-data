@@ -1,4 +1,3 @@
-
 # coding: utf-8
 
 from collections import OrderedDict
@@ -65,24 +64,6 @@ def main():
 
     FINNGEN_manifest = FINNGEN_manifest.loc[:, list(cols.keys())].rename(columns=cols)
 
-    '''
-    Additional_row=pd.Series(["GCST90013791", "",
-                              "2021-02-22", "", "", "Crouch D", "Type 1 diabetes", 
-                              ["EFO_0001359"], "European=7977", "", "7977", "3983", "0"   ])
-
-    row_df=pd.DataFrame([Additional_row])
-    row_df=row_df.set_axis(list(FINNGEN_manifest.columns.values), axis=1, inplace=False)
-
-    FINNGEN_manifest_new=pd.concat([FINNGEN_manifest, row_df], ignore_index=True)
-    FINNGEN_manifest_new['trait_reported'][FINNGEN_manifest_new['study_id']=="FINNGEN_R5_I9_HEARTFAIL_AND_CHD"]="cardiovascular disease"
-    
-    # Load no finngen study table
-    gwas = pd.read_json(args.in_study_table, 
-                        orient='records', lines=True)
-    # Merge
-    merged = pd.concat([gwas, FINNGEN_manifest], sort=False)
-    print(merged)
-    '''
     # Write
     FINNGEN_manifest.to_json(args.outf, orient='records', lines=True)
 
