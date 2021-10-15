@@ -192,19 +192,21 @@ rule merge_study_tables:
     input:
         gwas = rules.make_gwas_cat_studies_table.output.main,
         ukb = rules.make_UKB_studies_table.output.study_table
+        finngen = rules.make_FINNGEN_studies_table.output.study_table
     output:
-        tmpdir + '/{version}/merged_study_table.old.json'
+        tmpdir + '/{version}/merged_study_table.json'
     shell:
         'python scripts/merge_study_tables.py '
         '--in_gwascat {input.gwas} '
         '--in_ukb {input.ukb} '
+        '--in_finngen {input.finngen} '
         '--output {output}'
 
 rule make_FINNGEN_studies_table:
     input:
         finn_manifest=config['FINNGEN_manifest']
     output:
-        tmpdir + '/{version}/FINNGEN_study_table.json'
+        study_table = tmpdir + '/{version}/FINNGEN_study_table.json'
     shell:
         'python scripts/make_FINNGEN_study_table.py '
         '--in_manifest {input.finn_manifest} '
