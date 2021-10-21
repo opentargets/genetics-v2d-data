@@ -1,5 +1,3 @@
-import logging
-import os
 from typing import List, Optional, Union
 
 import pandas as pd
@@ -38,7 +36,7 @@ SORTED_TAS_DF = pd.DataFrame(data=THERAPEUTIC_AREAS)
 EFO_RELEASE_API_TEMPLATE = 'https://api.github.com/repos/EBISPOT/efo/releases/{}'
 OWL_FILENAME = 'efo_otar_slim.owl'
 
-@retry(logger=logger, tries=5, delay=3, backoff=1.5, jitter=(1, 3))
+@retry(tries=5, delay=3, backoff=1.5, jitter=(1, 3))
 def fetch_otar_owl_from_github(efo_release):
     """Queries the GitHub API to fetch the latest EFO OTAR SLIM OWL URL."""
     
