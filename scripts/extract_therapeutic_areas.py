@@ -56,13 +56,12 @@ def fetch_otar_owl_from_github(efo_release):
     return otar_slim_assets[0]['browser_download_url']
 
 
-def extract_therapeutic_areas_from_owl(
-    owl_url: str
-) -> pd.DataFrame:
+def extract_therapeutic_areas_from_owl() -> pd.DataFrame:
     """
     A dataframe with all the EFO IDs and their therapeutic areas are parsed from the EFO OTAR SLIM OWL file. 
     """
-
+    
+    owl_url = fetch_otar_owl_from_github('latest')
     efo_terms = Ontology(owl_url, timeout=10).terms()
     owl_parsed = []
     
