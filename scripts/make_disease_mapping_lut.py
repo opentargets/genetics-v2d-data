@@ -14,7 +14,7 @@ def main(
     finngen_spreadsheet: str,
     ukbb_spreadsheet: str,
     output_disease_lut: str  
-):
+) -> None:
     # Load data
     studies_df = read_input_file(study_index)
     finngen_df = read_input_file(finngen_spreadsheet)
@@ -82,16 +82,9 @@ def get_gwas_catalog_mappings(
 ) -> pd.DataFrame:
     """Extracts GWAS catalog traits from study table (these do not require OT mapping)."""
     
-    return  (
-        # Drop studies without a mapping
-        studies_df[studies_df['trait_efos'].str.len() > 0]
+    return (
+        studies_df[studies_df['study_id'].str.startswith('GCST')]
         .filter(items=['study_id', 'trait_reported', 'trait_efos'])
-        .explode('trait_efos')
-        # Group data
-        .groupby('study_id').agg(lambda x: list(set(x))).reset_index()
-        # Drop Finngen studies to later bring them all from the Finngen dataset
-        #.query('study_id.str.contains("FINNGEN")==False', engine='python')
-        .explode('trait_reported')
     )
 
 def get_ukbb_mappings(
