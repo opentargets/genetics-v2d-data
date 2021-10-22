@@ -2,6 +2,7 @@
 """Generates a look-up table that includes all disease mappings present in the Genetics Portal studies."""
 
 import argparse
+import logging
 from pathlib import Path, PurePath
 import tempfile
 
@@ -15,7 +16,7 @@ def main(
     ukbb_spreadsheet: str,
     output_disease_lut: str  
 ) -> None:
-    # Load data
+    # 0. Load data
     studies_df = read_input_file(study_index)
     finngen_df = read_input_file(finngen_spreadsheet)
     ukbb_df = read_input_file(ukbb_spreadsheet)
@@ -32,9 +33,9 @@ def main(
             source = source.explode('proposed_efos')
             null_studies = source[source['proposed_efos'].isna()]
         assert len(null_studies) == 0, f"Studies in {source} contain invalid mappings."
-    
+    logging.info('Disease mappings loaded and split per data source.')
 
-    # 4. Merge updated mappings across data sources
+    # 2. Merge updated mappings across data sources
     genetics_mappings = (
         pd.concat([valid_finngen, valid_ukb, gwas_catalog_mappings], ignore_index=True)
         # Coalesce all mappings in trait_efos
@@ -48,20 +49,22 @@ def main(
         len(valid_finngen.explode('proposed_efos'))
     ), "WARNING! Some mappings went missing during the merge."
 
-    # 5. Bring therapeutic areas
+    # 3. Bring therapeutic areas
     genetics_mappings_w_ta = build_therapeutic_areas(genetics_mappings)
     genetics_mappings_w_ta['therapeutic_area'] = genetics_mappings_w_ta['therapeutic_areas'].apply(get_prioritised_therapeutic_area)
+    logging.info('EFO loaded. Therapeutic areas built.')
 
     # Check everything is an ontology ID and that there are no mappings without a TA
     assert genetics_mappings_w_ta['trait_efos'].str.contains('\w+_\d+', regex=True).all() == False, 'WARNING! There are invalid EFO IDs'
     assert len(genetics_mappings_w_ta[genetics_mappings_w_ta['therapeutic_area'].isna()]), 'WARNING! There are EFO IDs without a therapeutic area.'
     genetics_mappings_w_ta = genetics_mappings_w_ta.loc[genetics_mappings_w_ta['trait_efos'].str.contains('\w+_\d+', regex=True), :]
 
-    # 6. Format and write output
+    # 4. Format and write output
     output_table = (genetics_mappings_w_ta
         .groupby(['study_id', 'trait_reported', 'therapeutic_area']).agg(lambda x: list(set(x))).reset_index()
     )
     output_table.to_parquet(output_disease_lut)
+    logging.info(f'{output_disease_lut} successfully generated. Exiting.')
 
 def read_input_file(path: str):
     """
@@ -171,6 +174,18 @@ if __name__ == '__main__':
     parser.add_argument('--in_ukbb_mappings', help='URL of the spreadsheet that contains the updated UK Biobank disease mappings resulting from upgrading to EFO3', default='https://docs.google.com/spreadsheets/d/1iTGRVPXsHizNXdDnj0on9zfURjTLP8A73mn7CNZiVw8/edit?usp=sharing')
     parser.add_argument('--out_disease_lut', help='Parquet file that stores all disease mappings present in the Genetics Portal studies', required=True)
     args = parser.parse_args()
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+    )
+
+    # Report input data:
+    logging.info(f'Study index file path: {args.in_studies}')
+    logging.info(f'Finngen curation spreadsheet URL: {args.in_finngen_mappings}')
+    logging.info(f'UK Biobank curation spreadsheet URL: {args.in_ukbb_mappings}')
+
     main(
         args.in_studies,
         args.in_finngen_mappings,
