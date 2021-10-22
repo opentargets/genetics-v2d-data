@@ -13,22 +13,26 @@ def main(
     study_index: str,
     finngen_spreadsheet: str,
     ukbb_spreadsheet: str,
-    disease_index: str,
     output_disease_lut: str  
 ):
     # Load data
     studies_df = read_input_file(study_index)
-    finngen_df = read_input_file(
-        finngen_spreadsheet.replace('/edit?usp=sharing', '/export?format=csv')
-    )
-    ukbb_df = read_input_file(
-        ukbb_spreadsheet.replace('/edit?usp=sharing', '/export?format=csv')
-    )
+    finngen_df = read_input_file(finngen_spreadsheet)
+    ukbb_df = read_input_file(ukbb_spreadsheet)
 
     # 1. Extract mappings per data source GWAS catalog traits from study table (these do not require OT mapping)
     gwas_catalog_mappings = get_gwas_catalog_mappings(studies_df)
     valid_ukb = get_ukbb_mappings(ukbb_df)
     valid_finngen = get_finngen_mappings(finngen_df)
+    # Assert there are no studies with a null mapping
+    for source in [gwas_catalog_mappings, valid_ukb, valid_finngen]:
+        if 'proposed_efos' not in source.columns:
+            null_studies = source[source['trait_reported'].isna()]
+        else:
+            source = source.explode('proposed_efos')
+            null_studies = source[source['proposed_efos'].isna()]
+        assert len(null_studies) == 0, f"Studies in {source} contain invalid mappings."
+    
 
     # 4. Join static with dinamycally imported mappings TODO: concat and not mergesl
     genetics_mappings = (gwas_catalog_mappings
@@ -61,14 +65,14 @@ def main(
     genetics_mappings_w_ta['trait_category'] = genetics_mappings_w_ta['therapeuticAreas'].apply(lambda X: get_more_relevant_ta(X))
     genetics_mappings_w_ta = genetics_mappings_w_ta.explode('trait_category').explode('trait_efos')
     '''
-    tas = extract_therapeutic_areas_from_owl(OWL_FILENAME)
-    genetics_mappings_w_ta = (
+    
+    genetics_mappings_w_ta = build_therapeutic_areas(genetics_mappings)
 
-    )
 
     # Check everything is an ontology ID
     assert genetics_mappings_w_ta['trait_efos'].str.contains('\w+_\d+', regex=True).all() == False, 'WARNING! There is at least one mapping with an invalid ID'
     genetics_mappings_w_ta = genetics_mappings_w_ta.loc[genetics_mappings_w_ta['trait_efos'].str.contains('\w+_\d+', regex=True), :]
+    
     genetics_mappings_final = (genetics_mappings_w_ta
         .groupby('study_id').agg(lambda x: list(set(x))).reset_index()
     )
@@ -80,14 +84,18 @@ def read_input_file(path: str):
     are: a single CSV file; a directory with Parquet files.
     """
     if 'parquet' in path:
-        data_dir = Path(path)
-        full_df = pd.concat(
-            pd.read_parquet(parquet_file)
-            for parquet_file in data_dir.glob('*.parquet')
-        )
-        return pd.read_parquet(full_df)
-    elif 'csv' in path:
-        return pd.read_csv(path)
+        path = Path(path)
+        if Path.is_dir(path):
+            data_dir = Path(path)
+            full_df = pd.concat(
+                pd.read_parquet(parquet_file)
+                for parquet_file in data_dir.glob('*.parquet')
+            )
+            return pd.read_parquet(full_df)
+        if Path.is_file(path):
+            return pd.read_parquet(path)
+    else:
+        return pd.read_csv(path.replace('/edit?usp=sharing', '/export?format=csv'))
 
 def get_gwas_catalog_mappings(
     studies_df: pd.DataFrame
@@ -123,7 +131,7 @@ def get_ukbb_mappings(
                 'candidateId': 'proposed_efos'
             })
             .explode('trait_reported')
-        )
+    )
 
 def get_finngen_mappings(
     finngen_df: pd.DataFrame
@@ -137,30 +145,46 @@ def get_finngen_mappings(
         # Group data
         .groupby('NAME').agg(lambda x: list(set(x))).reset_index()
         .rename(columns={
-            'NAME':'study_id',
+            'NAME':'study_name',
             'LONGNAME':'trait_reported',
             'efo_cls':'proposed_efos'
         })
         .explode('trait_reported')
-        .assign(study_id=lambda x: 'FINNGEN_R5_' + x.study_id)
+        .assign(study_id=lambda x: 'FINNGEN_R5_' + x.study_name)
+        .drop('study_name', axis=1)
     )
-    #valid_finngen['study_id'] = 'FINNGEN_R5_' + valid_finngen['study_id']
 
-def get_therapeutic_areas():
-    efo_owl_parsed_df = extract_therapeutic_areas_from_owl(owl_url)
+def build_therapeutic_areas(
+    genetics_mappings: pd.DataFrame
+) -> pd.DataFrame:
+    """Therapeutic areas per trait are built into the mappings table."""
+    
+    efo_tas_df = extract_therapeutic_areas_from_owl()
+    genetics_mappings_w_trait = (
+        genetics_mappings.explode('trait_efos')
+        .merge(
+            efo_tas_df,
+            left_on='trait_efos',
+            right_on='efo_id',
+            how='left')
+        .drop('efo_id', axis=1)
+    )
+
+    return genetics_mappings_w_trait
+
+
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--in_studies', help='Directory of parquet files that stores the study index.', default='https://docs.google.com/spreadsheets/d/1yrQPpsRi-mijs_BliKFZjeoxP6kGIs9Bz-02_0WDvAA/edit?usp=sharing', required=True)
-    parser.add_argument('--in_finngen-mappings', help='URL of the spreadsheet that contains all Finngen disease mappings', required=True)
-    parser.add_argument('--in_ukbb-mappings', help='URL of the spreadsheet that contains the updated UK Biobank disease mappings resulting from upgrading to EFO3', default='https://docs.google.com/spreadsheets/d/1iTGRVPXsHizNXdDnj0on9zfURjTLP8A73mn7CNZiVw8/edit?usp=sharing', required=True)
-    parser.add_argument('--in_disease-index', help='Directory of parquet files that stores the OT disease index to extract the therapeutic areas', required=True)
-    parser.add_argument('--out_disease-lut', help='Parquet file that stores all disease mappings present in the Genetics Portal studies', required=True)
+    parser.add_argument('--in_studies', help='Directory of parquet files that stores the study index.', required=True)
+    parser.add_argument('--in_finngen_mappings', help='URL of the spreadsheet that contains all Finngen disease mappings', nargs='?', default='https://docs.google.com/spreadsheets/d/1yrQPpsRi-mijs_BliKFZjeoxP6kGIs9Bz-02_0WDvAA/edit?usp=sharing')
+    parser.add_argument('--in_ukbb_mappings', help='URL of the spreadsheet that contains the updated UK Biobank disease mappings resulting from upgrading to EFO3', default='https://docs.google.com/spreadsheets/d/1iTGRVPXsHizNXdDnj0on9zfURjTLP8A73mn7CNZiVw8/edit?usp=sharing')
+    parser.add_argument('--out_disease_lut', help='Parquet file that stores all disease mappings present in the Genetics Portal studies', required=True)
     args = parser.parse_args()
     main(
         args.in_studies,
-        args.in_finngen-mappings,
-        args.in_ukbb-mappings,
-        args.in_disease-index,
-        args.out_disease-lut
+        args.in_finngen_mappings,
+        args.in_ukbb_mappings,
+        args.out_disease_lut
     )
