@@ -35,15 +35,13 @@ def main(
     
 
     # 4. Join static with dinamycally imported mappings TODO: concat and not mergesl
-    genetics_mappings = (gwas_catalog_mappings
-        .merge(
-            pd.concat([valid_finngen, valid_ukb], ignore_index=True),
-            on=["study_id", "trait_reported"],
-            how="outer"
-        ))
-    # Coalesce trait_efos to include the updated mappings 
-    genetics_mappings['trait_efos'] = genetics_mappings['proposed_efos'].combine_first(genetics_mappings.trait_efos)
-    genetics_mappings.drop(columns='proposed_efos', inplace=True)
+    genetics_mappings = (
+        pd.concat([valid_finngen, valid_ukb, gwas_catalog_mappings], ignore_index=True)
+        # Coalesce all mappings in trait_efos
+        .assign(trait_efos=lambda x: x.proposed_efos.combine_first(x.trait_efos)).drop('proposed_efos', axis=1)
+        .explode('trait_efos')
+        .drop_duplicates()
+    )
 
     # 5. Bring therapeutic areas
     '''
@@ -161,7 +159,7 @@ def build_therapeutic_areas(
     
     efo_tas_df = extract_therapeutic_areas_from_owl()
     genetics_mappings_w_trait = (
-        genetics_mappings.explode('trait_efos')
+        genetics_mappings
         .merge(
             efo_tas_df,
             left_on='trait_efos',
