@@ -2,7 +2,8 @@
 """Generates a look-up table that includes all disease mappings present in the Genetics Portal studies."""
 
 import argparse
-from pathlib import Path
+from pathlib import Path, PurePath
+import tempfile
 from typing import List, Union
 
 import pandas as pd
@@ -65,14 +66,16 @@ def main(
     '''
     
     genetics_mappings_w_ta = build_therapeutic_areas(genetics_mappings)
+    genetics_mappings_w_ta['therapeutic_area'] = genetics_mappings_w_ta['therapeutic_areas'].apply(get_prioritised_therapeutic_area)
 
-
-    # Check everything is an ontology ID
+    # Check everything is an ontology ID and that there are no mappings without a TA
     assert genetics_mappings_w_ta['trait_efos'].str.contains('\w+_\d+', regex=True).all() == False, 'WARNING! There are invalid EFO IDs'
+    assert len(genetics_mappings_w_ta[genetics_mappings_w_ta['therapeutic_area'].isna()]), 'WARNING! There are EFO IDs without a therapeutic area.'
     genetics_mappings_w_ta = genetics_mappings_w_ta.loc[genetics_mappings_w_ta['trait_efos'].str.contains('\w+_\d+', regex=True), :]
-    
+
+    # Format and write output
     genetics_mappings_final = (genetics_mappings_w_ta
-        .groupby('study_id').agg(lambda x: list(set(x))).reset_index()
+        .groupby(['study_id', 'trait_reported', 'therapeutic_area']).agg(lambda x: list(set(x))).reset_index()
     )
     genetics_mappings_final.to_parquet(output_disease_lut)
 
@@ -170,7 +173,16 @@ def build_therapeutic_areas(
 
     return genetics_mappings_w_trait
 
-
+def write_evidence_strings(output_table: pd.DataFrame, output_file: str) -> None:
+    """Exports the table to a parquet file."""
+    with tempfile.TemporaryDirectory() as tmp_dir_name:
+        (
+            output_table.coalesce(1).write.format('parquet').mode('overwrite')
+            .option('compression', 'org.apache.hadoop.io.compress.GzipCodec').save(tmp_dir_name)
+        )
+        parquet_chunks = [f for f in Path.iterdir(tmp_dir_name) if f.endswith('.parquet')]
+        assert len(parquet_chunks) == 1, f'Expected one Parquet file, but found {len(parquet_chunks)}.'
+        Path.rename(PurePath.joinpath.join(tmp_dir_name, parquet_chunks[0]), output_file)
 
 
 if __name__ == '__main__':
