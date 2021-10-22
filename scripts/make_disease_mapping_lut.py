@@ -4,7 +4,6 @@
 import argparse
 from pathlib import Path, PurePath
 import tempfile
-from typing import List, Union
 
 import pandas as pd
 
@@ -35,7 +34,7 @@ def main(
         assert len(null_studies) == 0, f"Studies in {source} contain invalid mappings."
     
 
-    # 4. Join static with dinamycally imported mappings TODO: concat and not mergesl
+    # 4. Merge updated mappings across data sources
     genetics_mappings = (
         pd.concat([valid_finngen, valid_ukb, gwas_catalog_mappings], ignore_index=True)
         # Coalesce all mappings in trait_efos
@@ -45,26 +44,6 @@ def main(
     )
 
     # 5. Bring therapeutic areas
-    '''
-    genetics_mappings_w_ta = (genetics_mappings
-        .explode('trait_efos')
-        # Get list of all TAs from the disease index
-        .merge(
-            disease_index_df.filter(items=['id', 'therapeuticAreas']),
-            left_on='trait_efos',
-            right_on='id',
-            how='left'
-        )
-        .drop(columns='id')
-        .explode('therapeuticAreas')
-        # Group data
-        .groupby('study_id').agg(lambda x: list(set(x))).reset_index()
-        .explode('trait_reported')
-    )
-    genetics_mappings_w_ta['trait_category'] = genetics_mappings_w_ta['therapeuticAreas'].apply(lambda X: get_more_relevant_ta(X))
-    genetics_mappings_w_ta = genetics_mappings_w_ta.explode('trait_category').explode('trait_efos')
-    '''
-    
     genetics_mappings_w_ta = build_therapeutic_areas(genetics_mappings)
     genetics_mappings_w_ta['therapeutic_area'] = genetics_mappings_w_ta['therapeutic_areas'].apply(get_prioritised_therapeutic_area)
 
@@ -73,11 +52,11 @@ def main(
     assert len(genetics_mappings_w_ta[genetics_mappings_w_ta['therapeutic_area'].isna()]), 'WARNING! There are EFO IDs without a therapeutic area.'
     genetics_mappings_w_ta = genetics_mappings_w_ta.loc[genetics_mappings_w_ta['trait_efos'].str.contains('\w+_\d+', regex=True), :]
 
-    # Format and write output
-    genetics_mappings_final = (genetics_mappings_w_ta
+    # 6. Format and write output
+    output_table = (genetics_mappings_w_ta
         .groupby(['study_id', 'trait_reported', 'therapeutic_area']).agg(lambda x: list(set(x))).reset_index()
     )
-    genetics_mappings_final.to_parquet(output_disease_lut)
+    output_table.to_parquet(output_disease_lut)
 
 def read_input_file(path: str):
     """
@@ -118,6 +97,7 @@ def get_gwas_catalog_mappings(
 def get_ukbb_mappings(
     ukbb_df: pd.DataFrame
 ) -> pd.DataFrame:
+    """Extracts UK Biobank traits from the curation spreadsheet."""
 
     return (ukbb_df
             .query('candidate == True')
@@ -137,6 +117,7 @@ def get_ukbb_mappings(
 def get_finngen_mappings(
     finngen_df: pd.DataFrame
 ) -> pd.DataFrame:
+    """Extracts UK Biobank traits from the curation spreadsheet."""
     
     return (finngen_df
         .query('valid == True')
