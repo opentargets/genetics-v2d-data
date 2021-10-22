@@ -42,6 +42,11 @@ def main(
         .explode('trait_efos')
         .drop_duplicates()
     )
+    assert len(genetics_mappings) == (
+        len(gwas_catalog_mappings.explode('trait_efos')) +
+        len(valid_ukb.explode('proposed_efos')) +
+        len(valid_finngen.explode('proposed_efos'))
+    ), "WARNING! Some mappings went missing during the merge."
 
     # 5. Bring therapeutic areas
     genetics_mappings_w_ta = build_therapeutic_areas(genetics_mappings)
