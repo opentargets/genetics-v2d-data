@@ -16,7 +16,7 @@ credsets: 'gs://genetics-portal-dev-staging/finemapping/merged_210515/credset/_S
 
 # UK Biobank (Neale V2 and SAIGE) sumstat manifest files
 ukb_manifest: 'gs://genetics-portal-input/ukb_phenotypes/neale2_saige_study_manifest.190430.tsv'
-ukb_efo_curation: 'gs://genetics-portal-input/ukb_phenotypes/ukb_efo_annotation.190828.json'
+ukb_efo_curation: 'gs://genetics-portal-input/ukb_phenotypes/ukb_efo_annotation-2021-10-25.json'
 
 # FINNGEN sumstat manifest files
 FINNGEN_manifest: 'configs/r5_finngen.json'
