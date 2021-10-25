@@ -114,8 +114,12 @@ def get_ukbb_mappings(
     return (
         ukbb_old_df.merge(ukbb_new_df, on=['study_id'], how='outer', indicator=True)
         .query("_merge == 'left_only' or _merge == 'both' and candidate == True")
+
+        # Coalesce EFOs and traits into a single column
         .assign(proposed_efos=lambda X: X.proposed_efos_y.combine_first(X.proposed_efos_x))
-        .filter(items=['study_id', 'proposed_efos'])
+        .assign(trait_reported=lambda X: X.trait_reported_y.combine_first(X.trait_reported_x))
+        
+        .filter(items=['study_id', 'trait_reported', 'proposed_efos'])
     )
 
     
