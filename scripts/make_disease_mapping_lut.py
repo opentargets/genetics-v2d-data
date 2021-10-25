@@ -136,7 +136,6 @@ def get_ukbb_old_mappings(
     ukbb_old_mappings: str
 ) -> pd.DataFrame:
     """Extracts initial UK Biobank trait mappings from the curation JSON ."""
-    # TODO: The old file does not contain the `trait_reported`.
 
     return (
         read_input_file(ukbb_old_mappings)
