@@ -59,7 +59,7 @@ def main(
     # 4. Format and write output
     (
         genetics_mappings_w_ta
-        .groupby(['study_id', 'trait_reported', 'therapeutic_area']).agg(lambda x: list(set(x))).reset_index()
+        .groupby(['study_id', 'trait_reported', 'therapeutic_area'], dropna=False).agg(lambda x: list(set(x))).reset_index()
         .to_parquet(output_disease_lut)
     )
     logging.info(f'{output_disease_lut} successfully generated. Exiting.')
@@ -111,10 +111,6 @@ def get_ukbb_mappings(
     ukbb_old_df = get_ukbb_old_mappings(ukbb_old_mappings)
     ukbb_new_df = get_ukbb_new_mappings(ukbb_new_mappings)
 
-    '''print(ukbb_old_df.head())
-    print('nuevo')
-    print(ukbb_new_df.head())'''
-
     return (
         ukbb_old_df.merge(ukbb_new_df, on=['study_id'], how='outer', indicator=True)
         .query("_merge == 'left_only' or _merge == 'both' and candidate == True")
@@ -140,6 +136,7 @@ def get_ukbb_old_mappings(
     ukbb_old_mappings: str
 ) -> pd.DataFrame:
     """Extracts initial UK Biobank trait mappings from the curation JSON ."""
+    # TODO: The old file does not contain the `trait_reported`.
 
     return (
         read_input_file(ukbb_old_mappings)
