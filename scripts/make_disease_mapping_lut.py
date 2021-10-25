@@ -13,18 +13,15 @@ from extract_therapeutic_areas import *
 def main(
     study_index: str,
     finngen_spreadsheet: str,
-    ukbb_spreadsheet: str,
+    ukbb_old_mappings: str,
+    ukbb_new_mappings: str,
     output_disease_lut: str  
 ) -> None:
-    # 0. Load data
-    studies_df = read_input_file(study_index)
-    finngen_df = read_input_file(finngen_spreadsheet)
-    ukbb_df = read_input_file(ukbb_spreadsheet)
 
     # 1. Extract mappings per data source GWAS catalog traits from study table (these do not require OT mapping)
-    gwas_catalog_mappings = get_gwas_catalog_mappings(studies_df)
-    valid_ukb = get_ukbb_mappings(ukbb_df)
-    valid_finngen = get_finngen_mappings(finngen_df)
+    gwas_catalog_mappings = get_gwas_catalog_mappings(study_index)
+    valid_ukb = get_ukbb_mappings(ukbb_old_mappings, ukbb_new_mappings)
+    valid_finngen = get_finngen_mappings(finngen_spreadsheet)
     # Assert there are no studies with a null mapping
     for source in [gwas_catalog_mappings, valid_ukb, valid_finngen]:
         if 'proposed_efos' not in source.columns:
@@ -41,8 +38,8 @@ def main(
         # Coalesce all mappings in trait_efos
         .assign(trait_efos=lambda x: x.proposed_efos.combine_first(x.trait_efos)).drop('proposed_efos', axis=1)
         .explode('trait_efos')
-        .drop_duplicates()
     )
+
     assert len(genetics_mappings) == (
         len(gwas_catalog_mappings.explode('trait_efos')) +
         len(valid_ukb.explode('proposed_efos')) +
@@ -82,45 +79,81 @@ def read_input_file(path: str):
             return pd.read_parquet(full_df)
         if Path.is_file(path):
             return pd.read_parquet(path)
+    elif 'json' in path:
+        return pd.read_json(path, lines=True)
     else:
         return pd.read_csv(path.replace('/edit?usp=sharing', '/export?format=csv'))
 
 def get_gwas_catalog_mappings(
-    studies_df: pd.DataFrame
+    study_index: str
 ) -> pd.DataFrame:
-    """Extracts GWAS catalog traits from study table (these do not require OT mapping)."""
+    """Extracts GWAS catalog trait mappings from study table (these do not require OT mapping)."""
     
+    studies_df = read_input_file(study_index)
     return (
         studies_df[studies_df['study_id'].str.startswith('GCST')]
         .filter(items=['study_id', 'trait_reported', 'trait_efos'])
     )
 
 def get_ukbb_mappings(
-    ukbb_df: pd.DataFrame
+    ukbb_old_mappings: str,
+    ukbb_new_mappings: str
 ) -> pd.DataFrame:
-    """Extracts UK Biobank traits from the curation spreadsheet."""
+    """
+    UK Biobank trait mappings are merged from two different sources:
+    1. ukbb_old_df: Initial curation done using EFO2.
+    2. ukbb_new_df: Review of some studies from ukbb_old_df where the mapping is incorrect or is updated.
+    A study being in both datasets means that it is either incorrect or updated:
+    If updated (candidate = True) --> The new mapping is kept.
+    If incorrect (candidate = False) --> The mapping is dropped.
+    """
+    ukbb_old_df = get_ukbb_old_mappings(ukbb_old_mappings)
+    ukbb_new_df = get_ukbb_new_mappings(ukbb_new_mappings)
 
-    return (ukbb_df
-            .query('candidate == True')
-            .dropna(how='all')
-            .filter(items=['study_id', 'traitName', 'candidateId'])
-            # Trim potential whitespaces
-            .apply(lambda x: x.str.strip())
-            # Group data
-            .groupby('study_id').agg(lambda x: list(set(x))).reset_index()
-            .rename(columns={
-                'traitName': 'trait_reported',
-                'candidateId': 'proposed_efos'
-            })
-            .explode('trait_reported')
+    '''print(ukbb_old_df.head())
+    print('nuevo')
+    print(ukbb_new_df.head())'''
+
+    return (
+        ukbb_old_df.merge(ukbb_new_df, on=['study_id'], how='outer', indicator=True)
+        .query("_merge == 'left_only' or _merge == 'both' and candidate == True")
+        .assign(proposed_efos=lambda X: X.proposed_efos_y.combine_first(X.proposed_efos_x))
+        .filter(items=['study_id', 'proposed_efos'])
+    )
+
+    
+def get_ukbb_new_mappings(
+    ukbb_new_mappings: str
+) -> pd.DataFrame:
+    """Extracts valid UK Biobank trait mappings from the curation spreadsheet."""
+
+    return (
+        read_input_file(ukbb_new_mappings)
+        .rename(columns={'traitName': 'trait_reported', 'candidateId':'proposed_efos'})
+        .query('candidate == True | current == True')
+        .dropna(how='all')
+        .filter(items=['study_id', 'trait_reported', 'current', 'currentEfo', 'candidate', 'proposed_efos'])
+    )
+
+def get_ukbb_old_mappings(
+    ukbb_old_mappings: str
+) -> pd.DataFrame:
+    """Extracts initial UK Biobank trait mappings from the curation JSON ."""
+
+    return (
+        read_input_file(ukbb_old_mappings)
+        .drop('curation_confidence', axis=1)
+        .rename(columns={'efos': 'proposed_efos'})
+        .explode('proposed_efos')
     )
 
 def get_finngen_mappings(
-    finngen_df: pd.DataFrame
+    finngen_spreadsheet: str
 ) -> pd.DataFrame:
-    """Extracts UK Biobank traits from the curation spreadsheet."""
+    """Extracts Finngen trait mappings from the curation spreadsheet."""
     
-    return (finngen_df
+    return (
+        read_input_file(finngen_spreadsheet)
         .query('valid == True')
         .filter(items=['NAME', 'LONGNAME', 'efo_cls'])
         # Trim all strings to have a clean mapped id
@@ -171,7 +204,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--in_studies', help='Directory of parquet files that stores the study index.', required=True)
     parser.add_argument('--in_finngen_mappings', help='URL of the spreadsheet that contains all Finngen disease mappings', nargs='?', default='https://docs.google.com/spreadsheets/d/1yrQPpsRi-mijs_BliKFZjeoxP6kGIs9Bz-02_0WDvAA/edit?usp=sharing')
-    parser.add_argument('--in_ukbb_mappings', help='URL of the spreadsheet that contains the updated UK Biobank disease mappings resulting from upgrading to EFO3', default='https://docs.google.com/spreadsheets/d/1iTGRVPXsHizNXdDnj0on9zfURjTLP8A73mn7CNZiVw8/edit?usp=sharing')
+    parser.add_argument('--in_ukbb_old_mappings', help='JSON file that contains the initial UK Biobank disease mappings. File can be found in gs://genetics-portal-input/ukb_phenotypes/ukb_efo_annotation.190828.json', required=True)
+    parser.add_argument('--in_ukbb_new_mappings', help='URL of the spreadsheet that contains the updated UK Biobank disease mappings resulting from upgrading to EFO3', default='https://docs.google.com/spreadsheets/d/1PotmUEirkV36dh-vpZ3GgxQg_LcOefZKbyTq0PNQ6NY/edit?usp=sharing')
     parser.add_argument('--out_disease_lut', help='Parquet file that stores all disease mappings present in the Genetics Portal studies', required=True)
     args = parser.parse_args()
 
@@ -184,11 +218,13 @@ if __name__ == '__main__':
     # Report input data:
     logging.info(f'Study index file path: {args.in_studies}')
     logging.info(f'Finngen curation spreadsheet URL: {args.in_finngen_mappings}')
-    logging.info(f'UK Biobank curation spreadsheet URL: {args.in_ukbb_mappings}')
+    logging.info(f'UK Biobank curation spreadsheet URL: {args.in_ukbb_new_mappings}')
+    logging.info(f'UK Biobank initial curation file path: {args.in_ukbb_old_mappings}')
 
     main(
         args.in_studies,
         args.in_finngen_mappings,
-        args.in_ukbb_mappings,
+        args.in_ukbb_old_mappings,
+        args.in_ukbb_new_mappings,
         args.out_disease_lut
     )
