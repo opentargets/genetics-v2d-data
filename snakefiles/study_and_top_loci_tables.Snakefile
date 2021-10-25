@@ -249,20 +249,6 @@ rule merge_gwascat_and_sumstat_toploci:
 # Study table -----------------------------------------------------------------
 #
 
-rule get_efo_categories:
-    ''' Uses OLS API to get "therapeutic area" / category for each EFO
-    '''
-    input:
-        study_table = rules.merge_FINNGEN_study_tables.output,
-        therapeutic_areas = config['efo_therapeutic_areas']
-    output:
-        tmpdir + '/{version}/efo_categories.json'
-    shell:
-        'python scripts/get_therapeutic_areas.py '
-        '--in_study {input.study_table} '
-        '--in_ta {input.therapeutic_areas} '
-        '--output {output}'
-
 rule list_studies_with_sumstats:
     ''' Makes a list of files with sumstats
     '''

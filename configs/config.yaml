@@ -21,10 +21,6 @@ ukb_efo_curation: 'gs://genetics-portal-input/ukb_phenotypes/ukb_efo_annotation.
 # FINNGEN sumstat manifest files
 FINNGEN_manifest: 'configs/r5_finngen.json'
 
-# Trait category / therapeutic area
-efo_therapeutic_areas: 'configs/therapeutic_areas.tsv' # List of therapeutic area labels
-therapeutic_area_unknown_label: 'Uncategorised'
-
 # LD table
 url_1000G: 'gs://genetics-portal-input/1000Genomes_phase3/plink_format_b38'
 gwascat_2_superpop: 'configs/gwascat_superpopulation_lut.curated.v2.tsv'
