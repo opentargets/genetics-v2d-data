@@ -57,10 +57,11 @@ def main(
     genetics_mappings_w_ta = genetics_mappings_w_ta.loc[genetics_mappings_w_ta['trait_efos'].str.contains('\w+_\d+', regex=True), :]
 
     # 4. Format and write output
-    output_table = (genetics_mappings_w_ta
+    (
+        genetics_mappings_w_ta
         .groupby(['study_id', 'trait_reported', 'therapeutic_area']).agg(lambda x: list(set(x))).reset_index()
+        .to_parquet(output_disease_lut)
     )
-    output_table.to_parquet(output_disease_lut)
     logging.info(f'{output_disease_lut} successfully generated. Exiting.')
 
 def read_input_file(path: str):
@@ -187,18 +188,6 @@ def build_therapeutic_areas(
     )
 
     return genetics_mappings_w_trait
-
-def write_evidence_strings(output_table: pd.DataFrame, output_file: str) -> None:
-    """Exports the table to a parquet file."""
-    with tempfile.TemporaryDirectory() as tmp_dir_name:
-        (
-            output_table.coalesce(1).write.format('parquet').mode('overwrite')
-            .option('compression', 'org.apache.hadoop.io.compress.GzipCodec').save(tmp_dir_name)
-        )
-        parquet_chunks = [f for f in Path.iterdir(tmp_dir_name) if f.endswith('.parquet')]
-        assert len(parquet_chunks) == 1, f'Expected one Parquet file, but found {len(parquet_chunks)}.'
-        Path.rename(PurePath.joinpath.join(tmp_dir_name, parquet_chunks[0]), output_file)
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
