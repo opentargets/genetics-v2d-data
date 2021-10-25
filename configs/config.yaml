@@ -20,7 +20,6 @@ ukb_efo_curation: 'gs://genetics-portal-input/ukb_phenotypes/ukb_efo_annotation.
 
 # FINNGEN sumstat manifest files
 FINNGEN_manifest: 'configs/r5_finngen.json'
-FINNGEN_efo_curation: 'configs/finngen_df5_efo_mapping.lastest.nonull.tsv'
 
 # Trait category / therapeutic area
 efo_therapeutic_areas: 'configs/therapeutic_areas.tsv' # List of therapeutic area labels
