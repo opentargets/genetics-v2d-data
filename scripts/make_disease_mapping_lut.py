@@ -3,10 +3,9 @@
 
 import argparse
 import logging
-from pathlib import Path, PurePath
-import tempfile
 
 import pandas as pd
+from pathlib import Path
 
 from extract_therapeutic_areas import *
 
