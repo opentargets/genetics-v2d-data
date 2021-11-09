@@ -47,18 +47,19 @@ def main(
 
     # 3. Bring therapeutic areas
     genetics_mappings_w_ta = build_therapeutic_areas(genetics_mappings)
-    genetics_mappings_w_ta['therapeutic_area'] = genetics_mappings_w_ta['therapeutic_areas'].apply(get_prioritised_therapeutic_area)
+    genetics_mappings_w_ta['trait_category'] = genetics_mappings_w_ta['therapeutic_areas'].apply(get_prioritised_therapeutic_area)
+    genetics_mappings_w_ta.drop('therapeutic_areas', axis=1)
     logging.info('EFO loaded. Therapeutic areas built.')
 
     # Check everything is an ontology ID and that there are no mappings without a TA
     assert genetics_mappings_w_ta['trait_efos'].str.contains('\w+_\d+', regex=True).all() == False, 'WARNING! There are invalid EFO IDs'
-    assert len(genetics_mappings_w_ta[genetics_mappings_w_ta['therapeutic_area'].isna()]), 'WARNING! There are EFO IDs without a therapeutic area.'
+    assert len(genetics_mappings_w_ta[genetics_mappings_w_ta['trait_category'].isna()]), 'WARNING! There are EFO IDs without a therapeutic area.'
     genetics_mappings_w_ta = genetics_mappings_w_ta.loc[genetics_mappings_w_ta['trait_efos'].str.contains('\w+_\d+', regex=True), :]
 
     # 4. Format and write output
     (
         genetics_mappings_w_ta
-        .groupby(['study_id', 'trait_reported', 'therapeutic_area'], dropna=False).agg(lambda x: list(set(x))).reset_index()
+        .groupby(['study_id', 'trait_reported', 'trait_category'], dropna=False).agg(lambda x: list(set(x))).reset_index()
         .to_parquet(output_disease_lut)
     )
     logging.info(f'{output_disease_lut} successfully generated. Exiting.')
