@@ -4,6 +4,7 @@
 import argparse
 import logging
 
+from numpy import ravel
 import pandas as pd
 from pathlib import Path
 
@@ -46,9 +47,26 @@ def main(
     ), "WARNING! Some mappings went missing during the merge."
 
     # 3. Bring therapeutic areas
-    genetics_mappings_w_ta = build_therapeutic_areas(genetics_mappings)
-    genetics_mappings_w_ta['trait_category'] = genetics_mappings_w_ta['therapeutic_areas'].apply(get_prioritised_therapeutic_area)
-    genetics_mappings_w_ta.drop('therapeutic_areas', axis=1)
+    genetics_mappings_w_ta = (
+
+        build_therapeutic_areas(genetics_mappings)
+    )
+    print(genetics_mappings_w_ta.head().columns)
+    genetics_mappings_w_ta = (genetics_mappings_w_ta
+        # A study/trait can be mapped to multiple EFOs, each with a different set of therapeutic areas.
+        # All the therapeutic areas are collected into the same column to extract the most significant
+        # one for a single study. The result of collecting these is a multidimensional array that must be flattened.
+        .groupby(['study_id', 'trait_efos', 'trait_reported']).apply(lambda X: list(X)).reset_index()
+    )
+    genetics_mappings_w_ta['therapeutic_areas'] = genetics_mappings_w_ta['therapeutic_areas'].apply(lambda X: ravel(X))
+
+    genetics_mappings_w_ta = (
+        genetics_mappings_w_ta
+        # Extract the most relevant TA from the array
+        .assign(trait_category=lambda X: get_prioritised_therapeutic_area(X.therapeutic_areas))
+
+        .drop('therapeutic_areas', axis=1)
+    )
     logging.info('EFO loaded. Therapeutic areas built.')
 
     # Check everything is an ontology ID and that there are no mappings without a TA
