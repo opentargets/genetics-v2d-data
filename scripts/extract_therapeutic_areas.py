@@ -85,7 +85,6 @@ def get_prioritised_therapeutic_area(
     SORTED_TAS_DF is a df where the therapeutic areas are arranged in order of relevance.
     The more relevant TA is extracted by selecting which one has the minimal index.
     """
-
     try:
         if len(therapeutic_areas) > 0:
             min_index = float('inf')
@@ -97,9 +96,8 @@ def get_prioritised_therapeutic_area(
             return ta
     except TypeError:
         return "Uncategorised"
-    except:
-        print(therapeutic_areas)
-
+    except Exception as e:
+        raise e
 
 def normalise_ontology_identifier(identifier: str) -> Optional[str]:
     """

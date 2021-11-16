@@ -4,7 +4,6 @@
 import argparse
 import logging
 
-from numpy import ravel
 import pandas as pd
 from pathlib import Path
 
@@ -46,40 +45,32 @@ def main(
         len(valid_finngen.explode('proposed_efos'))
     ), "WARNING! Some mappings went missing during the merge."
 
+    # Check everything is an ontology ID and that there are no mappings without a TA
+    assert genetics_mappings['trait_efos'].str.contains('\w+_\d+', regex=True).all() == False, 'WARNING! There are invalid EFO IDs'
+    genetics_mappings = genetics_mappings.loc[genetics_mappings['trait_efos'].str.contains('\w+_\d+', regex=True), :]
+
     # 3. Bring therapeutic areas
     genetics_mappings_w_ta = (
 
         build_therapeutic_areas(genetics_mappings)
-    )
-    print(genetics_mappings_w_ta.head().columns)
-    genetics_mappings_w_ta = (genetics_mappings_w_ta
         # A study/trait can be mapped to multiple EFOs, each with a different set of therapeutic areas.
-        # All the therapeutic areas are collected into the same column to extract the most significant
-        # one for a single study. The result of collecting these is a multidimensional array that must be flattened.
-        .groupby(['study_id', 'trait_efos', 'trait_reported']).apply(lambda X: list(X)).reset_index()
+        # All the therapeutic areas and EFOs are collected into the same column. The most significant TA
+        # per study is extracted. The result of collecting these is a multidimensional array that must be flattened.
+        .groupby(['study_id', 'trait_reported'])
+        .agg({'therapeutic_areas':list, 'trait_efos':list}).reset_index()
     )
-    genetics_mappings_w_ta['therapeutic_areas'] = genetics_mappings_w_ta['therapeutic_areas'].apply(lambda X: ravel(X))
-
-    genetics_mappings_w_ta = (
-        genetics_mappings_w_ta
-        # Extract the most relevant TA from the array
-        .assign(trait_category=lambda X: get_prioritised_therapeutic_area(X.therapeutic_areas))
-
-        .drop('therapeutic_areas', axis=1)
-    )
+    genetics_mappings_w_ta['therapeutic_areas'] = genetics_mappings_w_ta['therapeutic_areas'].apply(lambda X: flatten_array(X))
+    
+    # Extract the most relevant TA from the array
+    genetics_mappings_w_ta['trait_category'] = genetics_mappings_w_ta['therapeutic_areas'].apply(get_prioritised_therapeutic_area)
+    genetics_mappings_w_ta.drop('therapeutic_areas', axis=1, inplace=True)
     logging.info('EFO loaded. Therapeutic areas built.')
 
-    # Check everything is an ontology ID and that there are no mappings without a TA
-    assert genetics_mappings_w_ta['trait_efos'].str.contains('\w+_\d+', regex=True).all() == False, 'WARNING! There are invalid EFO IDs'
     assert len(genetics_mappings_w_ta[genetics_mappings_w_ta['trait_category'].isna()]), 'WARNING! There are EFO IDs without a therapeutic area.'
-    genetics_mappings_w_ta = genetics_mappings_w_ta.loc[genetics_mappings_w_ta['trait_efos'].str.contains('\w+_\d+', regex=True), :]
+    assert len(genetics_mappings_w_ta) == len(genetics_mappings_w_ta['study_id'].unique()), 'WARNING! There are duplicated studies.'
 
     # 4. Format and write output
-    (
-        genetics_mappings_w_ta
-        .groupby(['study_id', 'trait_reported', 'trait_category'], dropna=False).agg(lambda x: list(set(x))).reset_index()
-        .to_parquet(output_disease_lut)
-    )
+    genetics_mappings_w_ta.to_parquet(output_disease_lut)
     logging.info(f'{output_disease_lut} successfully generated. Exiting.')
 
 def read_input_file(path: str):
@@ -206,6 +197,15 @@ def build_therapeutic_areas(
     )
 
     return genetics_mappings_w_trait
+
+def flatten_array(
+    arr: List
+) -> List:
+    """Flattens a bidimensional array."""
+    try:
+        return [i for sublist in arr for i in sublist]
+    except Exception:
+        pass
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
