@@ -205,6 +205,27 @@ def main():
     # inconsistent with the rest of GWAS Catalog (correspondance w Annalisa Buniello)
     df = df.loc[~pd.isnull(df.n_initial), :]
 
+    # Manually add study requested in https://github.com/opentargets/genetics/issues/444
+    GCST90013791 = ({
+        'study_id': 'GCST90013791',
+        'pmid': '',
+        'pub_date': '2021-02-22',
+        'pub_journal': '',
+        'pub_title': '',
+        'pub_author': 'Crouch D',
+        'trait_reported': 'Type 1 diabetes',
+        'trait_efos': ['EFO_0001359'],
+        'ancestry_initial': 'European=7977',
+        'ancestry_replication': '',
+        'n_initial': 7977,
+        'n_replication': 3983,
+        'n_cases': 0,
+        'trait_category': '',
+        'num_assoc_loci': '',
+        'has_sumstats': True
+    })
+    df.loc[len(df)] = pd.Series(GCST90013791)
+
     # Write
     df.to_json(args.outf, orient='records', lines=True)
 
