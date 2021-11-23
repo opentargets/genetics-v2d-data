@@ -198,11 +198,6 @@ def main():
 
     return 0
 
-
-
-
-
-
 def parse_args():
     """ Load command line args """
     parser = argparse.ArgumentParser()

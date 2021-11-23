@@ -266,9 +266,6 @@ rule study_table_to_parquet:
         study_table: merged study table
         sumstat_studies: list of study IDs with sumstats
         top_loci: top loci table (needed to add number of associated loci)
-        efo_anno: EFO to therapeautic area mapping json
-        therapeutic_areas: list of "therapeutic areas", needed to sort the
-                           efo_anno
         
         This task will fail if there are any study IDs with summary stats
         that are not found in the merged study table, this is required
@@ -277,19 +274,12 @@ rule study_table_to_parquet:
     input:
         study_table = rules.merge_FINNGEN_study_tables.output,
         sumstat_studies = rules.list_studies_with_sumstats.output,
-        efo_anno = rules.get_efo_categories.output,
         top_loci = rules.merge_gwascat_and_sumstat_toploci.output,
-        therapeutic_areas = config['efo_therapeutic_areas']
     output:
         'output/{version}/studies.parquet'
-    params:
-        unknown_label = config['therapeutic_area_unknown_label']
     shell:
         'python scripts/study_table_to_parquet.py '
         '--in_study_table {input.study_table} '
         '--in_toploci {input.top_loci} '
         '--sumstat_studies {input.sumstat_studies} '
-        '--efo_categories {input.efo_anno} '
-        '--in_ta {input.therapeutic_areas} '
-        '--unknown_label {params.unknown_label} '
         '--output {output}'
