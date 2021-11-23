@@ -16,10 +16,15 @@ credsets: 'gs://genetics-portal-dev-staging/finemapping/merged_210515/credset/_S
 
 # UK Biobank (Neale V2 and SAIGE) sumstat manifest files
 ukb_manifest: 'gs://genetics-portal-input/ukb_phenotypes/neale2_saige_study_manifest.190430.tsv'
-ukb_efo_curation: 'gs://genetics-portal-input/ukb_phenotypes/ukb_efo_annotation-2021-10-25.json'
+ukb_efo_curation: 'gs://genetics-portal-input/ukb_phenotypes/ukb_efo_annotation.190828.json'
 
 # FINNGEN sumstat manifest files
 FINNGEN_manifest: 'configs/r5_finngen.json'
+FINNGEN_efo_curation: 'configs/finngen_df5_efo_mapping.lastest.nonull.tsv'
+
+# Trait category / therapeutic area
+efo_therapeutic_areas: 'configs/therapeutic_areas.tsv' # List of therapeutic area labels
+therapeutic_area_unknown_label: 'Uncategorised'
 
 # LD table
 url_1000G: 'gs://genetics-portal-input/1000Genomes_phase3/plink_format_b38'
