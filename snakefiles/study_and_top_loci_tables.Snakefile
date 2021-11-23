@@ -40,20 +40,18 @@ rule get_variant_index:
     shell:
         'cp {input} {output}'
 
-rule make_disease_mappings_lut:
+rule build_disease_mappings_lut:
     ''' Build LUT that integrates all the disease mappings
         study_table: merged study table in parquet format
         finngen-mappings: curation recorded in Google Sheets
-        ukbb-old-mappings: initial UK Biobank disease curation
-        ukbb-new-mappings: updated mappings resulting from upgrading to EFO3
+        ukbb-mappings: updated mappings resulting from upgrading to EFO3
         disease-index: parquet files that stores the OT disease index to extract the therapeutic areas
     '''
     input:
         study_table = rules.study_table_to_parquet.output,
         finngen-mappings = HTTPRemoteProvider().remote(
             'https://docs.google.com/spreadsheets/d/1yrQPpsRi-mijs_BliKFZjeoxP6kGIs9Bz-02_0WDvAA/edit?usp=sharing'),
-        ukbb_old_mappings = config['ukb_efo_curation']
-        ukbb_new_mappings = HTTPRemoteProvider().remote(
+        ukbb-mappings = HTTPRemoteProvider().remote(
             'https://docs.google.com/spreadsheets/d/1PotmUEirkV36dh-vpZ3GgxQg_LcOefZKbyTq0PNQ6NY/edit?usp=sharing')
         disease-index = FTPRemoteProvider().remote(
             'ftp://ftp.ebi.ac.uk/pub/databases/opentargets/platform/21.06/output/etl/parquet/diseases')    
@@ -63,8 +61,8 @@ rule make_disease_mappings_lut:
         'python scripts/make_disease_mapping_lut.py '
         '--in_studies {input.study_table} '
         '--in_finngen-mappings {input.finngen-mappings} '
-        '--in_ukbb_old_mappings {input.ukbb_old_mappings} '
-        '--in_ukbb_new_mappings {input.ukbb_new_mappings} '
+        '--in_ukbb-mappings {input.ukbb-mappings} '
+        '--in_disease-index {input.disease-index} '
         '--out_disease-lut {output} '
 
 rule extract_gwascat_rsids_from_variant_index:
@@ -93,7 +91,7 @@ rule annotate_gwas_cat_with_variant_ids:
         tmpdir + \
             '/{version}/gwas-catalog-associations_ontology_variantID-annotated.tsv'
     shell:
-        'python scripts/annotate_gwascat_variantids.py '
+        'python scripts/annotate_gwascat_varaintids.py '
         '--gwas {input.gwascat} '
         '--invar {input.invar} '
         '--out {output}'
@@ -178,12 +176,15 @@ rule make_UKB_studies_table:
     input:
         manifest = GSRemoteProvider().remote(
             config['ukb_manifest'], keep_local=KEEP_LOCAL),
+        efos = GSRemoteProvider().remote(
+            config['ukb_efo_curation'], keep_local=KEEP_LOCAL)
     output:
         study_table = tmpdir + '/{version}/UKB_study_table.json',
         prefix_counts = tmpdir + '/{version}/UKB_prefix_counts.tsv'
     shell:
         'python scripts/make_UKB_study_table.py '
         '--in_manifest {input.manifest} '
+        '--in_efos {input.efos} '
         '--prefix_counts {output.prefix_counts} '
         '--outf {output.study_table}'
 
@@ -194,24 +195,26 @@ rule merge_study_tables:
     input:
         gwas = rules.make_gwas_cat_studies_table.output.main,
         ukb = rules.make_UKB_studies_table.output.study_table
-        finngen = rules.make_FINNGEN_studies_table.output.study_table
     output:
-        tmpdir + '/{version}/merged_study_table.json'
+        tmpdir + '/{version}/merged_study_table.old.json'
     shell:
         'python scripts/merge_study_tables.py '
         '--in_gwascat {input.gwas} '
         '--in_ukb {input.ukb} '
-        '--in_finngen {input.finngen} '
         '--output {output}'
 
-rule make_FINNGEN_studies_table:
+rule merge_FINNGEN_study_tables:
     input:
-        finn_manifest=config['FINNGEN_manifest']
+        old_table=rules.merge_study_tables.output,
+        finn_manifest=config['FINNGEN_manifest'],
+        finn_efo=config['FINNGEN_efo_curation']
     output:
-        study_table = tmpdir + '/{version}/FINNGEN_study_table.json'
+        tmpdir + '/{version}/merged_study_table.json'
     shell:
-        'python scripts/make_FINNGEN_study_table.py '
+        'python scripts/Make_FINNGEN_entries.py '
         '--in_manifest {input.finn_manifest} '
+        '--in_EFO {input.finn_efo} '
+        '--in_study_table {input.old_table}'
         '--outf {output} '
 
 rule make_summarystat_toploci_table:
@@ -248,6 +251,20 @@ rule merge_gwascat_and_sumstat_toploci:
 #
 # Study table -----------------------------------------------------------------
 #
+
+rule get_efo_categories:
+    ''' Uses OLS API to get "therapeutic area" / category for each EFO
+    '''
+    input:
+        study_table = rules.merge_FINNGEN_study_tables.output,
+        therapeutic_areas = config['efo_therapeutic_areas']
+    output:
+        tmpdir + '/{version}/efo_categories.json'
+    shell:
+        'python scripts/get_therapeutic_areas.py '
+        '--in_study {input.study_table} '
+        '--in_ta {input.therapeutic_areas} '
+        '--output {output}'
 
 rule list_studies_with_sumstats:
     ''' Makes a list of files with sumstats
