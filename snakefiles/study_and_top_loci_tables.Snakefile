@@ -180,12 +180,7 @@ rule merge_study_tables:
     '''
     input:
         gwas = rules.make_gwas_cat_studies_table.output.main,
-<<<<<<< HEAD
-        ukb = rules.make_UKB_studies_table.output.study_table,
-        finngen = rules.make_FINNGEN_studies_table.output.study_table
-=======
         ukb = rules.make_UKB_studies_table.output.study_table
->>>>>>> 9eece716c449981d9ed3f02c3e9069a0a919d7ef
     output:
         tmpdir + '/{version}/merged_study_table.old.json'
     shell:
@@ -194,8 +189,7 @@ rule merge_study_tables:
         '--in_ukb {input.ukb} '
         '--output {output}'
 
-<<<<<<< HEAD
-=======
+
 rule merge_FINNGEN_study_tables:
     input:
         old_table=rules.merge_study_tables.output,
@@ -207,10 +201,9 @@ rule merge_FINNGEN_study_tables:
         'python scripts/Make_FINNGEN_entries.py '
         '--in_manifest {input.finn_manifest} '
         '--in_EFO {input.finn_efo} '
-        '--in_study_table {input.old_table}'
-        '--outf {output} '
+        '--in_study_table {input.old_table} '
+        '--outf {output}'
 
->>>>>>> 9eece716c449981d9ed3f02c3e9069a0a919d7ef
 rule make_summarystat_toploci_table:
     ''' Converts the toploci table produce from the finemapping pipeline to
         standardised format. Study table is need to know if a study is
@@ -219,7 +212,7 @@ rule make_summarystat_toploci_table:
     input:
         toploci = GSRemoteProvider().remote(
             config['toploci'], keep_local=KEEP_LOCAL),
-        study_info = rules.merge_study_tables.output
+        study_info = rules.merge_FINNGEN_study_tables.output
     output:
         tmpdir + '/{version}/sumstat-associations_ot-format.tsv'
     shell:
@@ -287,7 +280,7 @@ rule study_table_to_parquet:
         because of https://github.com/opentargets/genetics/issues/354 
     '''
     input:
-        study_table = rules.merge_study_tables.output,
+        study_table = rules.merge_FINNGEN_study_tables.output,
         sumstat_studies = rules.list_studies_with_sumstats.output,
         efo_anno = rules.get_efo_categories.output,
         top_loci = rules.merge_gwascat_and_sumstat_toploci.output,
