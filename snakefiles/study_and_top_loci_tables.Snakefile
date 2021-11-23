@@ -188,7 +188,7 @@ rule make_UKB_studies_table:
 
 # "Study table" rule that need to be above `make_summarystat_toploci_table`
 rule merge_study_tables:
-    ''' Merges the GWAS Catalog and Neale UK Biobank study tables together.
+    ''' Merges the GWAS Catalog, UK Biobank, and Finngen study tables together.
     '''
     input:
         gwas = rules.make_gwas_cat_studies_table.output.main,
