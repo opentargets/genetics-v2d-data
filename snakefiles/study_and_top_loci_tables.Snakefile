@@ -311,17 +311,15 @@ rule make_disease_mappings_lut:
         study_table = rules.study_table_to_parquet.output,
         finngen_mappings = HTTPRemoteProvider().remote(
             'https://docs.google.com/spreadsheets/d/1yrQPpsRi-mijs_BliKFZjeoxP6kGIs9Bz-02_0WDvAA/edit?usp=sharing'),
-        ukbb_old_mappings = config['ukb_efo_curation'],
+        ukbb_old_mappings =  GSRemoteProvider().remote(config['ukb_efo_curation'], keep_local=KEEP_LOCAL),
         ukbb_new_mappings = HTTPRemoteProvider().remote(
-            'https://docs.google.com/spreadsheets/d/1PotmUEirkV36dh-vpZ3GgxQg_LcOefZKbyTq0PNQ6NY/edit?usp=sharing'),
-        disease_index = FTPRemoteProvider().remote(
-            'ftp://ftp.ebi.ac.uk/pub/databases/opentargets/platform/21.06/output/etl/parquet/diseases')    
+            'https://docs.google.com/spreadsheets/d/1PotmUEirkV36dh-vpZ3GgxQg_LcOefZKbyTq0PNQ6NY/edit?usp=sharing')
     output:
         'output/{version}/trait_efo.parquet'
     shell:
         'python scripts/make_disease_mapping_lut.py '
         '--in_studies {input.study_table} '
-        '--in_finngen_mappings {input.finngen-mappings} '
+        '--in_finngen_mappings {input.finngen_mappings} '
         '--in_ukbb_old_mappings {input.ukbb_old_mappings} '
         '--in_ukbb_new_mappings {input.ukbb_new_mappings} '
         '--out_disease-lut {output}'
