@@ -209,7 +209,7 @@ def flatten_array(
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--in_studies', help='Directory of parquet files that stores the study index.', required=True)
+    parser.add_argument('--in_studies', help='Directory of the parquet file that stores the study index.', required=True)
     parser.add_argument('--in_finngen_mappings', help='URL of the spreadsheet that contains all Finngen disease mappings', nargs='?', default='https://docs.google.com/spreadsheets/d/1yrQPpsRi-mijs_BliKFZjeoxP6kGIs9Bz-02_0WDvAA/edit?usp=sharing')
     parser.add_argument('--in_ukbb_old_mappings', help='JSON file that contains the initial UK Biobank disease mappings. File can be found in gs://genetics-portal-input/ukb_phenotypes/ukb_efo_annotation-2021-10-25.json', required=True)
     parser.add_argument('--in_ukbb_new_mappings', help='URL of the spreadsheet that contains the updated UK Biobank disease mappings resulting from upgrading to EFO3', default='https://docs.google.com/spreadsheets/d/1PotmUEirkV36dh-vpZ3GgxQg_LcOefZKbyTq0PNQ6NY/edit?usp=sharing')
