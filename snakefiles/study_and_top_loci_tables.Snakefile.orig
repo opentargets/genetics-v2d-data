@@ -40,30 +40,6 @@ rule get_variant_index:
     shell:
         'cp {input} {output}'
 
-rule make_disease_mappings_lut:
-    ''' Build LUT that integrates all the disease mappings
-        study_table: merged study table in parquet format
-        finngen-mappings: curation recorded in Google Sheets
-        ukbb-old-mappings: initial UK Biobank disease curation
-        ukbb-new-mappings: updated mappings resulting from upgrading to EFO3
-    '''
-    input:
-        study_table = rules.study_table_to_parquet.output,
-        finngen-mappings = HTTPRemoteProvider().remote(
-            'https://docs.google.com/spreadsheets/d/1yrQPpsRi-mijs_BliKFZjeoxP6kGIs9Bz-02_0WDvAA/edit?usp=sharing'),
-        ukbb_old_mappings = config['ukb_efo_curation']
-        ukbb_new_mappings = HTTPRemoteProvider().remote(
-            'https://docs.google.com/spreadsheets/d/1PotmUEirkV36dh-vpZ3GgxQg_LcOefZKbyTq0PNQ6NY/edit?usp=sharing')
-    output:
-        'output/{version}/trait_efo.parquet'
-    shell:
-        'python scripts/make_disease_mapping_lut.py '
-        '--in_studies {input.study_table} '
-        '--in_finngen-mappings {input.finngen-mappings} '
-        '--in_ukbb_old_mappings {input.ukbb_old_mappings} '
-        '--in_ukbb_new_mappings {input.ukbb_new_mappings} '
-        '--out_disease-lut {output} '
-
 rule extract_gwascat_rsids_from_variant_index:
     ''' Makes set of GWAS Catalog rsids and chrom:pos strings. Then reads
         these from the variant index. Takes ~2 mins.
@@ -200,12 +176,16 @@ rule make_FINNGEN_studies_table:
         '--outf {output} '
 
 rule merge_study_tables:
-    ''' Merges the GWAS Catalog, UK Biobank, and Finngen study tables together.
+    ''' Merges the GWAS Catalog and Neale UK Biobank study tables together.
     '''
     input:
         gwas = rules.make_gwas_cat_studies_table.output.main,
+<<<<<<< HEAD
         ukb = rules.make_UKB_studies_table.output.study_table,
         finngen = rules.make_FINNGEN_studies_table.output.study_table
+=======
+        ukb = rules.make_UKB_studies_table.output.study_table
+>>>>>>> 9eece716c449981d9ed3f02c3e9069a0a919d7ef
     output:
         tmpdir + '/{version}/merged_study_table.old.json'
     shell:
@@ -214,6 +194,23 @@ rule merge_study_tables:
         '--in_ukb {input.ukb} '
         '--output {output}'
 
+<<<<<<< HEAD
+=======
+rule merge_FINNGEN_study_tables:
+    input:
+        old_table=rules.merge_study_tables.output,
+        finn_manifest=config['FINNGEN_manifest'],
+        finn_efo=config['FINNGEN_efo_curation']
+    output:
+        tmpdir + '/{version}/merged_study_table.json'
+    shell:
+        'python scripts/Make_FINNGEN_entries.py '
+        '--in_manifest {input.finn_manifest} '
+        '--in_EFO {input.finn_efo} '
+        '--in_study_table {input.old_table}'
+        '--outf {output} '
+
+>>>>>>> 9eece716c449981d9ed3f02c3e9069a0a919d7ef
 rule make_summarystat_toploci_table:
     ''' Converts the toploci table produce from the finemapping pipeline to
         standardised format. Study table is need to know if a study is
@@ -281,6 +278,9 @@ rule study_table_to_parquet:
         study_table: merged study table
         sumstat_studies: list of study IDs with sumstats
         top_loci: top loci table (needed to add number of associated loci)
+        efo_anno: EFO to therapeautic area mapping json
+        therapeutic_areas: list of "therapeutic areas", needed to sort the
+                           efo_anno
         
         This task will fail if there are any study IDs with summary stats
         that are not found in the merged study table, this is required
@@ -289,14 +289,48 @@ rule study_table_to_parquet:
     input:
         study_table = rules.merge_study_tables.output,
         sumstat_studies = rules.list_studies_with_sumstats.output,
+        efo_anno = rules.get_efo_categories.output,
         top_loci = rules.merge_gwascat_and_sumstat_toploci.output,
+        therapeutic_areas = config['efo_therapeutic_areas']
     output:
         'output/{version}/studies.parquet'
+    params:
+        unknown_label = config['therapeutic_area_unknown_label']
     shell:
         'python scripts/study_table_to_parquet.py '
         '--in_study_table {input.study_table} '
         '--in_toploci {input.top_loci} '
         '--sumstat_studies {input.sumstat_studies} '
+        '--efo_categories {input.efo_anno} '
+        '--in_ta {input.therapeutic_areas} '
+        '--unknown_label {params.unknown_label} '
         '--output {output}'
+
+rule make_disease_mappings_lut:
+    ''' Build LUT that integrates all the disease mappings
+        study_table: merged study table in parquet format
+        finngen-mappings: curation recorded in Google Sheets
+        ukbb-old-mappings: initial UK Biobank disease curation
+        ukbb-new-mappings: updated mappings resulting from upgrading to EFO3
+        disease-index: parquet files that stores the OT disease index to extract the therapeutic areas
+    '''
+    input:
+        study_table = rules.study_table_to_parquet.output,
+        finngen_mappings = HTTPRemoteProvider().remote(
+            'https://docs.google.com/spreadsheets/d/1yrQPpsRi-mijs_BliKFZjeoxP6kGIs9Bz-02_0WDvAA/edit?usp=sharing'),
+        ukbb_old_mappings = config['ukb_efo_curation'],
+        ukbb_new_mappings = HTTPRemoteProvider().remote(
+            'https://docs.google.com/spreadsheets/d/1PotmUEirkV36dh-vpZ3GgxQg_LcOefZKbyTq0PNQ6NY/edit?usp=sharing'),
+        disease_index = FTPRemoteProvider().remote(
+            'ftp://ftp.ebi.ac.uk/pub/databases/opentargets/platform/21.06/output/etl/parquet/diseases')    
+    output:
+        'output/{version}/trait_efo.parquet'
+    shell:
+        'python scripts/make_disease_mapping_lut.py '
+        '--in_studies {input.study_table} '
+        '--in_finngen_mappings {input.finngen-mappings} '
+        '--in_ukbb_old_mappings {input.ukbb_old_mappings} '
+        '--in_ukbb_new_mappings {input.ukbb_new_mappings} '
+        '--out_disease-lut {output}'
 
 

@@ -4,14 +4,15 @@
 # Ed Mountjoy
 #
 
+import re
+import sys
+import os
 import argparse
+import pandas as pd
+from pprint import pprint
 from collections import OrderedDict
 from operator import itemgetter
-import re
-
-import numpy as np
-import pandas as pd
-
+import json
 
 def main():
 
@@ -74,7 +75,18 @@ def main():
     manifest.loc[:, 'n_replication'] = 0
     manifest.loc[:, 'ancestry_initial'] = 'European=' + manifest['n_initial'].astype(str)
     manifest.loc[:, 'ancestry_replication'] = ''
-    manifest.loc[:, 'trait_efos'] = np.nan
+
+    # Load efos annotations
+    efo_mapper = {}
+    with open(args.in_efos, 'r') as in_h:
+        for line in in_h:
+            parts = json.loads(line)
+            efo_mapper[parts['study_id']] = parts['efos']
+    
+    # Map efos
+    manifest['trait_efos'] = manifest['study_id'].apply(
+        lambda stid: efo_mapper.get(stid, None)
+    )
 
     # Ouput required columns
     cols = OrderedDict([
@@ -86,6 +98,7 @@ def main():
         ('pub_author', 'pub_author'),
         ('trait_reported', 'trait_reported'),
         ('trait_efos', 'trait_efos'),
+        # ('trait_category', 'trait_category'),
         ('ancestry_initial', 'ancestry_initial'),
         ('ancestry_replication', 'ancestry_replication'),
         ('n_initial', 'n_initial'),
@@ -105,9 +118,8 @@ def to_int_safe(i):
         return None
 
 def make_trait_reported_string(s_raw):
-    """
-    Takes the raw trait name and outputs trnasformed name.
-    """
+    ''' Takes the raw trait name and outputs trnasformed name
+    '''
 
     # Replace any double spaces with single
     s_raw = re.sub(r' +', r' ', s_raw)
@@ -130,10 +142,8 @@ def make_trait_reported_string(s_raw):
     return trait
 
 def count_prefixes(l, sep=': '):
-    """ 
-    Counts the occurence of prefixes based on sep.
-    """
-
+    ''' Counts the occurence of prefixes based on sep
+    '''
     # Extract prefixes
     prefixes = []
     for entry in l:
@@ -154,16 +164,13 @@ def combine_rows(items):
     return ';'.join(items)
 
 def parse_args():
-    """
-    Load command line args.
-    """
-
+    """ Load command line args """
     parser = argparse.ArgumentParser()
     parser.add_argument('--in_manifest', metavar="<str>", help=("Input"), type=str, required=True)
+    parser.add_argument('--in_efos', metavar="<str>", help=("EFO mapping file"), type=str, required=True)
     parser.add_argument('--prefix_counts', metavar="<str>", help=("File to output prefix counts to"), type=str, required=True)
     parser.add_argument('--outf', metavar="<str>", help=("Output"), type=str, required=True)
     args = parser.parse_args()
-
     return args
 
 if __name__ == '__main__':
