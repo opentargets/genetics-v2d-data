@@ -40,8 +40,9 @@ targets.append(
     'output/{version}/ld_analysis_input.tsv'.format(version=config['version']) )
 
 # Make lut table for Irene
-targets.append(
-    'output/{version}/trait_efo.parquet'.format(version=config['version']) )
+# Removing this currently as mappings may be generated as a separate process
+#targets.append(
+#    'output/{version}/trait_efo.parquet'.format(version=config['version']) )
 
 # Trigger making of targets
 rule all:

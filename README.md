@@ -1,7 +1,7 @@
 Variant-disease tables
 ======================
 
-This repositroy contains scripts to produce variant-to-disease (V2D) association tables for Open Targets Genetics.
+This repository contains scripts to produce variant-to-disease (V2D) association tables for Open Targets Genetics.
 
 Changes made (Jan 2019):
 - All outputs in Apache Parquet format
@@ -23,6 +23,9 @@ Changes made (Jan 2019):
 ### Usage
 
 ```bash
+# Setup on gcloud if needed
+bash setup_gcloud.sh
+
 # Install java 8 e.g.
 sudo apt install -yf openjdk-8-jre-headless openjdk-8-jdk
 
@@ -32,22 +35,36 @@ gcloud auth application-default login
 # Install dependencies into isolated environment
 conda env create -n v2d_data --file environment.yaml
 
-# Activate environment, set core and RAM availability
-conda activate v2d_data
-cores=15
-export PYSPARK_SUBMIT_ARGS="--driver-memory 50g pyspark-shell"
-
 # Alter configuration file
 nano config.yaml
 
+# Remove downloads from any previous runs
+rm -r www.ebi.ac.uk/gwas/
+
 # Execute workflows
+# May want to start tmux session to avoid problems if connection is lost
+# (I've gotten snakemake problems on subsequent attempts when this happens too)
+tmux
+
+# Activate environment, set core and RAM availability
+# May want to use a smaller machine for step 1, then scale up to more
+# cores for step 2, and back down to a small machine for step 3
+conda activate v2d_data
+cores=31
+export PYSPARK_SUBMIT_ARGS="--driver-memory 100g pyspark-shell"
+
 version_date=`date +%y%m%d`
-snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores 1
-snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores
-snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores
+version_date=220111
+time snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores 1 | tee logs/$version_date/1_make_tables.log # Takes a couple hours
+time snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores 2>&1 | tee logs/$version_date/2_calculate_LD_table.log # Takes ~7 hrs on 31 cores
+
+# Reduce machine size in Google VM instance
+# This step only uses 1 core actually - but I'm not sure how much memory
+cores=3
+time snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores 2>&1 | tee logs/$version_date/3_make_overlap_table.log # Takes a couple hours
 
 # Upload output dir to google cloud storage
-gsutil -m rsync -r output/$version_date gs://genetics-portal-staging/v2d/$version_date
+gsutil -m rsync -r output/$version_date gs://genetics-portal-dev-staging/v2d/$version_date
 ```
 
 ### Tables
@@ -313,7 +330,7 @@ Methods:
     3. Extract samples separately for each super population
     4. Filter to remove MAF < 1% and genotyping-rate < 5%
     5. Convert to bed, bim, fam
-  3. Use plink to calculate correaltion coefficients (R) for each index study in each 1000G superpopulation.
+  3. Use plink to calculate correlation coefficients (R) for each index study in each 1000G superpopulation.
   4. Merge index variant correlation tables to input manifest
   4. Fisher-Z transform R coefficients.
   5. For each study take weighted average across populations weighting by sample size.
