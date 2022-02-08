@@ -54,14 +54,15 @@ cores=31
 export PYSPARK_SUBMIT_ARGS="--driver-memory 100g pyspark-shell"
 
 version_date=`date +%y%m%d`
-version_date=220111
-time snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores 1 | tee logs/$version_date/1_make_tables.log # Takes a couple hours
-time snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores 2>&1 | tee logs/$version_date/2_calculate_LD_table.log # Takes ~7 hrs on 31 cores
+version_date=220208
+mkdir -p logs/$version_date
+time snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores 1 | tee logs/$version_date/1_make_tables.log 2>&1 # Takes a couple hours
+time snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores 2>&1 | tee logs/$version_date/2_calculate_LD_table.log 2>&1 # Takes ~7 hrs on 31 cores
 
 # Reduce machine size in Google VM instance
 # This step only uses 1 core actually - but I'm not sure how much memory
 cores=3
-time snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores 2>&1 | tee logs/$version_date/3_make_overlap_table.log # Takes a couple hours
+time snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores 2>&1 | tee logs/$version_date/3_make_overlap_table.log 2>&1 # Takes a couple hours
 
 # Upload output dir to google cloud storage
 gsutil -m rsync -r output/$version_date gs://genetics-portal-dev-staging/v2d/$version_date
