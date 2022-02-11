@@ -11,12 +11,9 @@ from collections import OrderedDict
 import pandas as pd
 
 
-def main():
+def main(input_path: str, output_path: str) -> None:
 
     logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
-
-    # Parse args
-    args = parse_args()
     
     # Only keep required cols
     to_keep = OrderedDict([
@@ -26,10 +23,13 @@ def main():
     ])
 
     # Load manifest
-    manifest = pd.read_csv(args.input, sep='\t',
-                           header=0, dtype=object) \
-                           .filter(items=to_keep)
-    logging.info(f'{input} has been loaded. Formatting...')
+    manifest = (
+        pd.read_csv(input_path, sep='\t', header=0, dtype=object)
+        .filter(items=to_keep)
+        .rename(columns=to_keep)
+    )
+                                            
+    logging.info(f'{input_path} has been loaded. Formatting...')
 
     #
     # Add other columns -------------------------------------------------------
@@ -68,12 +68,12 @@ def main():
         ('n_cases', 'n_cases'),
         ('n_replication', 'n_replication')
         ])
-    manifest = ( manifest.loc[:, list(cols.keys())]
-                         .rename(columns=cols) )
+    manifest = (manifest.loc[:, list(cols.keys())]
+                         .rename(columns=cols))
 
     # Write
-    manifest.to_json(args.outf, orient='records', lines=True)
-    logging.info(f'{len(args.output)} studies have been saved in {args.output}. Exiting.')
+    manifest.to_json(args.output, orient='records', lines=True)
+    logging.info(f'{len(manifest)} studies have been saved in {output_path}. Exiting.')
 
 def to_int_safe(i):
     try:
@@ -95,4 +95,10 @@ def parse_args():
 
 if __name__ == '__main__':
 
-    main()
+    # Parse args
+    args = parse_args()
+    
+    main(
+        input_path=args.input,
+        output_path=args.output,
+    )
