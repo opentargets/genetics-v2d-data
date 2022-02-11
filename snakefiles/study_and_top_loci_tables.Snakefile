@@ -9,8 +9,7 @@ inter-dependencies.
 import pandas as pd
 import numpy as np
 import json
-
-HTTP = HTTPRemoteProvider()
+from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 
 #
 # Top loci table --------------------------------------------------------------
