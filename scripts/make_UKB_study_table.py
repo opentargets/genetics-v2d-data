@@ -36,23 +36,6 @@ def main():
     )
 
     #
-    # Clean trait names -------------------------------------------------------
-    #
-
-    # Get list of phenotype prefixes with counts
-    counts = count_prefixes(manifest['trait_raw'].tolist())
-    with open(args.prefix_counts, 'w') as out_h:
-        for prefix, count in sorted(counts.items(),
-                                    key=itemgetter(1),
-                                    reverse=True):
-            out_h.write('{}\t{}\n'.format(prefix, count))
-    
-    # Move prefixes to suffix (helps when viewed in the UI)
-    manifest['trait_reported'] = (
-        manifest['trait_raw'].apply(make_trait_reported_string)
-    )   
-
-    #
     # Add other columns -------------------------------------------------------
     #
 
@@ -104,55 +87,6 @@ def to_int_safe(i):
     except ValueError:
         return None
 
-def make_trait_reported_string(s_raw):
-    """
-    Takes the raw trait name and outputs trnasformed name.
-    """
-
-    # Replace any double spaces with single
-    s_raw = re.sub(r' +', r' ', s_raw)
-
-    # Assert no "|" in trait name
-    assert "|" not in s_raw
-
-    # Split prefix
-    parts = s_raw.split(': ', 1)
-
-    # Move prefix to end if exists
-    if len(parts) == 2:
-        trait = " | ".join([parts[1], parts[0]])
-    else:
-        trait = s_raw
-
-    # Capitalise the frist letter
-    trait = trait.capitalize()
-    
-    return trait
-
-def count_prefixes(l, sep=': '):
-    """ 
-    Counts the occurence of prefixes based on sep.
-    """
-
-    # Extract prefixes
-    prefixes = []
-    for entry in l:
-        parts = entry.split(sep)
-        if len(parts) > 1:
-            prefixes.append(parts[0])
-    # Count
-    counts = {}
-    for prefix in prefixes:
-        try:
-            counts[prefix] += 1
-        except KeyError:
-            counts[prefix] = 1
-    
-    return counts
-
-def combine_rows(items):
-    return ';'.join(items)
-
 def parse_args():
     """
     Load command line args.
@@ -160,7 +94,6 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--in_manifest', metavar="<str>", help=("Input"), type=str, required=True)
-    parser.add_argument('--prefix_counts', metavar="<str>", help=("File to output prefix counts to"), type=str, required=True)
     parser.add_argument('--outf', metavar="<str>", help=("Output"), type=str, required=True)
     args = parser.parse_args()
 
