@@ -191,7 +191,7 @@ rule merge_study_tables:
     '''
     input:
         gwas = rules.make_gwas_cat_studies_table.output.main,
-        ukb = rules.make_UKB_studies_table.output.study_table
+        ukb = rules.make_UKB_studies_table.output.study_table,
         finngen = rules.make_FINNGEN_studies_table.output.study_table
     output:
         tmpdir + '/{version}/merged_study_table.json'
