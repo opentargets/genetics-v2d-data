@@ -54,7 +54,7 @@ rule make_disease_mappings_lut:
             'https://docs.google.com/spreadsheets/d/1yrQPpsRi-mijs_BliKFZjeoxP6kGIs9Bz-02_0WDvAA/edit?usp=sharing'),
         ukbb_old_mappings = config['ukb_efo_curation'],
         ukbb_new_mappings = HTTPRemoteProvider().remote(
-            'https://docs.google.com/spreadsheets/d/1PotmUEirkV36dh-vpZ3GgxQg_LcOefZKbyTq0PNQ6NY/edit?usp=sharing')
+            'https://docs.google.com/spreadsheets/d/1PotmUEirkV36dh-vpZ3GgxQg_LcOefZKbyTq0PNQ6NY/edit?usp=sharing'),
         disease-index = FTPRemoteProvider().remote(
             'ftp://ftp.ebi.ac.uk/pub/databases/opentargets/platform/21.06/output/etl/parquet/diseases')    
     output:
