@@ -52,7 +52,7 @@ rule make_disease_mappings_lut:
         study_table = rules.study_table_to_parquet.output,
         finngen-mappings = HTTPRemoteProvider().remote(
             'https://docs.google.com/spreadsheets/d/1yrQPpsRi-mijs_BliKFZjeoxP6kGIs9Bz-02_0WDvAA/edit?usp=sharing'),
-        ukbb_old_mappings = config['ukb_efo_curation']
+        ukbb_old_mappings = config['ukb_efo_curation'],
         ukbb_new_mappings = HTTPRemoteProvider().remote(
             'https://docs.google.com/spreadsheets/d/1PotmUEirkV36dh-vpZ3GgxQg_LcOefZKbyTq0PNQ6NY/edit?usp=sharing')
         disease-index = FTPRemoteProvider().remote(
@@ -180,12 +180,10 @@ rule make_UKB_studies_table:
             config['ukb_manifest'], keep_local=KEEP_LOCAL),
     output:
         study_table = tmpdir + '/{version}/UKB_study_table.json',
-        prefix_counts = tmpdir + '/{version}/UKB_prefix_counts.tsv'
     shell:
         'python scripts/make_UKB_study_table.py '
-        '--in_manifest {input.manifest} '
-        '--prefix_counts {output.prefix_counts} '
-        '--outf {output.study_table}'
+        '--input {input.manifest} '
+        '--output {output.study_table}'
 
 # "Study table" rule that need to be above `make_summarystat_toploci_table`
 rule merge_study_tables:
