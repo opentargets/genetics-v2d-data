@@ -12,6 +12,10 @@ import json
 from snakemake.remote.GS import RemoteProvider as GSRemoteProvider
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 
+# Configuration is read from the config yaml:
+configfile: '../configs/config.yaml' # TODO: use Path
+tmpdir = config['temp_dir']
+
 #
 # Top loci table --------------------------------------------------------------
 #
