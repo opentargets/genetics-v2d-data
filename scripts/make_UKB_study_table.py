@@ -7,7 +7,6 @@
 import argparse
 from collections import OrderedDict
 
-import numpy as np
 import pandas as pd
 
 
@@ -83,8 +82,8 @@ def parse_args():
     """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--in_manifest', metavar="<str>", help=("Input"), type=str, required=True)
-    parser.add_argument('--outf', metavar="<str>", help=("Output"), type=str, required=True)
+    parser.add_argument('--input', metavar="<str>", help=("TSV file with UK Biobank (Neale V2 and SAIGE) manifest"), type=str, required=True)
+    parser.add_argument('--output', metavar="<str>", help=("JSON file with all Saige and Neale studies and their metadata."), type=str, required=True)
     args = parser.parse_args()
 
     return args
