@@ -9,6 +9,7 @@ inter-dependencies.
 import pandas as pd
 import numpy as np
 import json
+from snakemake.remote.GS import RemoteProvider as GSRemoteProvider
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 
 #
