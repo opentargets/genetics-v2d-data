@@ -67,8 +67,6 @@ def main():
         ('pub_journal', 'pub_journal'),
         ('pub_title', 'pub_title'),
         ('pub_author', 'pub_author'),
-        ('trait_reported', 'trait_reported'),
-        ('trait_efos', 'trait_efos'),
         ('ancestry_initial', 'ancestry_initial'),
         ('ancestry_replication', 'ancestry_replication'),
         ('n_initial', 'n_initial'),
