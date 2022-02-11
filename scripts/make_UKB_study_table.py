@@ -6,8 +6,6 @@
 
 import argparse
 from collections import OrderedDict
-from operator import itemgetter
-import re
 
 import numpy as np
 import pandas as pd
@@ -17,23 +15,18 @@ def main():
 
     # Parse args
     args = parse_args()
-
-    # Load manifest
-    manifest = pd.read_csv(args.in_manifest, sep='\t',
-                           header=0, dtype=object)
     
     # Only keep required cols
     to_keep = OrderedDict([
         ('code', 'study_id'),
-        ('trait', 'trait_raw'),
         ('n_total', 'n_total'),
         ('n_cases', 'n_cases')
     ])
-    manifest = (
-        manifest
-        .loc[:, to_keep.keys()]
-        .rename(columns=to_keep)
-    )
+
+    # Load manifest
+    manifest = pd.read_csv(args.in_manifest, sep='\t',
+                           header=0, dtype=object) \
+                           .filter(items=to_keep)
 
     #
     # Add other columns -------------------------------------------------------
@@ -57,7 +50,6 @@ def main():
     manifest.loc[:, 'n_replication'] = 0
     manifest.loc[:, 'ancestry_initial'] = 'European=' + manifest['n_initial'].astype(str)
     manifest.loc[:, 'ancestry_replication'] = ''
-    manifest.loc[:, 'trait_efos'] = np.nan
 
     # Ouput required columns
     cols = OrderedDict([
