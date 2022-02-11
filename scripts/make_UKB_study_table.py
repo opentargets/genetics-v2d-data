@@ -5,12 +5,15 @@
 #
 
 import argparse
+import logging
 from collections import OrderedDict
 
 import pandas as pd
 
 
 def main():
+
+    logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 
     # Parse args
     args = parse_args()
@@ -23,9 +26,10 @@ def main():
     ])
 
     # Load manifest
-    manifest = pd.read_csv(args.in_manifest, sep='\t',
+    manifest = pd.read_csv(args.input, sep='\t',
                            header=0, dtype=object) \
                            .filter(items=to_keep)
+    logging.info(f'{input} has been loaded. Formatting...')
 
     #
     # Add other columns -------------------------------------------------------
@@ -69,6 +73,7 @@ def main():
 
     # Write
     manifest.to_json(args.outf, orient='records', lines=True)
+    logging.info(f'{len(args.output)} studies have been saved in {args.output}. Exiting.')
 
 def to_int_safe(i):
     try:
