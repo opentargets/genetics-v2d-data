@@ -43,6 +43,7 @@ targets.append(
 rule all:
     input:
         targets
+    log: f"logs/{config['version']}/1_make_tables.log"
 
 # Add workflows
 include: 'snakefiles/study_and_top_loci_tables.Snakefile'
