@@ -6,15 +6,13 @@ inter-dependencies.
 
 '''
 
-import pandas as pd
-import numpy as np
 import json
+import numpy as np
+import pandas as pd
+from pathlib import Path
 from snakemake.remote.GS import RemoteProvider as GSRemoteProvider
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 
-# Configuration is read from the config yaml:
-configfile: '../configs/config.yaml' # TODO: use Path
-tmpdir = config['temp_dir']
 
 #
 # Top loci table --------------------------------------------------------------
@@ -26,8 +24,6 @@ rule get_gwas_cat_assoc:
     input:
         HTTPRemoteProvider().remote(
             'https://www.ebi.ac.uk/gwas/api/search/downloads/alternative')
-        # FTPRemoteProvider().remote(
-        #     'ftp://ftp.ebi.ac.uk/pub/databases/gwas/releases/latest/gwas-catalog-associations_ontology-annotated.tsv')
     output:
         tmpdir + '/{version}/gwas-catalog-associations_ontology-annotated.tsv'
     shell:
@@ -43,33 +39,6 @@ rule get_variant_index:
         tmpdir + '/variant-annotation.sitelist.tsv.gz'
     shell:
         'cp {input} {output}'
-
-rule make_disease_mappings_lut:
-    ''' Build LUT that integrates all the disease mappings
-        study_table: merged study table in parquet format
-        finngen_mappings: curation recorded in Google Sheets
-        ukbb_old_mappings: initial UK Biobank disease curation
-        ukbb_new_mappings: updated mappings resulting from upgrading to EFO3
-        disease_index: parquet files that stores the OT disease index to extract the therapeutic areas
-    '''
-    input:
-        study_table = rules.study_table_to_parquet.output,
-        finngen_mappings = HTTPRemoteProvider().remote(
-            'https://docs.google.com/spreadsheets/d/1yrQPpsRi-mijs_BliKFZjeoxP6kGIs9Bz-02_0WDvAA/edit?usp=sharing'),
-        ukbb_old_mappings = config['ukb_efo_curation'],
-        ukbb_new_mappings = HTTPRemoteProvider().remote(
-            'https://docs.google.com/spreadsheets/d/1PotmUEirkV36dh-vpZ3GgxQg_LcOefZKbyTq0PNQ6NY/edit?usp=sharing'),
-        disease_index = FTPRemoteProvider().remote(
-            'ftp://ftp.ebi.ac.uk/pub/databases/opentargets/platform/21.06/output/etl/parquet/diseases')    
-    output:
-        'output/{version}/trait_efo.parquet'
-    shell:
-        'python scripts/make_disease_mapping_lut.py '
-        '--in_studies {input.study_table} '
-        '--in_finngen_mappings {input.finngen_mappings} '
-        '--in_ukbb_old_mappings {input.ukbb_old_mappings} '
-        '--in_ukbb_new_mappings {input.ukbb_new_mappings} '
-        '--out_disease_lut {output} '
 
 rule extract_gwascat_rsids_from_variant_index:
     ''' Makes set of GWAS Catalog rsids and chrom:pos strings. Then reads
@@ -189,6 +158,16 @@ rule make_UKB_studies_table:
         '--input {input.manifest} '
         '--output {output.study_table}'
 
+rule make_FINNGEN_studies_table:
+    input:
+        finn_manifest=config['FINNGEN_manifest']
+    output:
+        study_table = tmpdir + '/{version}/FINNGEN_study_table.json'
+    shell:
+        'python scripts/make_FINNGEN_study_table.py '
+        '--in_manifest {input.finn_manifest} '
+        '--outf {output} '
+
 # "Study table" rule that need to be above `make_summarystat_toploci_table`
 rule merge_study_tables:
     ''' Merges the GWAS Catalog and Neale UK Biobank study tables together.
@@ -206,15 +185,19 @@ rule merge_study_tables:
         '--in_finngen {input.finngen} '
         '--output {output}'
 
-rule make_FINNGEN_studies_table:
+rule merge_FINNGEN_study_tables:
     input:
-        finn_manifest=config['FINNGEN_manifest']
+        old_table=rules.merge_study_tables.output,
+        finn_manifest=config['FINNGEN_manifest'],
+        finn_efo=config['FINNGEN_efo_curation']
     output:
-        study_table = tmpdir + '/{version}/FINNGEN_study_table.json'
+        tmpdir + '/{version}/merged_study_table.json'
     shell:
-        'python scripts/make_FINNGEN_study_table.py '
+        'python scripts/Make_FINNGEN_entries.py '
         '--in_manifest {input.finn_manifest} '
-        '--outf {output} '
+        '--in_EFO {input.finn_efo} '
+        '--in_study_table {input.old_table} '
+        '--outf {output}'
 
 rule make_summarystat_toploci_table:
     ''' Converts the toploci table produce from the finemapping pipeline to
@@ -296,3 +279,30 @@ rule study_table_to_parquet:
         '--in_ta {input.therapeutic_areas} '
         '--unknown_label {params.unknown_label} '
         '--output {output}'
+
+rule make_disease_mappings_lut:
+    ''' Build LUT that integrates all the disease mappings
+        study_table: merged study table in parquet format
+        finngen_mappings: curation recorded in Google Sheets
+        ukbb_old_mappings: initial UK Biobank disease curation
+        ukbb_new_mappings: updated mappings resulting from upgrading to EFO3
+        disease_index: parquet files that stores the OT disease index to extract the therapeutic areas
+    '''
+    input:
+        study_table = rules.study_table_to_parquet.output,
+        finngen_mappings = HTTPRemoteProvider().remote(
+            'https://docs.google.com/spreadsheets/d/1yrQPpsRi-mijs_BliKFZjeoxP6kGIs9Bz-02_0WDvAA/edit?usp=sharing'),
+        ukbb_old_mappings = config['ukb_efo_curation'],
+        ukbb_new_mappings = HTTPRemoteProvider().remote(
+            'https://docs.google.com/spreadsheets/d/1PotmUEirkV36dh-vpZ3GgxQg_LcOefZKbyTq0PNQ6NY/edit?usp=sharing'),
+        disease_index = FTPRemoteProvider().remote(
+            'ftp://ftp.ebi.ac.uk/pub/databases/opentargets/platform/21.06/output/etl/parquet/diseases')    
+    output:
+        'output/{version}/trait_efo.parquet'
+    shell:
+        'python scripts/make_disease_mapping_lut.py '
+        '--in_studies {input.study_table} '
+        '--in_finngen_mappings {input.finngen_mappings} '
+        '--in_ukbb_old_mappings {input.ukbb_old_mappings} '
+        '--in_ukbb_new_mappings {input.ukbb_new_mappings} '
+        '--out_disease_lut {output} '
