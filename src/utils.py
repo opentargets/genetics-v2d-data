@@ -6,4 +6,4 @@ def get_project_root() -> Path:
 
 
 def get_config_path() -> Path:
-    return get_project_root() / 'configs' / 'config.yaml'
+    return 'configs' / 'config.yaml'

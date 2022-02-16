@@ -7,11 +7,13 @@ Makes:
   4. Input manifest for LD calculation table
 '''
 
+from datetime import date
+
 from snakemake.remote.FTP import RemoteProvider as FTPRemoteProvider
 from snakemake.remote.GS import RemoteProvider as GSRemoteProvider
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 
-from datetime import date
+from src.utils import *
 
 # Load configuration
 configfile: "configs/config.yaml"
@@ -30,6 +32,10 @@ targets.append(
 # Make targets for study table
 targets.append(
     'output/{version}/studies.parquet'.format(version=config['version']) )
+
+# Make targets for study table
+targets.append(
+    'output/{version}/trait_efo.parquet'.format(version=config['version']) )
 
 # Make targets for finemapping table
 targets.append(
