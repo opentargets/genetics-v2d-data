@@ -210,7 +210,7 @@ def explode(df, columns):
     a = df.T.reindex(columns).values
     concat = np.concatenate([np.concatenate(a[i]) for i in range(a.shape[0])])
     p = pd.DataFrame(concat.reshape(a.shape[0], -1).T, idx, columns)
-    return pd.concat([df.drop(columns, axis=1), p], axis=1).reset_index(drop=True)
+    return df.drop(columns, axis=1).merge(p, left_index=True, right_index=True).reset_index(drop=True)
 
 def parse_args():
     """ Load command line args """

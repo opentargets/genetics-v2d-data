@@ -94,8 +94,8 @@ def parse_sets(in_gwas):
                     elif item.startswith('chr'):
                         chrom, pos = item.replace('_', ':').replace('.', ':').replace('-', ':').split(':')[:2]
                         chrom = chrom.replace('chr', '')
-                        pos = int(pos)
                         try:
+                            pos = int(pos)
                             chrom_pos = '{chrom}:{pos}'.format(chrom=chrom, pos=int(pos))
                             chrom_pos_b37_set.add(chrom_pos)
                         except ValueError:

@@ -10,16 +10,24 @@ gwas_cat_cluster_multi_proportion: 0.3 # For a given study, if more than this pr
 
 # Summary statistics finemapping pipeline output files
 gcs_sumstat_pattern: 'gs://genetics-portal-dev-sumstats/unfiltered/gwas/*.parquet'
-prev_gcs_sumstat_pattern: 'gs://genetics-portal-sumstats-b38/unfiltered/gwas/*.parquet'
-toploci: 'gs://genetics-portal-dev-staging/finemapping/merged_210515/top_loci.json.gz'
-credsets: 'gs://genetics-portal-dev-staging/finemapping/merged_210515/credset/_SUCCESS' # Need the whole directory, so passing the _SUCCSS file instead to trick snakemake
+#prev_gcs_sumstat_pattern: 'gs://genetics-portal-sumstats-b38/unfiltered/gwas/*.parquet'
+toploci: 'gs://genetics-portal-dev-staging/finemapping/220113_merged/top_loci.json.gz'
+credsets: 'gs://genetics-portal-dev-staging/finemapping/220113_merged/credset/_SUCCESS' # Need the whole directory, so passing the _SUCCSS file instead to trick snakemake
 
 # UK Biobank (Neale V2 and SAIGE) sumstat manifest files
 ukb_manifest: 'gs://genetics-portal-input/ukb_phenotypes/neale2_saige_study_manifest.190430.tsv'
-ukb_efo_curation: 'gs://genetics-portal-input/ukb_phenotypes/ukb_efo_annotation-2021-10-25.json'
+ukb_efo_curation: 'gs://genetics-portal-input/ukb_phenotypes/ukb_efo_annotation.190828.json'
 
 # FINNGEN sumstat manifest files
 FINNGEN_manifest: 'configs/r5_finngen.json'
+FINNGEN_efo_curation: 'configs/finngen_df5_efo_mapping.lastest.nonull.tsv'
+
+# Trait category / therapeutic area
+efo_therapeutic_areas: 'configs/therapeutic_areas.tsv' # List of therapeutic area labels
+therapeutic_area_unknown_label: 'Uncategorised'
+
+#Config files for disease mapping lut:
+
 
 # LD table
 url_1000G: 'gs://genetics-portal-input/1000Genomes_phase3/plink_format_b38'

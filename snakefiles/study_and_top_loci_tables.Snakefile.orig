@@ -6,13 +6,11 @@ inter-dependencies.
 
 '''
 
-import json
-import numpy as np
 import pandas as pd
-from pathlib import Path
-from snakemake.remote.GS import RemoteProvider as GSRemoteProvider
-from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
+import numpy as np
+import json
 
+assert(pd.__version__ >= '0.24')
 
 #
 # Top loci table --------------------------------------------------------------
@@ -24,6 +22,8 @@ rule get_gwas_cat_assoc:
     input:
         HTTPRemoteProvider().remote(
             'https://www.ebi.ac.uk/gwas/api/search/downloads/alternative')
+        # FTPRemoteProvider().remote(
+        #     'ftp://ftp.ebi.ac.uk/pub/databases/gwas/releases/latest/gwas-catalog-associations_ontology-annotated.tsv')
     output:
         tmpdir + '/{version}/gwas-catalog-associations_ontology-annotated.tsv'
     shell:
@@ -155,27 +155,13 @@ rule make_UKB_studies_table:
             config['ukb_efo_curation'], keep_local=KEEP_LOCAL)
     output:
         study_table = tmpdir + '/{version}/UKB_study_table.json',
+        prefix_counts = tmpdir + '/{version}/UKB_prefix_counts.tsv'
     shell:
         'python scripts/make_UKB_study_table.py '
-<<<<<<< HEAD
-        '--input {input.manifest} '
-        '--output {output.study_table}'
-
-rule make_FINNGEN_studies_table:
-    input:
-        finn_manifest=config['FINNGEN_manifest']
-    output:
-        study_table = tmpdir + '/{version}/FINNGEN_study_table.json'
-    shell:
-        'python scripts/make_FINNGEN_study_table.py '
-        '--in_manifest {input.finn_manifest} '
-        '--outf {output} '
-=======
         '--in_manifest {input.manifest} '
         '--in_efos {input.efos} '
         '--prefix_counts {output.prefix_counts} '
         '--outf {output.study_table}'
->>>>>>> d58d0d4c6c7e6822fe566ee129890ba82045f2b7
 
 # "Study table" rule that need to be above `make_summarystat_toploci_table`
 
@@ -194,8 +180,12 @@ rule merge_study_tables:
     '''
     input:
         gwas = rules.make_gwas_cat_studies_table.output.main,
+<<<<<<< HEAD
         ukb = rules.make_UKB_studies_table.output.study_table,
         finngen = rules.make_FINNGEN_studies_table.output.study_table
+=======
+        ukb = rules.make_UKB_studies_table.output.study_table
+>>>>>>> 9eece716c449981d9ed3f02c3e9069a0a919d7ef
     output:
         tmpdir + '/{version}/merged_study_table.old.json'
     shell:
@@ -204,6 +194,8 @@ rule merge_study_tables:
         '--in_ukb {input.ukb} '
         '--output {output}'
 
+<<<<<<< HEAD
+=======
 rule merge_FINNGEN_study_tables:
     input:
         old_table=rules.merge_study_tables.output,
@@ -215,9 +207,10 @@ rule merge_FINNGEN_study_tables:
         'python scripts/Make_FINNGEN_entries.py '
         '--in_manifest {input.finn_manifest} '
         '--in_EFO {input.finn_efo} '
-        '--in_study_table {input.old_table} '
-        '--outf {output}'
+        '--in_study_table {input.old_table}'
+        '--outf {output} '
 
+>>>>>>> 9eece716c449981d9ed3f02c3e9069a0a919d7ef
 rule make_summarystat_toploci_table:
     ''' Converts the toploci table produce from the finemapping pipeline to
         standardised format. Study table is need to know if a study is
@@ -226,7 +219,7 @@ rule make_summarystat_toploci_table:
     input:
         toploci = GSRemoteProvider().remote(
             config['toploci'], keep_local=KEEP_LOCAL),
-        study_info = rules.merge_FINNGEN_study_tables.output
+        study_info = rules.merge_study_tables.output
     output:
         tmpdir + '/{version}/sumstat-associations_ot-format.tsv'
     shell:
@@ -272,10 +265,12 @@ rule list_studies_with_sumstats:
     '''
     params:
         url=config['gcs_sumstat_pattern'],
+        prev_url=config['prev_gcs_sumstat_pattern']
     output:
         tmpdir + '/{version}/studies_with_sumstats.tsv'
     run:
         shell('gsutil -m ls -d "{params.url}" > {output}')
+	shell('gsutil -m ls -d "{params.prev_url}" >> {output}')
 
 rule study_table_to_parquet:
     ''' Converts study table to final parquet.
@@ -292,7 +287,7 @@ rule study_table_to_parquet:
         because of https://github.com/opentargets/genetics/issues/354 
     '''
     input:
-        study_table = rules.merge_FINNGEN_study_tables.output,
+        study_table = rules.merge_study_tables.output,
         sumstat_studies = rules.list_studies_with_sumstats.output,
         efo_anno = rules.get_efo_categories.output,
         top_loci = rules.merge_gwascat_and_sumstat_toploci.output,
@@ -314,10 +309,10 @@ rule study_table_to_parquet:
 rule make_disease_mappings_lut:
     ''' Build LUT that integrates all the disease mappings
         study_table: merged study table in parquet format
-        finngen_mappings: curation recorded in Google Sheets
-        ukbb_old_mappings: initial UK Biobank disease curation
-        ukbb_new_mappings: updated mappings resulting from upgrading to EFO3
-        disease_index: parquet files that stores the OT disease index to extract the therapeutic areas
+        finngen-mappings: curation recorded in Google Sheets
+        ukbb-old-mappings: initial UK Biobank disease curation
+        ukbb-new-mappings: updated mappings resulting from upgrading to EFO3
+        disease-index: parquet files that stores the OT disease index to extract the therapeutic areas
     '''
     input:
         study_table = rules.study_table_to_parquet.output,
@@ -333,7 +328,9 @@ rule make_disease_mappings_lut:
     shell:
         'python scripts/make_disease_mapping_lut.py '
         '--in_studies {input.study_table} '
-        '--in_finngen_mappings {input.finngen_mappings} '
+        '--in_finngen_mappings {input.finngen-mappings} '
         '--in_ukbb_old_mappings {input.ukbb_old_mappings} '
         '--in_ukbb_new_mappings {input.ukbb_new_mappings} '
-        '--out_disease_lut {output} '
+        '--out_disease-lut {output}'
+
+

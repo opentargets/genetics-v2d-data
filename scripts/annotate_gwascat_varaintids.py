@@ -326,7 +326,12 @@ def str_to_chrompos(s):
                     .replace('.', ':')
                     .replace('-', ':')
                     .split(':')[:2] )
-    return str(chrom), int(pos)
+    try:
+        s_chrom = str(chrom)
+        i_pos = int(pos)
+    except ValueError:
+        i_pos = np.nan
+    return s_chrom, i_pos
 
 def explode(df, columns):
     ''' Explodes multiple columns

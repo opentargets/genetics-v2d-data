@@ -86,7 +86,7 @@ def main():
             if not key in study_index_set:
                 continue
             # Skip low R2
-            if float(r2) < args.min_r2:
+            if not r2 or float(r2) < args.min_r2:
                 continue
             # Add to dict
             try:

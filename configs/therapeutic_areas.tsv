@@ -1,0 +1,389 @@
+category	term_label	display_label
+disease	cardiovascular disease	cardiovascular
+disease	disease of genitourinary system	disease of genitourinary system
+disease	endocrine system disease	endocrine system
+disease	hematologic disease	hematologic
+disease	immune system disease	immune system
+disease	integumentary system disease	integumentary system
+disease	mediastinal disease	mediastinal
+disease	musculoskeletal system disease	musculoskeletal system
+disease	nervous system disease	nervous system
+disease	respiratory system disease	respiratory system
+disease	urinary system disease	urinary system
+phenotype	Abnormality of connective tissue	endocrine system
+phenotype	Abnormality of head or neck	Abnormality of head or neck
+phenotype	Abnormality of the cardiovascular system	cardiovascular
+phenotype	Abnormality of the digestive system	digestive system
+phenotype	Abnormality of the ear	Abnormality of the ear
+phenotype	Abnormality of the endocrine system	endocrine system
+phenotype	Abnormality of the respiratory system	respiratory system
+phenotype	Abnormality of the urinary system	urinary system
+phenotype	Constitutional symptom	Constitutional symptom
+phenotype	Micropenis	abnormality of the genital system
+phenotype	Talipes equinovarus	Talipes equinovarus
+phenotype	abnormality of blood and blood-forming tissues	hematologic
+phenotype	abnormality of limbs	abnormality of limbs
+phenotype	abnormality of metabolism/homeostasis	abnormality of metabolism/homeostasis
+phenotype	abnormality of prenatal development or birth	abnormality of prenatal development or birth
+phenotype	abnormality of the genital system	abnormality of the genital system
+phenotype	abnormality of the immune system	immune system
+phenotype	abnormality of the integument	abnormality of the integument
+phenotype	abnormality of the musculature	musculoskeletal system
+phenotype	abnormality of the nervous system	nervous system
+phenotype	abnormality of the skeletal system	musculoskeletal system
+phenotype	hypoxia	hypoxia
+phenotype	necrosis	necrosis
+disease	digestive system disease	digestive system
+measurement	"1,5 anhydroglucitol measurement"	"1,5 anhydroglucitol measurement"
+measurement	Breslow thickness	Breslow thickness
+measurement	C9orf72 mutation status	C9orf72 mutation status
+measurement	CASCOT confidence score measurement	CASCOT confidence score measurement
+measurement	CHGA cleavage product measurement	CHGA cleavage product measurement
+measurement	CHGB cleavage product measurement	CHGB cleavage product measurement
+measurement	Gleason score measurement	Gleason score measurement
+measurement	HER2 status	HER2 status
+measurement	IGFBP-1 measurement	IGFBP-1 measurement
+measurement	LDH-related sciatica symptom severity measurement	LDH-related sciatica symptom severity measurement
+measurement	TP53 mutation status	TP53 mutation status
+measurement	X12063 measurement	X12063 measurement
+measurement	a disintegrin and metalloproteinase with thrombospondin motifs 5 measurement	a disintegrin and metalloproteinase with thrombospondin motifs 5 measurement
+measurement	abnormal paneth cell measurement	abnormal paneth cell measurement
+measurement	activities of daily living score measurement	activities of daily living score measurement
+measurement	adhesion molecule measurement	adhesion molecule measurement
+measurement	advanced glycation end-product measurement	advanced glycation end-product measurement
+measurement	aggressive behaviour measurement	aggressive behaviour measurement
+measurement	alcohol consumption measurement	alcohol consumption measurement
+measurement	allergy measurement	allergy measurement
+measurement	alpha-1-antitrypsin measurement	alpha-1-antitrypsin measurement
+measurement	amino acid measurement	amino acid measurement
+measurement	amyloid deposition measurement	amyloid deposition measurement
+measurement	analgesia requirement measurement	analgesia requirement measurement
+measurement	androstenedione measurement	androstenedione measurement
+measurement	anthropometric measurement	anthropometric measurement
+measurement	antibody measurement	antibody measurement
+measurement	antioxidant measurement	antioxidant measurement
+measurement	antisaccade response measurement	antisaccade response measurement
+measurement	arthritis disease activity score measurement	arthritis disease activity score measurement
+measurement	aspirin hydrolysis measurement	aspirin hydrolysis measurement
+measurement	asthma exacerbation measurement	asthma exacerbation measurement
+measurement	atazanavir measurement	atazanavir measurement
+measurement	athletic endurance measurement	athletic endurance measurement
+measurement	autoimmune disease biomarker	autoimmune disease biomarker
+measurement	behavior or behavioral disorder measurement	behavior or behavioral disorder measurement
+measurement	biopsy number	biopsy number
+measurement	birth measurement	birth measurement
+measurement	birth rate	birth rate
+measurement	blood osmolality measurement	blood osmolality measurement
+measurement	blood pressure change measurement	blood pressure change measurement
+measurement	blood toxic metal measurement	blood toxic metal measurement
+measurement	body odor measurement	body odor measurement
+measurement	bone measurement	bone measurement
+measurement	brain measurement	brain measurement
+measurement	breast milk measurement	breast milk measurement
+measurement	calcium measurement	calcium measurement
+measurement	cancer aggressiveness measurement	cancer aggressiveness measurement
+measurement	cancer biomarker measurement	cancer biomarker measurement
+measurement	carbohydrate measurement	carbohydrate measurement
+measurement	cardiac stress biomarker measurement	cardiac stress biomarker measurement
+measurement	cardiovascular measurement	cardiovascular measurement
+measurement	carotenoid measurement	carotenoid measurement
+measurement	carotid artery measurement	carotid artery measurement
+measurement	carrier status	carrier status
+measurement	cerebrospinal fluid biomarker measurement	cerebrospinal fluid biomarker measurement
+measurement	chloride measurement	chloride measurement
+measurement	clinical laboratory measurement	clinical laboratory measurement
+measurement	coagulation factor measurement	coagulation factor measurement
+measurement	coenzyme Q10 measurement	coenzyme Q10 measurement
+measurement	coffee consumption measurement	coffee consumption measurement
+measurement	cognitive function measurement	cognitive function measurement
+measurement	cognitive impairment measurement	cognitive impairment measurement
+measurement	computed tomography	computed tomography
+measurement	coronary atheroscleroris measurement	coronary atheroscleroris measurement
+measurement	cotinine glucuronidation measurement	cotinine glucuronidation measurement
+measurement	cotinine measurement	cotinine measurement
+measurement	cranial vault morphology measurement	cranial vault morphology measurement
+measurement	cutaneous psoriasis measurement	cutaneous psoriasis measurement
+measurement	cytotoxicity measurement	cytotoxicity measurement
+measurement	damage intensity	damage intensity
+measurement	delivery measurement	delivery measurement
+measurement	delta-5 desaturase measurement	delta-5 desaturase measurement
+measurement	delta-6 desaturase measurement	delta-6 desaturase measurement
+measurement	diabetes mellitus biomarker	diabetes mellitus biomarker
+measurement	diet measurement	diet measurement
+measurement	disease prognosis measurement	disease prognosis measurement
+measurement	dose	dose
+measurement	drug use measurement	drug use measurement
+measurement	dysmenorrheic pain measurement	dysmenorrheic pain measurement
+measurement	electrical current	electrical current
+measurement	electrodermal activity measurement	electrodermal activity measurement
+measurement	employment status	employment status
+measurement	energy expenditure measurement	energy expenditure measurement
+measurement	environmental exposure measurement	environmental exposure measurement
+measurement	erosive tooth wear measurement	erosive tooth wear measurement
+measurement	erythrocyte cadmium measurement	erythrocyte cadmium measurement
+measurement	estrogen receptor status	estrogen receptor status
+measurement	estrone conjugate measurement	estrone conjugate measurement
+measurement	estrone measurement	estrone measurement
+measurement	event death	event death
+measurement	exposure temperature	exposure temperature
+measurement	eye measurement	eye measurement
+measurement	facial asymmetry measurement	facial asymmetry measurement
+measurement	facial emotion recognition measurement	facial emotion recognition measurement
+measurement	facial morphology measurement	facial morphology measurement
+measurement	facial neural processing	facial neural processing
+measurement	facial pigmentation measurement	facial pigmentation measurement
+measurement	family size	family size
+measurement	fatty acid desaturase enzyme activity measurement	fatty acid desaturase enzyme activity measurement
+measurement	fear of pain measurement	fear of pain measurement
+measurement	fertility measurement	fertility measurement
+measurement	folic acid measurement	folic acid measurement
+measurement	fractional excretion of magnesium measurement	fractional excretion of magnesium measurement
+measurement	frailty measurement	frailty measurement
+measurement	frontal theta oscillation measurement	frontal theta oscillation measurement
+measurement	fructosamine measurement	fructosamine measurement
+measurement	fructose-bisphosphate aldolase measurement	fructose-bisphosphate aldolase measurement
+measurement	functional decline measurement	functional decline measurement
+measurement	gait measurement	gait measurement
+measurement	gene methylation measurement	gene methylation measurement
+measurement	generational effect measurement	generational effect measurement
+measurement	genomic measurement	genomic measurement
+measurement	genotype effect measurement	genotype effect measurement
+measurement	gestational serum measurement	gestational serum measurement
+measurement	gestational weight gain measurement	gestational weight gain measurement
+measurement	glucose homeostasis measurement	glucose homeostasis measurement
+measurement	glycated albumin measurement	glycated albumin measurement
+measurement	hair morphology measurement	hair morphology measurement
+measurement	hearing measurement	hearing measurement
+measurement	helping behavior measurement	helping behavior measurement
+measurement	hematological measurement	hematological measurement
+measurement	hexose measurement	hexose measurement
+measurement	hip osteoarthritis symptom severity measurement	hip osteoarthritis symptom severity measurement
+measurement	hormone measurement	hormone measurement
+measurement	illness severity status	illness severity status
+measurement	infectious disease biomarker	infectious disease biomarker
+measurement	inflammatory biomarker measurement	inflammatory biomarker measurement
+measurement	influenza A severity measurement	influenza A severity measurement
+measurement	insulin like growth factor measurement	insulin like growth factor measurement
+measurement	interleukin 2 measurement	interleukin 2 measurement
+measurement	interleukin 2 receptor antagonist measurement	interleukin 2 receptor antagonist measurement
+measurement	iron biomarker measurement	iron biomarker measurement
+measurement	job-related exhaustion measurement	job-related exhaustion measurement
+measurement	joint damage measurement	joint damage measurement
+measurement	joint hypermobility measurement	joint hypermobility measurement
+measurement	kynurenine measurement	kynurenine measurement
+measurement	lactate measurement	lactate measurement
+measurement	language measurement	language measurement
+measurement	laterality measurement	laterality measurement
+measurement	latitude	latitude
+measurement	lipid or lipoprotein measurement	lipid or lipoprotein measurement
+measurement	liver disease biomarker	liver disease biomarker
+measurement	liver enzyme measurement	liver enzyme measurement
+measurement	longitude	longitude
+measurement	magnesium measurement	magnesium measurement
+measurement	magnesium:creatinine ratio measurement	magnesium:creatinine ratio measurement
+measurement	mammographic density measurement	mammographic density measurement
+measurement	mannose measurement	mannose measurement
+measurement	menstrual cycle measurement	menstrual cycle measurement
+measurement	mental or behavioural disorder biomarker	mental or behavioural disorder biomarker
+measurement	metabolic network measurement	metabolic network measurement
+measurement	metabolic rate measurement	metabolic rate measurement
+measurement	metabolite measurement	metabolite measurement
+measurement	metastasis measurement	metastasis measurement
+measurement	microsatellite instability measurement	microsatellite instability measurement
+measurement	minimal erythema dose	minimal erythema dose
+measurement	miotic rate	miotic rate
+measurement	mitochondrial DNA measurement	mitochondrial DNA measurement
+measurement	monocyte early outgrowth colony forming unit	monocyte early outgrowth colony forming unit
+measurement	mosquito bite measurement	mosquito bite measurement
+measurement	mulitple keratinocyte carcinoma susceptibility measurement	mulitple keratinocyte carcinoma susceptibility measurement
+measurement	myoglobin measurement	myoglobin measurement
+measurement	naphthyl-keratin adduct measurement	naphthyl-keratin adduct measurement
+measurement	nausea and vomiting of pregnancy severity measurement	nausea and vomiting of pregnancy severity measurement
+measurement	nervous system measurement	nervous system measurement
+measurement	neurodevelopmental measurement	neurodevelopmental measurement
+measurement	neuroimaging measurement	neuroimaging measurement
+measurement	nevus count	nevus count
+measurement	nicotine dependence symptom count	nicotine dependence symptom count
+measurement	nicotine glucuronidation measurement	nicotine glucuronidation measurement
+measurement	nicotine metabolite ratio	nicotine metabolite ratio
+measurement	nicotine withdrawal measurement	nicotine withdrawal measurement
+measurement	nicotine withdrawal symptom count	nicotine withdrawal symptom count
+measurement	nitric oxide exhalation measurement	nitric oxide exhalation measurement
+measurement	number of injections	number of injections
+measurement	number of siblings	number of siblings
+measurement	number of stillbirths	number of stillbirths
+measurement	offspring mortality measurement	offspring mortality measurement
+measurement	offspring survival measurement	offspring survival measurement
+measurement	oligoclonal band measurement	oligoclonal band measurement
+measurement	operator variation	operator variation
+measurement	optic disc measurement	optic disc measurement
+measurement	organochlorine pesticide measurement	organochlorine pesticide measurement
+measurement	osteoarthritis biomarker measurement	osteoarthritis biomarker measurement
+measurement	ovarian reserve	ovarian reserve
+measurement	paragraph delayed recall measurement	paragraph delayed recall measurement
+measurement	parental emotion expression measurmement	parental emotion expression measurmement
+measurement	passage number	passage number
+measurement	pathologic complete response measurement	pathologic complete response measurement
+measurement	periodontal measurement	periodontal measurement
+measurement	personality trait measurement	personality trait measurement
+measurement	phosphorus measurement	phosphorus measurement
+measurement	physical activity measurement	physical activity measurement
+measurement	phytosterol measurement	phytosterol measurement
+measurement	place of residence measurement	place of residence measurement
+measurement	plasma trimethylamine N-oxide measurement	plasma trimethylamine N-oxide measurement
+measurement	polybrominated biphenyl measurement	polybrominated biphenyl measurement
+measurement	polybrominated diphenyl ether measurement	polybrominated diphenyl ether measurement
+measurement	polychlorinated biphenyls measurement	polychlorinated biphenyls measurement
+measurement	population measurement	population measurement
+measurement	post-operative fentanyl consumption measurement	post-operative fentanyl consumption measurement
+measurement	postburn hypertrophic scarring severity measurement	postburn hypertrophic scarring severity measurement
+measurement	potassium measurement	potassium measurement
+measurement	prefrontal cortex cytoarchtiectural measurement	prefrontal cortex cytoarchtiectural measurement
+measurement	progesterone receptor status	progesterone receptor status
+measurement	proprotein convertase subtilisin/kexin type 9 measurement	proprotein convertase subtilisin/kexin type 9 measurement
+measurement	protein measurement	protein measurement
+measurement	prothrombin fragments F1+2 measurement	prothrombin fragments F1+2 measurement
+measurement	psychosis predisposition measurement	psychosis predisposition measurement
+measurement	psychosocial stress measurement	psychosocial stress measurement
+measurement	puberty onset measurement	puberty onset measurement
+measurement	pulmonary function measurement	pulmonary function measurement
+measurement	quality of life during menstruation measurement	quality of life during menstruation measurement
+measurement	renal system measurement	renal system measurement
+measurement	reproductive behaviour measurement	reproductive behaviour measurement
+measurement	respiratory disease biomarker	respiratory disease biomarker
+measurement	respiratory symptom measurement	respiratory symptom measurement
+measurement	risk status	risk status
+measurement	rosacea severity measurement	rosacea severity measurement
+measurement	sRAGE measurement	sRAGE measurement
+measurement	selenium measurement	selenium measurement
+measurement	self reported educational attainment	self reported educational attainment
+measurement	seropositivity measurement	seropositivity measurement
+measurement	serum IgM measurement	serum IgM measurement
+measurement	serum VEGFR2 concentration measurement	serum VEGFR2 concentration measurement
+measurement	serum carcinoembryonic antigen measurement	serum carcinoembryonic antigen measurement
+measurement	serum copper measurement	serum copper measurement
+measurement	serum dimethylarginine measurement	serum dimethylarginine measurement
+measurement	serum homoarginine measurement	serum homoarginine measurement
+measurement	serum lipase activity measurement	serum lipase activity measurement
+measurement	serum zinc measurement	serum zinc measurement
+measurement	sex interaction measurement	sex interaction measurement
+measurement	short physical performance battery score measurement	short physical performance battery score measurement
+measurement	skin aging measurement	skin aging measurement
+measurement	skin barrier function measurement	skin barrier function measurement
+measurement	skin pigmentation measurement	skin pigmentation measurement
+measurement	sleep apnea measurement	sleep apnea measurement
+measurement	sleep measurement	sleep measurement
+measurement	smoking behaviour measurement	smoking behaviour measurement
+measurement	sodium measurement	sodium measurement
+measurement	sperm motility measurement	sperm motility measurement
+measurement	stroke outcome severity measurement	stroke outcome severity measurement
+measurement	sulfate measurement	sulfate measurement
+measurement	susceptibility to infectious disease measurement	susceptibility to infectious disease measurement
+measurement	tacrolimus measurement	tacrolimus measurement
+measurement	temperament and character inventory	temperament and character inventory
+measurement	temporal measurement	temporal measurement
+measurement	thiopurine metabolite measurement	thiopurine metabolite measurement
+measurement	thrombin generation potential measurement	thrombin generation potential measurement
+measurement	thrombin-antithrombin complex measurement	thrombin-antithrombin complex measurement
+measurement	thrombomodulin measurement	thrombomodulin measurement
+measurement	thyroid volume	thyroid volume
+measurement	ticagrelor measurement	ticagrelor measurement
+measurement	tiredness measurement	tiredness measurement
+measurement	tissue factor pathway inhibitor measurement	tissue factor pathway inhibitor measurement
+measurement	tonsillectomy risk measurement	tonsillectomy risk measurement
+measurement	total ventricular volume measurement	total ventricular volume measurement
+measurement	transcriptome measurement	transcriptome measurement
+measurement	transplant outcome measurement	transplant outcome measurement
+measurement	treatment outcome measurement	treatment outcome measurement
+measurement	tuberculin skin test reactivity measurement	tuberculin skin test reactivity measurement
+measurement	tumor size	tumor size
+measurement	tyrosine measurement	tyrosine measurement
+measurement	urate measurement	urate measurement
+measurement	urinary arsenic measurement	urinary arsenic measurement
+measurement	urinary nitrogen measurement	urinary nitrogen measurement
+measurement	uterine fibroid measurement	uterine fibroid measurement
+measurement	vancomycin trough measurement	vancomycin trough measurement
+measurement	vaso-occlusive pain measurement	vaso-occlusive pain measurement
+measurement	vaspin measurement	vaspin measurement
+measurement	vital signs	vital signs
+measurement	vitamin measurement	vitamin measurement
+measurement	wine liking measurement	wine liking measurement
+measurement	word list delayed recall measurement	word list delayed recall measurement
+disease	disease	disease
+phenotype	phenotype	phenotype
+measurement	measurement	measurement
+biological process	biological process	biological process
+biological process	Atrophy	Atrophy
+biological process	HIV mother to child transmission	HIV mother to child transmission
+biological process	aging	aging
+biological process	behavior	behavior
+biological process	calcification	calcification
+biological process	cellular component organization	cellular component organization
+biological process	cellular process	cellular process
+biological process	circadian rhythm	circadian rhythm
+biological process	developmental process	developmental process
+biological process	disease course	disease course
+biological process	drug interaction	drug interaction
+biological process	energy expenditure	energy expenditure
+biological process	energy intake	energy intake
+biological process	establishment of localization	establishment of localization
+biological process	heart transplant rejection	heart transplant rejection
+biological process	high altitude adaptation	high altitude adaptation
+biological process	homeostatic process	homeostatic process
+biological process	interspecies interaction between organisms	interspecies interaction between organisms
+biological process	lipid localization	lipid localization
+biological process	mental process	mental process
+biological process	metabolic process	metabolic process
+biological process	multicellular organismal process	multicellular organismal process
+biological process	neurodegeneration	neurodegeneration
+biological process	odontogenesis	odontogenesis
+biological process	pathological process	pathological process
+biological process	physical activity	physical activity
+biological process	platelet aggregation	platelet aggregation
+biological process	protein localization	protein localization
+biological process	psychomotor performance	psychomotor performance
+biological process	puberty	puberty
+biological process	regulation of biological process	regulation of biological process
+biological process	reproductive process	reproductive process
+biological process	respiratory process	respiratory process
+biological process	response to stimulus	response to stimulus
+biological process	sensory perception	sensory perception
+biological process	seroconversion	seroconversion
+biological process	single-organism process	single-organism process
+biological process	sleep	sleep
+biological process	vitamin metabolic process	vitamin metabolic process
+biological process	zinc ion homeostasis	zinc ion homeostasis
+disease	Multiple Organ Failure	Multiple Organ Failure
+disease	acute disease	acute disease
+disease	adverse effect	adverse effect
+disease	animal disease	animal disease
+disease	biological anomaly without phenotypic characterization	biological anomaly without phenotypic characterization
+disease	calcium oxalate urolithiasis	calcium oxalate urolithiasis
+disease	cell proliferation disorder	cell proliferation disorder
+disease	chronic disease	chronic disease
+disease	complication	complication
+disease	congenital abnormality	congenital abnormality
+disease	connective tissue disease	connective tissue disease
+disease	death by undetermined cause	death by undetermined cause
+disease	degenerative disorder	degenerative disorder
+disease	disease by anatomical system	disease by anatomical system
+disease	disease by subcellular system affected	disease by subcellular system affected
+disease	disorder by anatomical region	disorder by anatomical region
+disease	disorder involving pain	disorder involving pain
+disease	disorder of development or morphogenesis	disorder of development or morphogenesis
+disease	eosinophilic gastrointestinal disease	eosinophilic gastrointestinal disease
+disease	genetic disorder	genetic disorder
+disease	infectious disease	infectious disease
+disease	inflammatory disease	inflammatory disease
+disease	inherited genetic disease	inherited genetic disease
+disease	injury	injury
+disease	non-syndromic diaphragmatic or thoracic malformation	non-syndromic diaphragmatic or thoracic malformation
+disease	post-infectious disorder	post-infectious disorder
+disease	psychiatric disorder	psychiatric disorder
+disease	radiation or chemically induced disorder	radiation or chemically induced disorder
+disease	soft tissue disease	soft tissue disease
+disease	syndromic diaphragmatic or thoracic malformation	syndromic diaphragmatic or thoracic malformation
+disease	syndromic disease	syndromic disease
+disease	systemic or rheumatic disease	systemic or rheumatic disease
+disease	teratogenicity	teratogenicity
+disease	ventral hernia	ventral hernia
