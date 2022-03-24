@@ -183,17 +183,8 @@ rule merge_study_tables:
         'python scripts/merge_study_tables.py '
         '--in_gwascat {input.gwas} '
         '--in_ukb {input.ukb} '
+        '--in_finngen {input.finngen} '
         '--output {output}'
-
-rule make_FINNGEN_studies_table:
-    input:
-        finn_manifest=config['FINNGEN_manifest']
-    output:
-        study_table = tmpdir + '/{version}/FINNGEN_study_table.json'
-    shell:
-        'python scripts/make_FINNGEN_study_table.py '
-        '--in_manifest {input.finn_manifest} '
-        '--outf {output} '
 
 rule make_summarystat_toploci_table:
     ''' Converts the toploci table produce from the finemapping pipeline to
@@ -203,7 +194,7 @@ rule make_summarystat_toploci_table:
     input:
         toploci = GSRemoteProvider().remote(
             config['toploci'], keep_local=KEEP_LOCAL),
-        study_info = rules.merge_FINNGEN_study_tables.output
+        study_info = rules.merge_study_tables.output
     output:
         tmpdir + '/{version}/sumstat-associations_ot-format.tsv'
     shell:
@@ -234,7 +225,7 @@ rule get_efo_categories:
     ''' Uses OLS API to get "therapeutic area" / category for each EFO
     '''
     input:
-        study_table = rules.merge_FINNGEN_study_tables.output,
+        study_table = rules.merge_study_tables.output,
         therapeutic_areas = config['efo_therapeutic_areas']
     output:
         tmpdir + '/{version}/efo_categories.json'
