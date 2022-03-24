@@ -19,16 +19,10 @@ def main(input_path: str, output_path: str) -> None:
     logging.basicConfig(format="%(asctime)s - %(message)s", level=logging.INFO)
 
     # Only keep required cols
-    to_keep = OrderedDict(
-        [("code", "study_id"), ("n_total", "n_total"), ("n_cases", "n_cases")]
-    )
+    to_keep = OrderedDict([("code", "study_id"), ("n_total", "n_total"), ("n_cases", "n_cases")])
 
     # Load manifest
-    manifest = (
-        pd.read_csv(input_path, sep="\t", header=0, dtype=object)
-        .filter(items=to_keep)
-        .rename(columns=to_keep)
-    )
+    manifest = pd.read_csv(input_path, sep="\t", header=0, dtype=object).filter(items=to_keep).rename(columns=to_keep)
 
     logging.info(f"{input_path} has been loaded. Formatting...")
 
@@ -52,9 +46,7 @@ def main(input_path: str, output_path: str) -> None:
     manifest.loc[:, "n_initial"] = manifest["n_total"].apply(to_int_safe)
     manifest.loc[:, "n_cases"] = manifest["n_cases"].apply(to_int_safe)
     manifest.loc[:, "n_replication"] = 0
-    manifest.loc[:, "ancestry_initial"] = "European=" + manifest["n_initial"].astype(
-        str
-    )
+    manifest.loc[:, "ancestry_initial"] = "European=" + manifest["n_initial"].astype(str)
     manifest.loc[:, "ancestry_replication"] = ""
 
     # Ouput required columns
@@ -88,7 +80,7 @@ def to_int_safe(i):
 
 
 def parse_args():
-    """ Load command line args """
+    """Load command line args"""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--input",

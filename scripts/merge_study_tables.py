@@ -25,7 +25,6 @@ def main(in_gwascat: str, in_ukb: str, in_finngen: str, output: str) -> None:
     # Write
     merged.to_json(output, orient='records', lines=True)
 
-    return 0
 
 
 def parse_args():
