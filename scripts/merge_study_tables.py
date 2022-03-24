@@ -35,7 +35,7 @@ def parse_args():
     parser.add_argument('--in_gwascat', metavar="<str>", type=str, required=True)
     parser.add_argument('--in_ukb', metavar="<str>", type=str, required=True)
     parser.add_argument('--in_finngen', metavar="<str>", type=str, required=True)
-    parser.add_argument('--output', metavar="<str>", help=("Output merged file"), type=str, required=True)
+    parser.add_argument('--output', metavar="<str>", help=("Output merged file in parquet format"), type=str, required=True)
     args = parser.parse_args()
 
     return args

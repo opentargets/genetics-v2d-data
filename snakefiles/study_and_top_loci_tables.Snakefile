@@ -6,10 +6,6 @@ inter-dependencies.
 
 '''
 
-import json
-import numpy as np
-import pandas as pd
-from pathlib import Path
 from snakemake.remote.GS import RemoteProvider as GSRemoteProvider
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 
@@ -167,8 +163,8 @@ rule make_FINNGEN_studies_table:
         study_table = tmpdir + '/{version}/FINNGEN_study_table.json'
     shell:
         'python scripts/make_FINNGEN_study_table.py '
-        '--in_manifest {input.finn_manifest} '
-        '--outf {output} '
+        '--input {input.finn_manifest} '
+        '--output {output} '
 
 rule merge_study_tables:
     ''' Merges the GWAS Catalog and Neale UK Biobank study tables together.
@@ -178,7 +174,7 @@ rule merge_study_tables:
         ukb = rules.make_UKB_studies_table.output.study_table,
         finngen = rules.make_FINNGEN_studies_table.output.study_table
     output:
-        tmpdir + '/{version}/merged_study_table.old.json'
+        tmpdir + '/{version}/merged_study_table.json'
     shell:
         'python scripts/merge_study_tables.py '
         '--in_gwascat {input.gwas} '
@@ -251,32 +247,22 @@ rule study_table_to_parquet:
         study_table: merged study table
         sumstat_studies: list of study IDs with sumstats
         top_loci: top loci table (needed to add number of associated loci)
-        efo_anno: EFO to therapeautic area mapping json
-        therapeutic_areas: list of "therapeutic areas", needed to sort the
-                           efo_anno
-        
+
         This task will fail if there are any study IDs with summary stats
         that are not found in the merged study table, this is required
         because of https://github.com/opentargets/genetics/issues/354 
     '''
     input:
-        study_table = rules.merge_FINNGEN_study_tables.output,
+        study_table = rules.merge_study_tables.output,
         sumstat_studies = rules.list_studies_with_sumstats.output,
-        efo_anno = rules.get_efo_categories.output,
         top_loci = rules.merge_gwascat_and_sumstat_toploci.output,
-        therapeutic_areas = config['efo_therapeutic_areas']
     output:
         'output/{version}/studies.parquet'
-    params:
-        unknown_label = config['therapeutic_area_unknown_label']
     shell:
         'python scripts/study_table_to_parquet.py '
         '--in_study_table {input.study_table} '
         '--in_toploci {input.top_loci} '
         '--sumstat_studies {input.sumstat_studies} '
-        '--efo_categories {input.efo_anno} '
-        '--in_ta {input.therapeutic_areas} '
-        '--unknown_label {params.unknown_label} '
         '--output {output}'
 
 rule make_disease_mappings_lut:
@@ -288,12 +274,11 @@ rule make_disease_mappings_lut:
         disease_index: parquet files that stores the OT disease index to extract the therapeutic areas
     '''
     input:
-        study_table = rules.study_table_to_parquet.output,
+        study_table = rules.merge_study_tables.output,
         finngen_mappings = HTTPRemoteProvider().remote(config['FINNGEN_efo_curation']),
-        ukbb_original_mappings = config['ukb_efo_original_curation'],
-        ukb_updated_curation = HTTPRemoteProvider().remote(config['ukb_efo_updated_curation']),
-        disease_index = FTPRemoteProvider().remote(
-            'ftp://ftp.ebi.ac.uk/pub/databases/opentargets/platform/21.06/output/etl/parquet/diseases')    
+        ukbb_original_mappings = GSRemoteProvider().remote(config['ukb_efo_original_curation'], keep_local=KEEP_LOCAL),
+        ukb_updated_mappings = HTTPRemoteProvider().remote(config['ukb_efo_updated_curation']),
+    
     output:
         'output/{version}/trait_efo.parquet'
     shell:
