@@ -16,8 +16,8 @@ credsets: 'gs://genetics-portal-dev-staging/finemapping/220113_merged/credset/_S
 # UK Biobank (Neale V2 and SAIGE) sumstat manifest files
 ukb_manifest: 'gs://genetics-portal-input/ukb_phenotypes/neale2_saige_study_manifest.190430.tsv'
 
-# FINNGEN sumstat manifest files
-FINNGEN_manifest: 'configs/r5_finngen.json'
+# FINNGEN sumstat manifest file
+FINNGEN_manifest: 'https://r6.finngen.fi/api/phenos'
 
 # Trait category / therapeutic area
 efo_therapeutic_areas: 'configs/therapeutic_areas.tsv' # List of therapeutic area labels
