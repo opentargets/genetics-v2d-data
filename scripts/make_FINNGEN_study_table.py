@@ -3,17 +3,20 @@ Processes Finngen's manifest to extract all studies and their metadata in the OT
 """
 # coding: utf-8
 
-from collections import OrderedDict
-
 import argparse
+from collections import OrderedDict
+import logging
+
 import numpy as np
 import pandas as pd
 
 
 def main(input_path: str, output_path: str) -> None:
 
+    logging.basicConfig(format="%(asctime)s - %(message)s", level=logging.INFO)
+
     # Read manifest
-    FINNGEN_manifest = pd.read_json(input_path, lines=True).rename(
+    manifest = pd.read_json(input_path, lines=True).rename(
         columns={
             'phenocode': 'study_id',
             'phenostring': 'trait',
@@ -22,22 +25,23 @@ def main(input_path: str, output_path: str) -> None:
             'num_controls': 'n_controls',
         }
     )
+    logging.info(f"{input_path} has been loaded. Formatting...")
 
     keep_columns = ['study_id', 'trait', 'trait_category', 'n_cases', 'n_controls']
-    FINNGEN_manifest = FINNGEN_manifest[keep_columns]
+    manifest = manifest[keep_columns]
 
     # Format table:
-    FINNGEN_manifest['study_id'] = 'FINNGEN_R5_' + FINNGEN_manifest['study_id']
-    FINNGEN_manifest['n_total'] = FINNGEN_manifest['n_cases'] + FINNGEN_manifest['n_controls']
-    FINNGEN_manifest['pmid'] = ''
-    FINNGEN_manifest['pub_date'] = '2021-5-11'
-    FINNGEN_manifest['pub_author'] = 'FINNGEN_R5'
-    FINNGEN_manifest['ancestry_initial'] = 'European=' + FINNGEN_manifest['n_total'].astype(str)
-    FINNGEN_manifest['n_replication'] = 0
-    FINNGEN_manifest['ancestry_replication'] = ''
-    FINNGEN_manifest['pub_journal'] = ''
-    FINNGEN_manifest['pub_title'] = ''
-    FINNGEN_manifest['trait_efos'] = np.nan
+    manifest['study_id'] = 'FINNGEN_R5_' + manifest['study_id']
+    manifest['n_total'] = manifest['n_cases'] + manifest['n_controls']
+    manifest['pmid'] = ''
+    manifest['pub_date'] = '2021-5-11'
+    manifest['pub_author'] = 'FINNGEN_R5'
+    manifest['ancestry_initial'] = 'European=' + manifest['n_total'].astype(str)
+    manifest['n_replication'] = 0
+    manifest['ancestry_replication'] = ''
+    manifest['pub_journal'] = ''
+    manifest['pub_title'] = ''
+    manifest['trait_efos'] = np.nan
 
     cols = OrderedDict(
         [
@@ -57,9 +61,10 @@ def main(input_path: str, output_path: str) -> None:
         ]
     )
 
-    FINNGEN_manifest = FINNGEN_manifest.loc[:, list(cols.keys())].rename(columns=cols)
+    manifest = manifest.loc[:, list(cols.keys())].rename(columns=cols)
 
-    FINNGEN_manifest.to_json(output_path, orient='records', lines=True)
+    manifest.to_json(output_path, orient='records', lines=True)
+    logging.info(f"{len(manifest)} studies have been saved in {output_path}. Exiting.")
 
 
 def parse_args():
