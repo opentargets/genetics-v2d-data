@@ -257,7 +257,6 @@ rule make_disease_mappings_lut:
         finngen_mappings: curation recorded in Google Sheets
         ukbb_original_mappings: initial UK Biobank disease curation
         ukb_updated_curation: updated mappings resulting from upgrading to EFO3
-        disease_index: parquet files that stores the OT disease index to extract the therapeutic areas
     '''
     input:
         study_table = rules.merge_study_tables.output,

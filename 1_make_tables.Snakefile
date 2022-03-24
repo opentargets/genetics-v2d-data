@@ -3,8 +3,9 @@
 Makes:
   1. Top loci table
   2. Study table
-  3. Finemapping table
-  4. Input manifest for LD calculation table
+  3. Trait to EFO look up table
+  4. Finemapping table
+  5. Input manifest for LD calculation table
 '''
 
 from datetime import date
