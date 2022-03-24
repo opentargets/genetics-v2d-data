@@ -1,12 +1,12 @@
+"""
+Processes UK Biobank's manifest to extract all studies and their metadata in the OTG format.
+"""
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Ed Mountjoy
 #
 
-import re
-import sys
-import os
 import argparse
 import logging
 from collections import OrderedDict

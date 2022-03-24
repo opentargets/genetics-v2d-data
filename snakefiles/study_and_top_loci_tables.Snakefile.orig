@@ -180,12 +180,8 @@ rule merge_study_tables:
     '''
     input:
         gwas = rules.make_gwas_cat_studies_table.output.main,
-<<<<<<< HEAD
         ukb = rules.make_UKB_studies_table.output.study_table,
         finngen = rules.make_FINNGEN_studies_table.output.study_table
-=======
-        ukb = rules.make_UKB_studies_table.output.study_table
->>>>>>> 9eece716c449981d9ed3f02c3e9069a0a919d7ef
     output:
         tmpdir + '/{version}/merged_study_table.old.json'
     shell:
@@ -194,23 +190,6 @@ rule merge_study_tables:
         '--in_ukb {input.ukb} '
         '--output {output}'
 
-<<<<<<< HEAD
-=======
-rule merge_FINNGEN_study_tables:
-    input:
-        old_table=rules.merge_study_tables.output,
-        finn_manifest=config['FINNGEN_manifest'],
-        finn_efo=config['FINNGEN_efo_curation']
-    output:
-        tmpdir + '/{version}/merged_study_table.json'
-    shell:
-        'python scripts/Make_FINNGEN_entries.py '
-        '--in_manifest {input.finn_manifest} '
-        '--in_EFO {input.finn_efo} '
-        '--in_study_table {input.old_table}'
-        '--outf {output} '
-
->>>>>>> 9eece716c449981d9ed3f02c3e9069a0a919d7ef
 rule make_summarystat_toploci_table:
     ''' Converts the toploci table produce from the finemapping pipeline to
         standardised format. Study table is need to know if a study is
