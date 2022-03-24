@@ -1,226 +1,110 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
-# Ed Mountjoy
-#
+from typing import List, Optional
 
-'''
-http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252FEFO_0002508
-
-'''
-
-import sys
-import os
 import pandas as pd
+from pronto import Ontology
 import requests
-import json
-from pprint import pprint
-import numpy as np
-from collections import OrderedDict
-import argparse
+from retry import retry
 
-def main():
+# A dict of all therapeutic areas and their ids ranked by order of relevance
+THERAPEUTIC_AREAS = {
+    'therapeutic_area': [
+        'cell proliferation disorder', 'infectious disease',
+        'pregnancy or perinatal disease', 'animal disease',
+        'disease of visual system', 'cardiovascular disease',
+        'pancreas disease', 'gastrointestinal disease',
+        'reproductive system or breast disease', 'integumentary system disease',
+        'endocrine system disease', 'respiratory or thoracic disease',
+        'urinary system disease', 'musculoskeletal or connective tissue disease',
+        'disease of ear', 'immune system disease',
+        'hematologic disease', 'nervous system disease',
+        'psychiatric disorder', 'nutritional or metabolic disease',
+        'genetic, familial or congenital disease', 'injury, poisoning or other complication',
+        'phenotype', 'measurement', 'biological process'],
+    'id': [
+        'MONDO_0045024', 'EFO_0005741', 'OTAR_0000014',
+        'EFO_0005932', 'MONDO_0024458', 'EFO_0000319',
+        'EFO_0009605', 'EFO_0010282', 'OTAR_0000017',
+        'EFO_0010285', 'EFO_0001379', 'OTAR_0000010',
+        'EFO_0009690', 'OTAR_0000006', 'MONDO_0021205',
+        'EFO_0000540', 'EFO_0005803', 'EFO_0000618',
+        'MONDO_0002025', 'MONDO_0024297', 'OTAR_0000018',
+        'OTAR_0000009', 'EFO_0000651','EFO_0001444',
+        'GO_0008150']
+}
+SORTED_TAS_DF = pd.DataFrame(data=THERAPEUTIC_AREAS)
 
-    pd.set_option('display.max_columns', 500)
+EFO_RELEASE_API_TEMPLATE = 'https://api.github.com/repos/EBISPOT/efo/releases/{}'
+OWL_FILENAME = 'efo_otar_slim.owl'
 
-    # Args
-    args = parse_args()
-
-    # Load therapeutic areas dict
-    ta_dict = load_therapeutic_area_labels(args.in_ta)
-
-    # Load study info and explode efo column
-    std = pd.read_json(args.in_study, orient='records', lines=True)
-    std['trait_efos'] = std['trait_efos'].apply(
-        lambda x: x if isinstance(x, list) else [None])
-    std = explode(std, ['trait_efos'])
+@retry(tries=5, delay=3, backoff=1.5, jitter=(1, 3))
+def fetch_otar_owl_from_github(efo_release):
+    """Queries the GitHub API to fetch the latest EFO OTAR SLIM OWL URL."""
     
-    # # DEBUG
-    # std = std.head(100)
-
-    # Get efo therapeutic areas
-    efo_res = get_efo_therapeutic_areas_multi(
-        efo_list=std['trait_efos'],
-        ta_dict=ta_dict,
-        order=True
-    )
-
-    # Write as json
-    with open(args.output, 'w') as out_h:
-        for efo, ta in efo_res.items():
-            out_h.write(
-                json.dumps(
-                    {'efo_term': efo,
-                     'therapeutic_areas': ta}
-                ) + '\n'
-            )
-
-    return 0
-
-def get_efo_therapeutic_areas_multi(efo_list, ta_dict, order=False):
-    ''' For a list of efo terms, get a list of therapeutic areas
-    params:
-        efo (str): EFO short form code
-        ta_dict (dict): Dictionary of therapeutic area EFO labels -> display labels
-        order (bool): whether to order efo's by order in input file
-    returns:
-        dict of efo -> list of therapeutic areas
-    '''
-    d = {}
-    efo_set = set([x for x in efo_list if isinstance(x, str)])
-    # efo_set = set([x for x in efo_list])
-    for i, efo in enumerate(set(efo_set)):
-        if i % 10 == 0:
-            print('Processed {} of {}...'.format(i, len(efo_set)))
-        d[efo] = get_efo_therapeutic_areas(efo, ta_dict, order)
-    return d
-
-def get_efo_therapeutic_areas(efo, ta_dict, order=False):
-    ''' For a single efo term, get a list of therapeutic areas
-    params:
-        efo (str): EFO short form code
-        ta_dict (dict): Dictionary of therapeutic area EFO labels -> display labels
-        order (bool): whether to order efo's by order in input file
-    returns list of therapeutic area display labels
-    '''
-    ta_set = set([])
-
-    # Get set of labels from ancestors
-    for anc in get_efo_ancestor_terms(efo):
-        if anc['label'] in ta_dict:
-            ta_set.add(ta_dict[anc['label']])
-    
-    # Check if the efo term is a therapeutic area itself
-    # This is only likely if we get to a root (phenotype, disease, measurement)
-    if len(ta_set) < 2:
-        efo_label = get_efo_label(efo)
-        if efo_label in ta_dict:
-            ta_set.add(ta_dict[efo_label])
-    
-    # Order labels same as input file
-    if order:
-        ta_list = sorted(ta_set, key=lambda x: list(ta_dict.values()).index(x))
-    # Random order list
+    if efo_release == 'latest':
+        url = EFO_RELEASE_API_TEMPLATE.format(efo_release)
     else:
-        ta_list = list(ta_set)
+        url = EFO_RELEASE_API_TEMPLATE.format(f'tags/{efo_release}')
+    response = requests.get(url)
+    response.raise_for_status()  # In case of HTTP errors, this will be caught by the @retry decorator.
     
-    return ta_list
-
-def load_therapeutic_area_labels(inf):
-    ''' Loads therapeutic labels and display labels
-    '''
-    d = OrderedDict()
-    with open(inf, 'r') as in_h:
-        in_h.readline() # skip header
-        for line in in_h:
-
-            if line.startswith('#'):
-                continue
-            
-            try:
-                category, term_label, display_label = line.rstrip().split('\t')
-            except ValueError:
-                sys.exit('Error for in {}: {}'.format(inf, line))
-            
-            if term_label in d:
-                sys.exit(
-                    'Error: duplicate term_label in therapuetic'
-                    ' area list: {}'.format(term_label)
-                )
-            d[term_label] = display_label
-    return d
-
-def get_efo_ancestor_terms(efo):
-    ''' Uses OLS API to get all ancestors for an efo term.
-    Params:
-        efo (str): efo short form code
-    Returns:
-        yields dicts of json respons for each ancestor term
-    '''
-
-    # Query OLS
-    url = ("http://www.ebi.ac.uk/ols/api/ontologies/efo/terms/"
-           "http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252F{efo}/ancestors")
-    url = url.format(efo=efo.replace(':', '_'))
-    # print(url)
-
-    # Get first page
-    page = query_rest(url)
+    otar_slim_assets = [asset for asset in response.json()['assets'] if asset['name'] == OWL_FILENAME]
+    if len(otar_slim_assets) == 0:
+        raise AssertionError(f'EFO release {efo_release!r} on GitHub does not contain the file {OWL_FILENAME!r}.')
+    if len(otar_slim_assets) > 1:
+        raise AssertionError(f'EFO release {efo_release!r} contains multiple files named {OWL_FILENAME!r}.')
     
-    # Process data
-    while True:
+    return otar_slim_assets[0]['browser_download_url']
+
+
+def extract_therapeutic_areas_from_owl() -> pd.DataFrame:
+    """
+    A dataframe with all the EFO IDs and their therapeutic areas are parsed from the EFO OTAR SLIM OWL file. 
+    """
+    
+    owl_url = fetch_otar_owl_from_github('latest')
+    efo_terms = Ontology(owl_url, timeout=10).terms()
+    owl_parsed = []
+    
+    for term in efo_terms:
+        # The TAs are extracted by iterating through the ancestors of a term and looking up if it's in THERAPEUTIC_AREAS
+        therapeutic_areas = []
+        for ancestor in term.superclasses():
+            ancestor_id = normalise_ontology_identifier(ancestor.id)
+            if ancestor_id in THERAPEUTIC_AREAS['id']:
+                therapeutic_areas.append(ancestor_id)
         
-        # Stop if no terms
-        try:
-            page['_embedded']['terms']
-        except KeyError:
-            break
-
-        # Iterate over ancestors
-        for anc in page['_embedded']['terms']:
-            yield anc
-
-        # Get next page
-        if 'next' in page['_links']:
-            page = query_rest(page['_links']['next']['href'])
-        else:
-            break
-
-def get_efo_label(code):
-    ''' Gets the mapped trait name from the efo code from the OLS API
-    '''
-    # Get from API
-    url = ('https://www.ebi.ac.uk/ols/api/'
-           'search?q={code}&queryFields=short_form')
-    url = url.format(code=code)
+        efo_id = normalise_ontology_identifier(term.id)
+        owl_parsed.append((efo_id, therapeutic_areas))
     
-    # Make query
-    data = query_rest(url)
+    return pd.DataFrame(owl_parsed, columns=['efo_id', 'therapeutic_areas'])
 
-    # Extract label
-    label = None
-    for entry in data['response']['docs']:
-        if entry['short_form'] == code:
-            label = entry['label']
-            break
-
-    return label
-
-def query_rest(url):
-    ''' Queries rest api, checks response is ok and parases json
-    '''
+def get_prioritised_therapeutic_area(
+    therapeutic_areas: List,
+) -> str:
+    """
+    SORTED_TAS_DF is a df where the therapeutic areas are arranged in order of relevance.
+    The more relevant TA is extracted by selecting which one has the minimal index.
+    """
     try:
-        resp = requests.get(url)
-    except:
-        sys.exit('Error fetching: {}'.format(url))
+        if len(therapeutic_areas) > 0:
+            min_index = float('inf')
+            for ta in therapeutic_areas:
+                idx = SORTED_TAS_DF.index[SORTED_TAS_DF['id'] == ta]
+                if idx < min_index: 
+                    min_index = idx
+            ta = SORTED_TAS_DF.iloc[min_index]["therapeutic_area"].values[0]
+            return ta
+    except TypeError:
+        return "Uncategorised"
+    except Exception as e:
+        raise e
 
-    # Check the response was ok
-    if not (resp.ok):
-        resp.raise_for_status()
-    
-    # Load the response data into a dict variable
-    data = json.loads(resp.content.decode('utf-8'))
+def normalise_ontology_identifier(identifier: str) -> Optional[str]:
+    """
+    Normalise ontology identifier representation in order to make direct string-to-string comparison possible.
+    Ex:
+    'http://www.orpha.net/ORDO/Orphanet_178506' --> 'Orphanet_178506'
+    'BTO:0000305' --> 'BTO_0000305'
+    """
 
-    return data
-
-def explode(df, columns):
-    ''' Explodes multiple columns
-    '''
-    idx = np.repeat(df.index, df[columns[0]].str.len())
-    a = df.T.reindex(columns).values
-    concat = np.concatenate([np.concatenate(a[i]) for i in range(a.shape[0])])
-    p = pd.DataFrame(concat.reshape(a.shape[0], -1).T, idx, columns)
-    return df.drop(columns, axis=1).merge(p, left_index=True, right_index=True).reset_index(drop=True)
-
-def parse_args():
-    """ Load command line args """
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--in_study', metavar="<str>", type=str, required=True)
-    parser.add_argument('--in_ta', metavar="<str>", type=str, required=True)
-    parser.add_argument('--output', metavar="<str>", help=("Output"), type=str, required=True)
-    args = parser.parse_args()
-    return args
-
-if __name__ == '__main__':
-
-    main()
+    return identifier.split('/')[-1].replace(':', '_')
