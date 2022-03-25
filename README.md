@@ -26,8 +26,9 @@ Changes made (Jan 2019):
 # Setup on gcloud if needed
 bash setup_gcloud.sh
 
-# Install java 8 e.g.
+# Install java 8 e.g. and jq
 sudo apt install -yf openjdk-8-jre-headless openjdk-8-jdk
+sudo apt-get install jq
 
 # Authenticate google cloud storage
 gcloud auth application-default login
