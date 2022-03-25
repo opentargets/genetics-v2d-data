@@ -11,13 +11,13 @@ from get_therapeutic_areas import *
 
 
 def main(
-    study_index: str, finngen_spreadsheet: str, ukbb_old_mappings: str, ukbb_new_mappings: str, output_disease_lut: str
+    studies: str, finngen_mappings: str, ukb_original_mappings: str, ukb_updated_mappings: str, output_path: str
 ) -> None:
 
     # 1. Extract mappings per data source GWAS catalog traits from study table (these do not require OT mapping)
-    gwas_catalog_mappings = get_gwas_catalog_mappings(study_index)
-    valid_ukb = get_ukbb_mappings(ukbb_old_mappings, ukbb_new_mappings)
-    valid_finngen = get_finngen_mappings(finngen_spreadsheet)
+    gwas_catalog_mappings = get_gwas_catalog_mappings(studies)
+    valid_ukb = get_ukb_mappings(ukb_original_mappings, ukb_updated_mappings)
+    valid_finngen = get_finngen_mappings(finngen_mappings)
     # Assert there are no studies with a null mapping
     for source in [gwas_catalog_mappings, valid_ukb, valid_finngen]:
         if 'proposed_efos' not in source.columns:
@@ -78,8 +78,8 @@ def main(
     ), 'WARNING! There are duplicated studies.'
 
     # 4. Format and write output
-    genetics_mappings_w_ta.to_parquet(output_disease_lut)
-    logging.info(f'{output_disease_lut} successfully generated. Exiting.')
+    genetics_mappings_w_ta.to_parquet(output_path)
+    logging.info(f'{output_path} successfully generated. Exiting.')
 
 
 def read_input_file(path: str):
@@ -97,20 +97,24 @@ def read_input_file(path: str):
             return pd.read_parquet(path)
     elif 'json' in path:
         return pd.read_json(path, lines=True)
-    else:
+    elif 'spreadsheet' in path:
         return pd.read_csv(path.replace('/edit?usp=sharing', '/export?format=csv'))
+    elif 'csv' in path:
+        return pd.read_csv(path)
+    else:
+        raise ValueError(f'Unsupported input file format: {path}')
 
 
-def get_gwas_catalog_mappings(study_index: str) -> pd.DataFrame:
+def get_gwas_catalog_mappings(studies: str) -> pd.DataFrame:
     """Extracts GWAS catalog trait mappings from study table (these do not require OT mapping)."""
 
-    studies_df = read_input_file(study_index)
+    studies_df = read_input_file(studies)
     return studies_df[studies_df['study_id'].str.startswith('GCST')].filter(
         items=['study_id', 'trait_reported', 'trait_efos']
     )
 
 
-def get_ukbb_mappings(ukbb_old_mappings: str, ukbb_new_mappings: str) -> pd.DataFrame:
+def get_ukb_mappings(ukb_original_mappings: str, ukb_updated_mappings: str) -> pd.DataFrame:
     """
     UK Biobank trait mappings are merged from two different sources:
     1. ukbb_old_df: Initial curation done using EFO2.
@@ -119,24 +123,23 @@ def get_ukbb_mappings(ukbb_old_mappings: str, ukbb_new_mappings: str) -> pd.Data
     If updated (candidate = True) --> The new mapping is kept.
     If incorrect (candidate = False) --> The mapping is dropped.
     """
-    ukbb_old_df = get_ukbb_old_mappings(ukbb_old_mappings)
-    ukbb_new_df = get_ukbb_new_mappings(ukbb_new_mappings)
+    ukbb_old_df = get_ukb_original_mappings(ukb_original_mappings)
+    ukbb_new_df = get_ukb_updated_mappings(ukb_updated_mappings)
 
     return (
         ukbb_old_df.merge(ukbb_new_df, on=['study_id'], how='outer', indicator=True)
         .query("_merge == 'left_only' or _merge == 'both' and candidate == True")
-        # Coalesce EFOs and traits into a single column
+        # Coalesce EFOs into a single column
         .assign(proposed_efos=lambda X: X.proposed_efos_y.combine_first(X.proposed_efos_x))
-        .assign(trait_reported=lambda X: X.trait_reported_y.combine_first(X.trait_reported_x))
         .filter(items=['study_id', 'trait_reported', 'proposed_efos'])
     )
 
 
-def get_ukbb_new_mappings(ukbb_new_mappings: str) -> pd.DataFrame:
+def get_ukb_updated_mappings(ukb_updated_mappings: str) -> pd.DataFrame:
     """Extracts valid UK Biobank trait mappings from the curation spreadsheet."""
 
     return (
-        read_input_file(ukbb_new_mappings)
+        read_input_file(ukb_updated_mappings)
         .rename(columns={'traitName': 'trait_reported', 'candidateId': 'proposed_efos'})
         .query('candidate == True | current == True')
         .dropna(how='all')
@@ -144,22 +147,22 @@ def get_ukbb_new_mappings(ukbb_new_mappings: str) -> pd.DataFrame:
     )
 
 
-def get_ukbb_old_mappings(ukbb_old_mappings: str) -> pd.DataFrame:
-    """Extracts initial UK Biobank trait mappings from the curation JSON ."""
+def get_ukb_original_mappings(ukb_original_mappings: str) -> pd.DataFrame:
+    """Extracts original UK Biobank trait mappings from the curation JSON ."""
 
     return (
-        read_input_file(ukbb_old_mappings)
+        read_input_file(ukb_original_mappings)
         .drop('curation_confidence', axis=1)
         .rename(columns={'efos': 'proposed_efos'})
         .explode('proposed_efos')
     )
 
 
-def get_finngen_mappings(finngen_spreadsheet: str) -> pd.DataFrame:
+def get_finngen_mappings(finngen_mappings: str) -> pd.DataFrame:
     """Extracts Finngen trait mappings from the curation spreadsheet."""
 
     return (
-        read_input_file(finngen_spreadsheet)
+        read_input_file(finngen_mappings)
         .query('valid == True')
         .filter(items=['NAME', 'LONGNAME', 'efo_cls'])
         # Trim all strings to have a clean mapped id
@@ -196,27 +199,25 @@ def flatten_array(arr: List) -> List:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--in_studies', help='Directory of parquet files that stores the study index.', required=True)
+    parser.add_argument('--studies', help='Location of file with all studies.', required=True)
     parser.add_argument(
-        '--in_finngen_mappings',
+        '--finngen_mappings',
         help='URL of the spreadsheet that contains all Finngen disease mappings',
         nargs='?',
         default='https://docs.google.com/spreadsheets/d/1yrQPpsRi-mijs_BliKFZjeoxP6kGIs9Bz-02_0WDvAA/edit?usp=sharing',
     )
     parser.add_argument(
-        '--in_ukbb_old_mappings',
+        '--ukb_original_mappings',
         help='JSON file that contains the initial UK Biobank disease mappings. File can be found in gs://genetics-portal-input/ukb_phenotypes/ukb_efo_annotation-2021-10-25.json',
         required=True,
     )
     parser.add_argument(
-        '--in_ukbb_new_mappings',
+        '--ukb_updated_mappings',
         help='URL of the spreadsheet that contains the updated UK Biobank disease mappings resulting from upgrading to EFO3',
         default='https://docs.google.com/spreadsheets/d/1PotmUEirkV36dh-vpZ3GgxQg_LcOefZKbyTq0PNQ6NY/edit?usp=sharing',
     )
     parser.add_argument(
-        '--out_disease_lut',
-        help='Parquet file that stores all disease mappings present in the Genetics Portal studies',
-        required=True,
+        '--output', help='LUT that includes all disease mappings present in the Genetics Portal studies.', required=True
     )
     args = parser.parse_args()
 
@@ -227,15 +228,16 @@ if __name__ == '__main__':
     )
 
     # Report input data:
-    logging.info(f'Study index file path: {args.in_studies}')
-    logging.info(f'Finngen curation spreadsheet URL: {args.in_finngen_mappings}')
-    logging.info(f'UK Biobank curation spreadsheet URL: {args.in_ukbb_new_mappings}')
-    logging.info(f'UK Biobank initial curation file path: {args.in_ukbb_old_mappings}')
+    logging.info(f'Collection of all studies path: {args.studies}')
+    logging.info(f'Finngen curation spreadsheet URL: {args.finngen_mappings}')
+    logging.info(f'UK Biobank initial curation file path: {args.ukb_original_mappings}')
+    logging.info(f'UK Biobank curation updates spreadsheet URL: {args.ukb_updated_mappings}')
+    logging.info(f'Output disease/EFO LUT: {args.output}')
 
     main(
-        args.in_studies,
-        args.in_finngen_mappings,
-        args.in_ukbb_old_mappings,
-        args.in_ukbb_new_mappings,
-        args.out_disease_lut,
+        studies=args.studies,
+        finngen_mappings=args.finngen_mappings,
+        ukb_original_mappings=args.ukb_original_mappings,
+        ukb_updated_mappings=args.ukb_updated_mappings,
+        output_path=args.output,
     )

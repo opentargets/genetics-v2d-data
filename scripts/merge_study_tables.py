@@ -18,9 +18,9 @@ def main(in_gwascat: str, in_ukb: str, in_finngen: str, output_path: str) -> Non
     logging.basicConfig(format="%(asctime)s - %(message)s", level=logging.INFO)
 
     # Load input files
-    gwas = pd.read_json(in_gwascat, orient='records', lines=True).drop_duplicates()
-    ukb = pd.read_json(in_ukb, orient='records', lines=True).drop_duplicates()
-    finngen = pd.read_json(in_finngen, orient='records', lines=True).drop_duplicates()
+    gwas = pd.read_json(in_gwascat, orient='records', lines=True)
+    ukb = pd.read_json(in_ukb, orient='records', lines=True)
+    finngen = pd.read_json(in_finngen, orient='records', lines=True)
 
     logging.info(f"{len(gwas)} studies from GWAS Catalog have been loaded. Formatting...")
     logging.info(f"{len(ukb)} studies from UK Biobank have been loaded. Formatting...")
@@ -28,7 +28,7 @@ def main(in_gwascat: str, in_ukb: str, in_finngen: str, output_path: str) -> Non
     
 
     # Merge
-    merged = pd.concat([gwas, ukb, finngen], sort=False).drop_duplicates()
+    merged = pd.concat([gwas, ukb, finngen], sort=False)
 
     assert gwas.shape[0] + ukb.shape[0] + finngen.shape[0] == merged.shape[0], 'Merged table has different number of rows'
 
@@ -55,4 +55,4 @@ def parse_args():
 if __name__ == '__main__':
 
     args = parse_args()
-    main(in_gwascat=args.in_gwascat, in_ukb=args.in_ukb, in_finngen=args.in_finngen, output=args.output)
+    main(in_gwascat=args.in_gwascat, in_ukb=args.in_ukb, in_finngen=args.in_finngen, output_path=args.output)

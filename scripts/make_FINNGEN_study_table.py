@@ -31,11 +31,11 @@ def main(input_path: str, output_path: str) -> None:
     manifest = manifest[keep_columns]
 
     # Format table:
-    manifest['study_id'] = 'FINNGEN_R5_' + manifest['study_id']
+    manifest['study_id'] = 'FINNGEN_R6_' + manifest['study_id']
     manifest['n_total'] = manifest['n_cases'] + manifest['n_controls']
     manifest['pmid'] = ''
-    manifest['pub_date'] = '2021-5-11'
-    manifest['pub_author'] = 'FINNGEN_R5'
+    manifest['pub_date'] = '2022-01-24'
+    manifest['pub_author'] = 'FINNGEN_R6'
     manifest['ancestry_initial'] = 'European=' + manifest['n_total'].astype(str)
     manifest['n_replication'] = 0
     manifest['ancestry_replication'] = ''

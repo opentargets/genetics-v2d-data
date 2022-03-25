@@ -12,8 +12,6 @@ import argparse
 import pandas as pd
 from collections import OrderedDict
 from parquet_writer import write_parquet
-import datetime
-import json
 
 
 def main():
@@ -171,12 +169,11 @@ def main():
             ('n_initial', 'Int64'),
             ('n_replication', 'Int64'),
             ('n_cases', 'Int64'),
-            ('trait_category', 'object'),
             ('num_assoc_loci', 'Int64'),
             ('has_sumstats', 'bool'),
         ]
     )
-    assert set(dtypes.keys()) == set(merged.columns)
+    assert set(dtypes.keys()) == set(merged.columns), 'Columns in merged study table are not as expected.'
     merged = merged.loc[:, dtypes.keys()].astype(dtype=dtypes)
 
     # Split array columns
