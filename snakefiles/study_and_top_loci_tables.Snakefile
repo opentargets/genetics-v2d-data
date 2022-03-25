@@ -46,7 +46,7 @@ rule extract_gwascat_rsids_from_variant_index:
     output:
         tmpdir + '/{version}/variant-annotation.sitelist.GWAScat.tsv.gz'
     shell:
-        'pypy3 scripts/extract_from_variant-index.py '
+        'python scripts/extract_from_variant-index.py '
         '--gwas {input.gwascat} '
         '--vcf {input.invar} '
         '--out {output}'
@@ -157,14 +157,17 @@ rule make_UKB_studies_table:
 # "Study table" rule that need to be above `make_summarystat_toploci_table`
 
 rule make_FINNGEN_studies_table:
-    input:
-        finn_manifest=config['FINNGEN_manifest']
+    params:
+        finn_manifest = config['FINNGEN_manifest']
     output:
         study_table = tmpdir + '/{version}/FINNGEN_study_table.json'
     shell:
-        'python scripts/make_FINNGEN_study_table.py '
-        '--input {input.finn_manifest} '
-        '--output {output} '
+        """
+        wget -q -O {tmpdir}/r6_finngen.json {params.finn_manifest}
+        python scripts/make_FINNGEN_study_table.py \
+            --input {tmpdir}/r6_finngen.json \
+            --output {output}
+        """
 
 rule merge_study_tables:
     ''' Merges the GWAS Catalog and Neale UK Biobank study tables together.
@@ -253,23 +256,27 @@ rule study_table_to_parquet:
 
 rule make_disease_mappings_lut:
     ''' Build LUT that integrates all the disease mappings
-        study_table: merged study table in parquet format
+        studies: merged study table in parquet format
         finngen_mappings: curation recorded in Google Sheets
-        ukbb_original_mappings: initial UK Biobank disease curation
+        ukb_original_mappings: initial UK Biobank disease curation
         ukb_updated_curation: updated mappings resulting from upgrading to EFO3
+        output: output disease/EFO LUT
     '''
     input:
         study_table = rules.merge_study_tables.output,
-        finngen_mappings = HTTPRemoteProvider().remote(config['FINNGEN_efo_curation']),
-        ukbb_original_mappings = GSRemoteProvider().remote(config['ukb_efo_original_curation'], keep_local=KEEP_LOCAL),
-        ukb_updated_mappings = HTTPRemoteProvider().remote(config['ukb_efo_updated_curation']),
+        ukb_original_mappings = GSRemoteProvider().remote(config['ukb_efo_original_curation'], keep_local=KEEP_LOCAL),
     
+    params:
+        finngen_mappings = config['FINNGEN_efo_curation'],
+
     output:
         'output/{version}/trait_efo.parquet'
     shell:
-        'python scripts/make_disease_mapping_lut.py '
-        '--in_studies {input.study_table} '
-        '--in_finngen_mappings {input.finngen_mappings} '
-        '--ukbb_original_mappings {input.ukbb_original_mappings} '
-        '--ukb_updated_curation {input.ukb_updated_curation} '
-        '--out_disease_lut {output} '
+        """
+        wget -q -O {tmpdir}/finngen_mappings.csv {params.finngen_mappings}
+        python scripts/make_disease_mapping_lut.py \
+            --studies {input.study_table} \
+            --finngen_mappings {tmpdir}/finngen_mappings.csv \
+            --ukb_original_mappings {input.ukb_original_mappings} \
+            --output {output}
+        """
