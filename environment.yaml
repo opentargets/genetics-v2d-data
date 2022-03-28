@@ -17,6 +17,7 @@ dependencies:
   - psutil
   - pip:
     - pronto
-    - pyspark
     - psutil
+    - pyarrow
+    - pyspark
 

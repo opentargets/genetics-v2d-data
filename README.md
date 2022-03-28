@@ -56,7 +56,7 @@ tmux
 # cores for step 2, and back down to a small machine for step 3
 export PYSPARK_SUBMIT_ARGS="--driver-memory 100g pyspark-shell"
 
-export $VERSION_DATE=`date +%y%m%d`
+export VERSION_DATE=`date +%y%m%d`
 mkdir -p logs/$VERSION_DATE
 
 # Run workflow
