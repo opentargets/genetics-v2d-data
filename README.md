@@ -35,6 +35,7 @@ gcloud auth application-default login
 
 # Install dependencies into isolated environment
 conda env create -n v2d_data --file environment.yaml
+conda activate v2d_data
 
 # Alter configuration file
 nano config.yaml
@@ -47,26 +48,25 @@ rm -r www.ebi.ac.uk/gwas/
 # (I've gotten snakemake problems on subsequent attempts when this happens too)
 tmux
 
-# Activate environment, set core and RAM availability
+
 # May want to use a smaller machine for step 1, then scale up to more
 # cores for step 2, and back down to a small machine for step 3
-conda activate v2d_data
-cores=31
 export PYSPARK_SUBMIT_ARGS="--driver-memory 100g pyspark-shell"
 
-version_date=`date +%y%m%d`
-version_date=220208
-mkdir -p logs/$version_date
-time snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores 1 | tee logs/$version_date/1_make_tables.log 2>&1 # Takes a couple hours
-time snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores 2>&1 | tee logs/$version_date/2_calculate_LD_table.log 2>&1 # Takes ~7 hrs on 31 cores
+export $VERSION_DATE=`date +%y%m%d`
+mkdir -p logs/$VERSION_DATE
+
+# Run workflow
+time snakemake -s 1_make_tables.Snakefile --config version=$VERSION_DATE --cores all | tee logs/$VERSION_DATE/1_make_tables.log 2>&1 # Takes a couple hours
+time snakemake -s 2_calculate_LD_table.Snakefile --config version=$VERSION_DATE --cores all 2>&1 | tee logs/$VERSION_DATE/2_calculate_LD_table.log 2>&1 # Takes ~7 hrs on 31 cores
 
 # Reduce machine size in Google VM instance
 # This step only uses 1 core actually - but I'm not sure how much memory
 cores=3
-time snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores 2>&1 | tee logs/$version_date/3_make_overlap_table.log 2>&1 # Takes a couple hours
+time snakemake -s 3_make_overlap_table.Snakefile --config version=$VERSION_DATE --cores all 2>&1 | tee logs/$VERSION_DATE/3_make_overlap_table.log 2>&1 # Takes a couple hours
 
 # Upload output dir to google cloud storage
-gsutil -m rsync -r output/$version_date gs://genetics-portal-dev-staging/v2d/$version_date
+gsutil -m rsync -r output/$VERSION_DATE gs://genetics-portal-dev-staging/v2d/$VERSION_DATE
 ```
 
 ### Tables
