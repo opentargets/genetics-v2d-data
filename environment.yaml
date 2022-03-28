@@ -16,5 +16,6 @@ dependencies:
   - httplib2  
   - crcmod
   - java-jdk=8
+  - pip
   - pip:
     - pronto
