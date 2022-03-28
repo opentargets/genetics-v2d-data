@@ -4,14 +4,10 @@
 # Ed Mountjoy
 #
 
-import os
-import sys
 import argparse
-import pyspark.sql
+
 from pyspark.sql.types import *
 from pyspark.sql.functions import *
-from glob import glob
-import gzip
 
 from common.utils import initialize_sparksession
 
