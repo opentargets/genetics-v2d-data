@@ -26,12 +26,15 @@ Changes made (Jan 2019):
 # Setup on gcloud if needed
 bash setup_gcloud.sh
 
-# Install java 8 e.g. and jq
-sudo apt install -yf openjdk-8-jre-headless openjdk-8-jdk
-sudo apt-get install jq
-
-# Authenticate google cloud storage
+# Authenticate google cloud storage if needed
 gcloud auth application-default login
+
+# Set up the instance.
+sudo apt update
+sudo apt install -yf \
+  openjdk-13-jre-headless \
+  python3-pip \
+  jq
 
 # Install dependencies into isolated environment
 conda env create -n v2d_data --file environment.yaml
