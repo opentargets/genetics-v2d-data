@@ -23,6 +23,21 @@ Changes made (Jan 2019):
 ### Usage
 
 ```bash
+# Set parameters.
+export INSTANCE_NAME=v2d_data
+export INSTANCE_ZONE=europe-west1-d
+
+# Create the instance and SSH.
+gcloud compute instances create \
+  ${INSTANCE_NAME} \
+  --project=open-targets-genetics-dev \
+  --zone=${INSTANCE_ZONE} \
+  --machine-type=n1-highmem-32 \
+  --service-account=426265110888-compute@developer.gserviceaccount.com \
+  --scopes=https://www.googleapis.com/auth/cloud-platform \
+  --create-disk=auto-delete=yes,boot=yes,device-name=${INSTANCE_NAME},image=projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20210927,mode=rw,size=2000,type=projects/open-targets-eu-dev/zones/europe-west1-d/diskTypes/pd-balanced
+gcloud compute ssh --zone ${INSTANCE_ZONE} ${INSTANCE_NAME}
+
 # Setup on gcloud if needed
 bash setup_gcloud.sh
 
@@ -35,6 +50,9 @@ sudo apt install -yf \
   openjdk-13-jre-headless \
   python3-pip \
   jq
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+chmod +x Miniconda3-latest-Linux-x86_64.sh
+./Miniconda3-latest-Linux-x86_64.sh
 
 # Install dependencies into isolated environment
 conda env create -n v2d_data --file environment.yaml
