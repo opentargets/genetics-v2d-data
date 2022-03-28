@@ -14,7 +14,6 @@ from snakemake.remote.FTP import RemoteProvider as FTPRemoteProvider
 from snakemake.remote.GS import RemoteProvider as GSRemoteProvider
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 
-from src.utils import *
 
 # Load configuration
 configfile: "configs/config.yaml"
