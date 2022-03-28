@@ -13,7 +13,7 @@ from pyspark.sql.functions import *
 from glob import glob
 import gzip
 
-from src.utils import initialize_sparksession
+from common.utils import initialize_sparksession
 
 def main():
 
