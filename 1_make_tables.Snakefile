@@ -16,7 +16,7 @@ from datetime import date
 # Load configuration
 configfile: "configs/config.yaml"
 tmpdir = config['temp_dir']
-KEEP_LOCAL = True
+KEEP_LOCAL = False
 
 if 'version' not in config:
     config['version'] = date.today().strftime("%y%m%d")
