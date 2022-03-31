@@ -3,15 +3,17 @@
 Makes:
   1. Top loci table
   2. Study table
-  3. Finemapping table
-  4. Input manifest for LD calculation table
+  3. Trait to EFO look up table
+  4. Finemapping table
+  5. Input manifest for LD calculation table
 '''
+
+from datetime import date
 
 from snakemake.remote.FTP import RemoteProvider as FTPRemoteProvider
 from snakemake.remote.GS import RemoteProvider as GSRemoteProvider
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 
-from datetime import date
 
 # Load configuration
 configfile: "configs/config.yaml"
@@ -31,6 +33,10 @@ targets.append(
 targets.append(
     'output/{version}/studies.parquet'.format(version=config['version']) )
 
+# Make targets for study table
+targets.append(
+    'output/{version}/trait_efo.parquet'.format(version=config['version']) )
+
 # Make targets for finemapping table
 targets.append(
     'output/{version}/finemapping.parquet'.format(version=config['version']) )
@@ -39,15 +45,15 @@ targets.append(
 targets.append(
     'output/{version}/ld_analysis_input.tsv'.format(version=config['version']) )
 
-# Make lut table for Irene
-# Removing this currently as mappings may be generated as a separate process
-#targets.append(
-#    'output/{version}/trait_efo.parquet'.format(version=config['version']) )
+# Make trait to EFO lut table
+targets.append(
+    'output/{version}/trait_efo.parquet'.format(version=config['version']) )
 
 # Trigger making of targets
 rule all:
     input:
         targets
+    log: f"logs/{config['version']}/1_make_tables.log"
 
 # Add workflows
 include: 'snakefiles/study_and_top_loci_tables.Snakefile'

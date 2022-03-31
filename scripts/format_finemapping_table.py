@@ -4,28 +4,17 @@
 # Ed Mountjoy
 #
 
-import os
-import sys
 import argparse
-import pyspark.sql
+
 from pyspark.sql.types import *
 from pyspark.sql.functions import *
-from glob import glob
-import gzip
+
+from common.utils import initialize_sparksession
 
 def main():
 
     # Args
     args = parse_args()
-
-    # Make spark session
-    global spark
-    spark = (
-        pyspark.sql.SparkSession.builder
-        .config("spark.master", "local[*]")
-        .getOrCreate()
-    )
-    print('Spark version: ', spark.version)
     
     # Load data
     credset = (
@@ -73,5 +62,8 @@ def parse_args():
     return args
 
 if __name__ == '__main__':
+
+    global spark
+    spark = initialize_sparksession()
 
     main()

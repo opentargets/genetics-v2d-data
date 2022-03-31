@@ -23,17 +23,40 @@ Changes made (Jan 2019):
 ### Usage
 
 ```bash
+# Set parameters.
+export INSTANCE_NAME=v2d_data
+export INSTANCE_ZONE=europe-west1-d
+
+# Create the instance and SSH.
+gcloud compute instances create \
+  ${INSTANCE_NAME} \
+  --project=open-targets-genetics-dev \
+  --zone=${INSTANCE_ZONE} \
+  --machine-type=n1-highmem-32 \
+  --service-account=426265110888-compute@developer.gserviceaccount.com \
+  --scopes=https://www.googleapis.com/auth/cloud-platform \
+  --create-disk=auto-delete=yes,boot=yes,device-name=${INSTANCE_NAME},image=projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20210927,mode=rw,size=2000,type=projects/open-targets-eu-dev/zones/europe-west1-d/diskTypes/pd-balanced
+gcloud compute ssh --zone ${INSTANCE_ZONE} ${INSTANCE_NAME}
+
 # Setup on gcloud if needed
 bash setup_gcloud.sh
 
-# Install java 8 e.g.
-sudo apt install -yf openjdk-8-jre-headless openjdk-8-jdk
-
-# Authenticate google cloud storage
+# Authenticate google cloud storage if needed
 gcloud auth application-default login
+
+# Set up the instance.
+sudo apt update
+sudo apt install -yf \
+  openjdk-13-jre-headless \
+  python3-pip \
+  jq
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+chmod +x Miniconda3-latest-Linux-x86_64.sh
+./Miniconda3-latest-Linux-x86_64.sh
 
 # Install dependencies into isolated environment
 conda env create -n v2d_data --file environment.yaml
+conda activate v2d_data
 
 # Alter configuration file
 nano config.yaml
@@ -46,26 +69,25 @@ rm -r www.ebi.ac.uk/gwas/
 # (I've gotten snakemake problems on subsequent attempts when this happens too)
 tmux
 
-# Activate environment, set core and RAM availability
+
 # May want to use a smaller machine for step 1, then scale up to more
 # cores for step 2, and back down to a small machine for step 3
-conda activate v2d_data
-cores=31
 export PYSPARK_SUBMIT_ARGS="--driver-memory 100g pyspark-shell"
 
-version_date=`date +%y%m%d`
-version_date=220208
-mkdir -p logs/$version_date
-time snakemake -s 1_make_tables.Snakefile --config version=$version_date --cores 1 | tee logs/$version_date/1_make_tables.log 2>&1 # Takes a couple hours
-time snakemake -s 2_calculate_LD_table.Snakefile --config version=$version_date --cores $cores 2>&1 | tee logs/$version_date/2_calculate_LD_table.log 2>&1 # Takes ~7 hrs on 31 cores
+export VERSION_DATE=`date +%y%m%d`
+mkdir -p logs/$VERSION_DATE
+
+# Run workflow
+time snakemake -s 1_make_tables.Snakefile --config version=$VERSION_DATE --cores all | tee logs/$VERSION_DATE/1_make_tables.log 2>&1 # Takes a couple hours
+time snakemake -s 2_calculate_LD_table.Snakefile --config version=$VERSION_DATE --cores all 2>&1 | tee logs/$VERSION_DATE/2_calculate_LD_table.log 2>&1 # Takes ~7 hrs on 31 cores
 
 # Reduce machine size in Google VM instance
 # This step only uses 1 core actually - but I'm not sure how much memory
 cores=3
-time snakemake -s 3_make_overlap_table.Snakefile --config version=$version_date --cores $cores 2>&1 | tee logs/$version_date/3_make_overlap_table.log 2>&1 # Takes a couple hours
+time snakemake -s 3_make_overlap_table.Snakefile --config version=$VERSION_DATE --cores all 2>&1 | tee logs/$VERSION_DATE/3_make_overlap_table.log 2>&1 # Takes a couple hours
 
 # Upload output dir to google cloud storage
-gsutil -m rsync -r output/$version_date gs://genetics-portal-dev-staging/v2d/$version_date
+gsutil -m rsync -r output/$VERSION_DATE gs://genetics-portal-dev-staging/v2d/$VERSION_DATE
 ```
 
 ### Tables

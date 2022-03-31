@@ -9,10 +9,15 @@ dependencies:
   - plink
   - scipy
   - numpy
-  - pyarrow>=0.15
   - requests>=2.18.0
   - parallel
-  - pyspark
   - httplib2  
   - crcmod
-  - java-jdk=8
+  - pip
+  - psutil
+  - pip:
+    - pronto
+    - psutil
+    - pyarrow
+    - pyspark
+
