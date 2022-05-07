@@ -16,15 +16,25 @@ def main(input_path: str, output_path: str) -> None:
     logging.basicConfig(format="%(asctime)s - %(message)s", level=logging.INFO)
 
     # Read manifest
-    manifest = pd.read_json(input_path, lines=True).rename(
-        columns={
+    manifest = (
+        pd.read_json(input_path, orient='records')
+
+        # When phenostring is not provided, phenotype extracted from the phenocode
+        .assign(phenostring=lambda df: df.apply(
+            lambda row: row['phenostring'] if row['phenostring'] and row['phenostring'] != '' else row['phenocode'], 
+            axis=1)
+        )
+
+        # Renaming columns to accomodate OTG schema:
+        .rename(columns={
             'phenocode': 'study_id',
             'phenostring': 'trait',
             'category': 'trait_category',
             'num_cases': 'n_cases',
             'num_controls': 'n_controls',
-        }
+        })
     )
+
     logging.info(f"{input_path} has been loaded. Formatting...")
 
     keep_columns = ['study_id', 'trait', 'trait_category', 'n_cases', 'n_controls']

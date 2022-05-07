@@ -163,9 +163,8 @@ rule make_FINNGEN_studies_table:
         study_table = tmpdir + '/{version}/FINNGEN_study_table.json'
     shell:
         """
-        curl {params.finn_manifest} | jq -r '.[]| @json' > {tmpdir}/r6_finngen.json
         python scripts/make_FINNGEN_study_table.py \
-            --input {tmpdir}/r6_finngen.json \
+            --input {params} \
             --output {output}
         """
 

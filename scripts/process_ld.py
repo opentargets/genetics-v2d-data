@@ -19,8 +19,8 @@ import sys
 import numpy as np
 import argparse
 import pyspark.sql
-from pyspark.sql.types import *
-from pyspark.sql.functions import *
+from pyspark.sql.types import DoubleType, StructType, StringType, IntegerType
+from pyspark.sql.functions import col, pow, when, regexp_replace, split, lag, udf, log10, sqrt, desc
 from pyspark.sql.window import Window
 from scipy.stats import norm
 
@@ -92,7 +92,7 @@ def main():
             coln.replace('R_', 'Z_'),
             arctanh(col(coln))
         )
-    
+
     # Compute weighted average across populations
     data = data.withColumn('Z_overall',
         (
@@ -122,7 +122,7 @@ def main():
     data = data.filter(col('R2_overall') >= args.min_r2)
 
     # Drop unneeded columns
-    data = data.drop(*['Z_overall','R_overall', 'R_AFR',
+    data = data.drop(*['Z_overall', 'R_overall', 'R_AFR',
                        'R_AMR', 'R_EAS', 'R_EUR', 'R_SAS', 'Z_AFR',
                        'Z_AMR', 'Z_EAS', 'Z_EUR', 'Z_SAS', 'index_variant_id'])
     
