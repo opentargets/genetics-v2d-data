@@ -18,6 +18,7 @@ def main(input_path: str, output_path: str) -> None:
     # Read manifest
     manifest = (
         pd.read_json(input_path, orient='records')
+        .filter(items=['phenocode', 'phenosring', 'category', 'num_cases', 'num_controls'])
 
         # When phenostring is not provided, phenotype extracted from the phenocode
         .assign(phenostring=lambda df: df.apply(
@@ -36,9 +37,6 @@ def main(input_path: str, output_path: str) -> None:
     )
 
     logging.info(f"{input_path} has been loaded. Formatting...")
-
-    keep_columns = ['study_id', 'trait', 'trait_category', 'n_cases', 'n_controls']
-    manifest = manifest[keep_columns]
 
     # Format table:
     manifest['study_id'] = 'FINNGEN_R6_' + manifest['study_id']
