@@ -48,8 +48,7 @@ gcloud auth application-default login
 sudo apt update
 sudo apt install -yf \
   openjdk-13-jre-headless \
-  python3-pip \
-  jq
+  python3-pip
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
 chmod +x Miniconda3-latest-Linux-x86_64.sh
 ./Miniconda3-latest-Linux-x86_64.sh
