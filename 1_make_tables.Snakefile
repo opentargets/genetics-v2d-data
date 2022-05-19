@@ -20,7 +20,7 @@ tmpdir = config['temp_dir']
 KEEP_LOCAL = False
 
 # Extract run version from configuration if exists:
-version = config['version'] if 'version' not in config else date.today().strftime("%y%m%d")
+version = config['version'] if 'version' in config else date.today().strftime('%y%m%d')
 
 # Trigger making of targets
 rule all:

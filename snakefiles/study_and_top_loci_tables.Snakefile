@@ -14,47 +14,37 @@ from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 # Top loci table --------------------------------------------------------------
 #
 
-rule get_gwas_cat_assoc:
-    ''' Download GWAS catalog association file
-    '''
+rule get_gwas_cat_assoc:  # Download GWAS catalog association filed
     input:
-        HTTPRemoteProvider().remote(
-            'https://www.ebi.ac.uk/gwas/api/search/downloads/alternative')
+        HTTPRemoteProvider().remote('https://www.ebi.ac.uk/gwas/api/search/downloads/alternative')
     output:
         tmpdir + '/{version}/gwas-catalog-associations_ontology-annotated.tsv'
     shell:
         'cp {input} {output}'
 
-rule get_variant_index:
-    ''' Download variant index site list
-    '''
+rule get_variant_index:  # Download variant index site list
     input:
-        GSRemoteProvider().remote(
-            config['var_index_sitelist'], keep_local=KEEP_LOCAL)
+        GSRemoteProvider().remote(config['var_index_sitelist'], keep_local=KEEP_LOCAL)
     output:
         tmpdir + '/variant-annotation.sitelist.tsv.gz'
     shell:
         'cp {input} {output}'
 
-rule extract_gwascat_rsids_from_variant_index:
-    ''' Makes set of GWAS Catalog rsids and chrom:pos strings. Then reads
-        these from the variant index. Takes ~2 mins.
-    '''
+rule extract_gwascat_rsids_from_variant_index:  # Extract rsids from variant index
     input:
         gwascat = rules.get_gwas_cat_assoc.output,
         invar = rules.get_variant_index.output
     output:
         tmpdir + '/{version}/variant-annotation.sitelist.GWAScat.tsv.gz'
     shell:
-        'python scripts/extract_from_variant-index.py '
-        '--gwas {input.gwascat} '
-        '--vcf {input.invar} '
-        '--out {output}'
+        '''
+        python scripts/extract_from_variant-index.py
+            --gwas {input.gwascat}
+            --vcf {input.invar}
+            --out {output}
+        '''
 
-rule annotate_gwas_cat_with_variant_ids:
-    ''' Annotates rows in the gwas catalog assoc file with variant IDs from
-        a VCF
-    '''
+rule annotate_gwas_cat_with_variant_ids:  # Adding annotation from variant annotation rows to GWAS association
     input:
         gwascat = rules.get_gwas_cat_assoc.output,
         invar = rules.extract_gwascat_rsids_from_variant_index.output
@@ -80,20 +70,20 @@ rule make_gwas_cat_studies_table:
     '''
     input:
         toploci = rules.annotate_gwas_cat_with_variant_ids.output,
-        gwas_study = HTTPRemoteProvider().remote(
-            'https://www.ebi.ac.uk/gwas/api/search/downloads/studies_alternative', keep_local=KEEP_LOCAL),
-        ancestries = HTTPRemoteProvider().remote(
-            'https://www.ebi.ac.uk/gwas/api/search/downloads/ancestry', keep_local=KEEP_LOCAL)
+        gwas_study = HTTPRemoteProvider().remote('https://www.ebi.ac.uk/gwas/api/search/downloads/studies_alternative', keep_local=KEEP_LOCAL),
+        ancestries = HTTPRemoteProvider().remote('https://www.ebi.ac.uk/gwas/api/search/downloads/ancestry', keep_local=KEEP_LOCAL)
     output:
         main = tmpdir + '/{version}/gwas-catalog_study_table.json',
         lut = tmpdir + '/{version}/gwas-catalog_study_id_lut.tsv'
     shell:
-        'python scripts/make_gwas_cat_study_table.py '
-        '--in_gwascat_study {input.gwas_study} '
-        '--in_toploci {input.toploci} '
-        '--in_ancestries {input.ancestries} '
-        '--outf {output.main} '
-        '--out_id_lut {output.lut}'
+        '''
+        python scripts/make_gwas_cat_study_table.py
+            --in_gwascat_study {input.gwas_study}
+            --in_toploci {input.toploci}
+            --in_ancestries {input.ancestries}
+            --outf {output.main}
+            --out_id_lut {output.lut}
+        '''
 
 rule convert_gwas_catalog_to_standard:
     ''' Outputs the GWAS Catalog association data into a standard format
@@ -196,24 +186,26 @@ rule make_summarystat_toploci_table:
     output:
         tmpdir + '/{version}/sumstat-associations_ot-format.tsv'
     shell:
-        'python scripts/format_sumstat_toploci_assoc.py '
-        '--inf {input.toploci} '
-        '--study_info {input.study_info} '
-        '--outf {output}'
+        '''
+        python scripts/format_sumstat_toploci_assoc.py
+            --inf {input.toploci}
+            --study_info {input.study_info}
+            --outf {output}
+        '''
 
-rule merge_gwascat_and_sumstat_toploci:
-    ''' Merges associations from gwas_cat and sumstat derived
-    '''
+rule merge_gwascat_and_sumstat_toploci:  # Merges associations from gwas_cat and sumstat derived
     input:
         gwascat = rules.cluster_gwas_catalog.output.out_assoc,
         sumstat = rules.make_summarystat_toploci_table.output
     output:
         'output/{version}/toploci.parquet'
     shell:
-        'python scripts/merge_top_loci_tables.py '
-        '--in_gwascat {input.gwascat} '
-        '--in_sumstat {input.sumstat} '
-        '--output {output}'
+        '''
+        python scripts/merge_top_loci_tables.py
+            --in_gwascat {input.gwascat}
+            --in_sumstat {input.sumstat}
+            --output {output}
+        '''
 
 #
 # Study table -----------------------------------------------------------------
