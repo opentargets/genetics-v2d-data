@@ -37,10 +37,16 @@ overlap_min_r2: 0.7
 var_index_sitelist: 'gs://genetics-portal-staging/variant-annotation/190129/variant-annotation.sitelist.tsv.gz'
 
 # GWAS Catalog files:
-gwas:
-  associations: https://www.ebi.ac.uk/gwas/api/search/downloads/alternative
-  studies: https://www.ebi.ac.uk/gwas/api/search/downloads/studies_alternative
-  ancestries: https://www.ebi.ac.uk/gwas/api/search/downloads/ancestry
-  studies_unpublished: https://www.ebi.ac.uk/gwas/api/search/downloads/unpublished_studies
-  ancestries_unpublished: https://www.ebi.ac.uk/gwas/api/search/downloads/unpublished_ancestries
+gwas_catalog:
+  sources:
+    associations: https://www.ebi.ac.uk/gwas/api/search/downloads/alternative
+    studies: https://www.ebi.ac.uk/gwas/api/search/downloads/studies_alternative
+    ancestries: https://www.ebi.ac.uk/gwas/api/search/downloads/ancestry
+    studies_unpublished: https://www.ebi.ac.uk/gwas/api/search/downloads/unpublished_studies
+    ancestries_unpublished: https://www.ebi.ac.uk/gwas/api/search/downloads/unpublished_ancestries
+  filter_parameters:
+    min_pvalue: 5e-8 # Minimum p-value to be included
+    cluster_dist_kb: 500 # ± Distance in Kb
+    cluster_min_loci: 10 # Minimum number of reported loci for that study to be included in the clustering analysis
+    cluster_multi_proportion: 0.3 # For a given study, if more than this proportion of loci are multi-signals (>1 signal within gwas_cat_cluster_dist_kb), the study will be clustered
 
