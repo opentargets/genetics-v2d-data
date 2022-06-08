@@ -35,3 +35,12 @@ overlap_min_r2: 0.7
 
 # Variant index
 var_index_sitelist: 'gs://genetics-portal-staging/variant-annotation/190129/variant-annotation.sitelist.tsv.gz'
+
+# GWAS Catalog files:
+gwas:
+  associations: https://www.ebi.ac.uk/gwas/api/search/downloads/alternative
+  studies: https://www.ebi.ac.uk/gwas/api/search/downloads/studies_alternative
+  ancestries: https://www.ebi.ac.uk/gwas/api/search/downloads/ancestry
+  studies_unpublished: https://www.ebi.ac.uk/gwas/api/search/downloads/unpublished_studies
+  ancestries_unpublished: https://www.ebi.ac.uk/gwas/api/search/downloads/unpublished_ancestries
+
