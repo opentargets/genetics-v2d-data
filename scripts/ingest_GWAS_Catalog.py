@@ -7,6 +7,7 @@ import numpy as np
 import pyspark.sql
 import pyspark.sql.types as t
 import pyspark.sql.functions as f
+from pyspark import SparkFiles
 
 
 # Init logging:
@@ -26,7 +27,13 @@ spark = (
 
 # These parameters will come as command line arguments:
 variant_annotation = 'gs://genetics-portal-dev-analysis/dsuveges/variant_annotation/2022-06-22'
-associations = 'https://www.ebi.ac.uk/gwas/api/search/downloads/alternative'  # URL to GWAS Catalog associations
+# associations = 'https://www.ebi.ac.uk/gwas/api/search/downloads/alternative'  # URL to GWAS Catalog associations
+associations = 'gs://ot-team/dsuveges/v2d_files/gwas_associations_2022-06-27.tsv'
+
+##
+## Temporary output files:
+##
+OUTPUT_PATH = 'gs://ot-team/dsuveges/v2d_files/'
 
 # These parameters will be read from a config file:
 
@@ -79,10 +86,13 @@ association_df = (
     # Select and rename columns:
     .select(*[f.col(old_name).alias(new_name) for old_name, new_name in ASSOCIATION_COLUMNS_MAP.items()])
 
+    # Cast columns:
+    .withColumn('pvalue_mlog', f.col('pvalue_mlog').cast(t.FloatType()))
+
     # Apply some pre-defined filters on the data:
     .filter(
         (~f.col('chr_id').contains(' x '))  # Dropping associations based on variant x variant interactions
-        & (~f.col('pvalue_mlog') >= -np.log10(PVALCUTOFF))  # Dropping sub-significant associations
+        & (f.col('pvalue_mlog') > -np.log10(PVALCUTOFF))  # Dropping sub-significant associations
         & (f.col('chr_pos').isNotNull() & f.col('chr_id').isNotNull())  # Dropping associations without genomic location
     )
 )
@@ -90,7 +100,7 @@ association_df = (
 # Providing stats on the filtered association dataset:
 logging.info(f'Number of associations: {association_df.count()}')
 logging.info(f'Number of studies: {association_df.select("study_accession").distinct().count()}')
-logging.info(f'Number of variants: {association_df.select("SNPS").distinct().count()}')
+logging.info(f'Number of variants: {association_df.select("snp_ids").distinct().count()}')
 logging.info(f'Assocation: {association_df.show(2, False, True)}')
 
 logging.info('Processing associaitons:')
@@ -130,6 +140,7 @@ parsed_associations = (
     .withColumn('VARIANT', f.explode(f.arrays_zip('chr_id', 'chr_pos', 'strongest_snp_risk_allele', 'snp_ids')))
 
     # Updating variant columns:
+    .withColumn('snp_ids', f.col('VARIANT.snp_ids'))
     .withColumn('chr_id', f.col('VARIANT.chr_id'))
     .withColumn('chr_pos', f.col('VARIANT.chr_pos').cast(t.IntegerType()))
     .withColumn('strongest_snp_risk_allele', f.col('VARIANT.strongest_snp_risk_allele'))
@@ -137,14 +148,14 @@ parsed_associations = (
     # Extracting risk allele:
     .withColumn('risk_allele', f.split(f.col('strongest_snp_risk_allele'), '-').getItem(1))
 
-    # Collecting all SNPs linked to the assocition:
+    # Create a unique set of SNPs linked to the assocition:
     .withColumn(
         'rsid_gwas_catalog',
-        f.array(
+        f.array_distinct(f.array(
            f.split(f.col('strongest_snp_risk_allele'), '-').getItem(0),
            f.col('snp_id_current'),
-           f.col('SNPS')
-        )
+           f.col('snp_ids')
+        ))
     )
 
     # Processing EFO terms:
@@ -167,5 +178,8 @@ parsed_associations = (
 # Providing stats on the filtered association dataset:
 logging.info(f'Number of associations: {parsed_associations.count()}')
 logging.info(f'Number of studies: {parsed_associations.select("study_accession").distinct().count()}')
-logging.info(f'Number of variants: {parsed_associations.select("SNPS").distinct().count()}')
+logging.info(f'Number of variants: {parsed_associations.select("snp_ids").distinct().count()}')
 logging.info(f'Assocation: {parsed_associations.show(2, False, True)}')
+
+# Saving data:
+parsed_associations.write.mode('overwrite').parquet(f'{OUTPUT_PATH}/parsed_associations.parquet')
