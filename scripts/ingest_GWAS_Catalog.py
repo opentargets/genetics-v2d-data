@@ -173,6 +173,7 @@ parsed_associations = (
 
     # Cleaning up:
     .drop('mapped_trait_uri', 'strongest_snp_risk_allele', 'VARIANT')
+    .persist()
 )
 
 # Providing stats on the filtered association dataset:
@@ -182,4 +183,28 @@ logging.info(f'Number of variants: {parsed_associations.select("snp_ids").distin
 logging.info(f'Assocation: {parsed_associations.show(2, False, True)}')
 
 # Saving data:
-parsed_associations.write.mode('overwrite').parquet(f'{OUTPUT_PATH}/parsed_associations.parquet')
+# parsed_associations.write.mode('overwrite').parquet(f'{OUTPUT_PATH}/parsed_associations.parquet')
+
+# Loading variant annotation and join with parsed associations:
+logging.info('Loading variant annotation:')
+
+# Reading and joining variant annotation:
+variants = (
+    spark.read.parquet(variant_annotation)
+    .select(
+        f.col('chrom_b38').alias('chr_id'),
+        f.col('pos_b38').alias('chr_pos'),
+        f.col('rsid').alias('rsid_gnomad'),
+        f.col('ref').alias('ref'),
+        f.col('alt').alias('alt')
+    )
+)
+
+mapped_associations = (
+    parsed_associations
+    .join(variants, on=['chr_id', 'chr_pos'], how='left_outer')
+    .persist()
+)
+
+mapped_associations.write.mode('overwrite').parquet(f'{OUTPUT_PATH}/mapped_parsed_associations.parquet')
+
