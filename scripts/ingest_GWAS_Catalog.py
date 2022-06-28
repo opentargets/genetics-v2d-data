@@ -260,7 +260,7 @@ def main():
     )
 
     # Debug: saving concordant mappings:
-    mapped_associations = spark.read.parquet(f'{OUTPUT_PATH}/concordant_associations.parquet').persist()
+    mapped_associations.write.mode('overwrite').parquet(f'{OUTPUT_PATH}/concordant_associations.parquet')
 
 
 if __name__ == '__main__':
