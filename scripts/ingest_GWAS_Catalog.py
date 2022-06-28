@@ -208,15 +208,59 @@ def main():
     gwas_associations = read_GWAS_associations()
     parsed_gwas_associations = parse_associations(gwas_associations)
 
-    # Save data:
+    # Debug: save data parsed associations:
     # parsed_gwas_associations.write.mode('overwrite').parquet(f'{OUTPUT_PATH}/parsed_associations.parquet')
 
+    # Mapping GWAS Catalog variants to GnomAD variants:
     mapped_associations = map_associations(parsed_gwas_associations)
-    # Save mapped data:
-    mapped_associations.write.mode('overwrite').parquet(f'{OUTPUT_PATH}/mapped_parsed_associations.parquet')
 
-    # Read mapped associations as debug:
-    # mapped_associations = spark.read.parquet(f'{OUTPUT_PATH}/mapped_parsed_associations.parquet')
+    # Debug: save mapped data:
+    # mapped_associations.write.mode('overwrite').parquet(f'{OUTPUT_PATH}/mapped_parsed_associations.parquet')
+
+    # Debug: read mapped associations:
+    # mapped_associations = spark.read.parquet(f'{OUTPUT_PATH}/mapped_parsed_associations.parquet').persist()
+
+    # Drop association/variant mappings, where the alleles are discordant:
+    mapped_associations = (
+        mapped_associations
+
+        # Dropping associations with no mapped variants:
+        .filter(f.col('alt').isNotNull())
+
+        # Adding column with the reverse-complement of the risk allele:
+        .withColumn(
+            'risk_allele_reverse_complement',
+            f.when(
+                f.col('risk_allele').rlike(r'^[ACTG]+$'),
+                f.reverse(f.translate(f.col('risk_allele'), "ACTG", "TGAC"))
+            )
+            .otherwise(f.col('risk_allele'))
+        )
+
+        # Adding columns flagging concordance:
+        .withColumn(
+            'is_concordant',
+            # If risk allele is found on the positive strand:
+            f.when((f.col('risk_allele') == f.col('ref')) | (f.col('risk_allele') == f.col('alt')), True)
+            # If risk allele is found on the negative strand:
+            .when(
+                (f.col('risk_allele_reverse_complement') == f.col('ref'))
+                | (f.col('risk_allele_reverse_complement') == f.col('alt')),
+                True
+            )
+            # If risk allele is ambiguous, still accepted:
+            .when(f.col('risk_allele') == '?', True)
+            # Allele is discordant:
+            .otherwise(False)
+        )
+
+        # Dropping discordant associations:
+        .filter((f.col('is_concordant') == True) & (f.col('risk_allele') == '?'))
+        .drop('is_concordant', 'risk_allele_reverse_complement')
+    )
+
+    # Debug: saving concordant mappings:
+    mapped_associations = spark.read.parquet(f'{OUTPUT_PATH}/concordant_associations.parquet').persist()
 
 
 if __name__ == '__main__':
