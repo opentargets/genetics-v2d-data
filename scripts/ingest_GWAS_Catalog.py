@@ -36,7 +36,7 @@ DROPPED_STUDIES = [
 INGEST_UNPUBLISHED_STUDIES = False
 
 # P-value threshold for associations:
-PVALCUTOFF = 8e-8
+PVALCUTOFF = 5e-8
 
 ASSOCIATION_COLUMNS_MAP = {
     # Variant related columns:
@@ -96,7 +96,6 @@ def read_GWAS_associations() -> DataFrame:
 
     logging.info('Processing associaitons:')
     return association_df
-
 
 def parse_associations(association_df: DataFrame) -> DataFrame:
     # Processing associations:
@@ -257,6 +256,11 @@ def main():
         # Dropping discordant associations:
         .filter((f.col('is_concordant') == True) & (f.col('risk_allele') == '?'))
         .drop('is_concordant', 'risk_allele_reverse_complement')
+
+        # Adding column for variant id:
+        .withColumn('variant_id', f.concat_ws('_', f.col('chr_id'), f.col('chr_pos'), f.col('ref'), f.col('alt')))
+
+        .show(1, False, True)
     )
 
     # Debug: saving concordant mappings:
