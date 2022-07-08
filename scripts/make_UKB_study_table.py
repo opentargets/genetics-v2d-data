@@ -84,7 +84,7 @@ def to_int_safe(i):
 
 
 def make_trait_reported_string(s_raw):
-    '''Takes the raw trait name and outputs trnasformed name'''
+    '''Takes the raw trait name and outputs transformed name'''
 
     # Replace any double spaces with single
     s_raw = re.sub(r' +', r' ', s_raw)
@@ -101,7 +101,7 @@ def make_trait_reported_string(s_raw):
     else:
         trait = s_raw
 
-    # Capitalise the frist letter
+    # Capitalise the first letter
     trait = trait.capitalize()
 
     return trait
