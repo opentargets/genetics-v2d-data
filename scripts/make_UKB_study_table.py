@@ -1,15 +1,11 @@
 """
 Processes UK Biobank's manifest to extract all studies and their metadata in the OTG format.
 """
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
-# Ed Mountjoy
-#
 
 import argparse
 import logging
 from collections import OrderedDict
+import re
 
 import pandas as pd
 
@@ -19,7 +15,9 @@ def main(input_path: str, output_path: str) -> None:
     logging.basicConfig(format="%(asctime)s - %(message)s", level=logging.INFO)
 
     # Only keep required cols
-    to_keep = OrderedDict([("code", "study_id"), ("n_total", "n_total"), ("n_cases", "n_cases")])
+    to_keep = OrderedDict(
+        [("code", "study_id"), ('trait', 'trait_raw'), ("n_total", "n_total"), ("n_cases", "n_cases")]
+    )
 
     # Load manifest
     manifest = pd.read_csv(input_path, sep="\t", header=0, dtype=object).filter(items=to_keep).rename(columns=to_keep)
@@ -29,6 +27,9 @@ def main(input_path: str, output_path: str) -> None:
     #
     # Add other columns -------------------------------------------------------
     #
+
+    # Process traits to a nicer format
+    manifest["trait_reported"] = manifest['trait_raw'].apply(make_trait_reported_string)
 
     # Vector to get Neale or SAIGE studies
     is_neale = manifest["study_id"].str.startswith("NEALE2_")
@@ -50,22 +51,25 @@ def main(input_path: str, output_path: str) -> None:
     manifest.loc[:, "ancestry_replication"] = ""
 
     # Ouput required columns
-    cols = OrderedDict(
-        [
-            ("study_id", "study_id"),
-            ("pmid", "pmid"),
-            ("pub_date", "pub_date"),
-            ("pub_journal", "pub_journal"),
-            ("pub_title", "pub_title"),
-            ("pub_author", "pub_author"),
-            ("ancestry_initial", "ancestry_initial"),
-            ("ancestry_replication", "ancestry_replication"),
-            ("n_initial", "n_initial"),
-            ("n_cases", "n_cases"),
-            ("n_replication", "n_replication"),
-        ]
-    )
-    manifest = manifest.loc[:, list(cols.keys())].rename(columns=cols)
+    cols = [
+        "study_id",
+        "pmid",
+        "pub_date",
+        "pub_journal",
+        "pub_title",
+        "pub_author",
+        "trait_reported",
+        "ancestry_initial",
+        "ancestry_replication",
+        "n_initial",
+        "n_cases",
+        "n_replication",
+    ]
+
+    manifest = manifest.filter(items=cols).drop_duplicates()
+
+    # Assert trait_reported is not empty
+    assert manifest["trait_reported"].notna().all(), "There are studies where the trait is not defined."
 
     # Write
     manifest.to_json(args.output, orient="records", lines=True)
@@ -77,6 +81,30 @@ def to_int_safe(i):
         return int(float(i))
     except ValueError:
         return None
+
+
+def make_trait_reported_string(s_raw):
+    '''Takes the raw trait name and outputs trnasformed name'''
+
+    # Replace any double spaces with single
+    s_raw = re.sub(r' +', r' ', s_raw)
+
+    # Assert no "|" in trait name
+    assert "|" not in s_raw
+
+    # Split prefix
+    parts = s_raw.split(': ', 1)
+
+    # Move prefix to end if exists
+    if len(parts) == 2:
+        trait = " | ".join([parts[1], parts[0]])
+    else:
+        trait = s_raw
+
+    # Capitalise the frist letter
+    trait = trait.capitalize()
+
+    return trait
 
 
 def parse_args():
