@@ -90,7 +90,7 @@ def make_trait_reported_string(s_raw):
     s_raw = re.sub(r' +', r' ', s_raw)
 
     # Assert no "|" in trait name
-    assert "|" not in s_raw
+    assert "|" not in s_raw, f"Reported trait ({s_raw}), contains invalid character."
 
     # Split prefix
     parts = s_raw.split(': ', 1)
