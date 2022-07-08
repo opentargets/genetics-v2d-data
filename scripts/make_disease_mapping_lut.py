@@ -36,7 +36,6 @@ def main(
         .drop('proposed_efos', axis=1)
         .explode('trait_efos')
     )
-
     assert len(genetics_mappings) == (
         len(gwas_catalog_mappings.explode('trait_efos'))
         + len(valid_ukb.explode('proposed_efos'))
@@ -55,7 +54,7 @@ def main(
         # A study/trait can be mapped to multiple EFOs, each with a different set of therapeutic areas.
         # All the therapeutic areas and EFOs are collected into the same column. The most significant TA
         # per study is extracted. The result of collecting these is a multidimensional array that must be flattened.
-        .groupby(['study_id', 'trait_reported'])
+        .groupby(['study_id', 'trait_reported'], dropna=False)
         .agg({'therapeutic_areas': list, 'trait_efos': list})
         .reset_index()
     )
@@ -76,6 +75,11 @@ def main(
     assert len(genetics_mappings_w_ta) == len(
         genetics_mappings_w_ta['study_id'].unique()
     ), 'WARNING! There are duplicated studies.'
+
+    # Assert no studies are lost in the process of adding the TA
+    assert len(genetics_mappings_w_ta.study_id.unique()) == len(
+        genetics_mappings.study_id.unique()
+    ), 'WARNING! Some studies were lost in the process of adding the TA.'
 
     # 4. Format and write output
     genetics_mappings_w_ta.to_parquet(output_path)
