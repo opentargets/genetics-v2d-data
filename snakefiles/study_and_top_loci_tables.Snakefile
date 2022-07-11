@@ -223,11 +223,11 @@ rule list_studies_with_sumstats:
     ''' Makes a list of files with sumstats
     '''
     params:
-        url=config['gcs_sumstat_pattern'],
+        url=config['sumstats_gcs_path'],
     output:
         tmpdir + '/{version}/studies_with_sumstats.tsv'
     run:
-        shell('gsutil -m ls -d "{params.url}" > {output}')
+        shell('gsutil -m ls {params.url} > {output}')
 
 rule study_table_to_parquet:
     ''' Converts study table to final parquet.

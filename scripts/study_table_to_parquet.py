@@ -27,13 +27,10 @@ def main():
     #
 
     # Load list of study IDs that have sumstats
-    from_sumstats = set([])
-    with open(args.sumstat_studies, 'r') as in_h:
-        for line in in_h:
-            # Get study_id
-            line = line.rstrip().rstrip('/')
-            stid = os.path.basename(line).replace('.parquet', '')
-            from_sumstats.add(stid)
+    sumstat_studies = pd.read_csv(args.sumstat_studies, sep='\t', header=None, names=['study_id'])
+
+    studies_pattern = r"(?<=gs:\/\/genetics-portal-dev-sumstats\/unfiltered\/gwas\/)(.*)(?=.parquet\/)"
+    from_sumstats = list(sumstat_studies.study_id.str.extract(studies_pattern).dropna()[0].unique())
 
     # Annotate study table with field showing if there are sumstats
     merged['has_sumstats'] = merged['study_id'].isin(from_sumstats)
@@ -183,9 +180,6 @@ def main():
 
     # Sort output
     merged = merged.sort_values(['study_id'])
-
-    # DEBUG output study table
-    merged.to_csv('tmp/study_table.tsv', sep='\t', index=None)
 
     # Save as parquet
     array_cols = ['trait_efos', 'ancestry_initial', 'ancestry_replication']
