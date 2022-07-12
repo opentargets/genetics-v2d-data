@@ -9,7 +9,7 @@ gwas_cat_cluster_min_loci: 10 # Minimum number of reported loci for that study t
 gwas_cat_cluster_multi_proportion: 0.3 # For a given study, if more than this proportion of loci are multi-signals (>1 signal within gwas_cat_cluster_dist_kb), the study will be clustered
 
 # Summary statistics finemapping pipeline output files
-gcs_sumstat_pattern: 'gs://genetics-portal-dev-sumstats/unfiltered/gwas/*.parquet'
+sumstats_gcs_path: 'gs://genetics-portal-dev-sumstats/unfiltered/gwas'
 toploci: 'gs://genetics-portal-dev-staging/finemapping/220113_merged/top_loci.json.gz'
 credsets: 'gs://genetics-portal-dev-staging/finemapping/220113_merged/credset/_SUCCESS' # Need the whole directory, so passing the _SUCCSS file instead to trick snakemake
 
