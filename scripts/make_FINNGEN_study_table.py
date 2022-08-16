@@ -18,7 +18,7 @@ def main(input_path: str, output_path: str) -> None:
     # Read manifest
     manifest = (
         pd.read_json(input_path, orient='records')
-        .filter(items=['phenocode', 'phenosring', 'category', 'num_cases', 'num_controls'])
+        .filter(items=['phenocode', 'phenostring', 'category', 'num_cases', 'num_controls'])
 
         # When phenostring is not provided, phenotype extracted from the phenocode
         .assign(phenostring=lambda df: df.apply(
@@ -83,8 +83,7 @@ def parse_args():
     parser.add_argument('--input', metavar="<str>", type=str, required=True)
     parser.add_argument('--output', metavar="<str>", help=("Output"), type=str, required=True)
 
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 
 if __name__ == '__main__':
