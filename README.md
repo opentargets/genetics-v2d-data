@@ -24,7 +24,7 @@ Changes made (Jan 2019):
 
 ```bash
 # Set parameters.
-export INSTANCE_NAME=v2d_data
+export INSTANCE_NAME=v2d-data
 export INSTANCE_ZONE=europe-west1-d
 
 # Create the instance and SSH.
@@ -50,8 +50,13 @@ sudo apt install -yf \
   openjdk-13-jre-headless \
   python3-pip
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
-chmod +x Miniconda3-latest-Linux-x86_64.sh
-./Miniconda3-latest-Linux-x86_64.sh
+bash ~/miniconda.sh -b
+~/miniconda3/bin/conda init
+exec bash
+
+# Clone repo
+git clone https://github.com/opentargets/genetics-v2d-data.git
+cd genetics-v2d-data
 
 # Install dependencies into isolated environment
 conda env create -n v2d_data --file environment.yaml
@@ -67,7 +72,6 @@ rm -r www.ebi.ac.uk/gwas/
 # May want to start tmux session to avoid problems if connection is lost
 # (I've gotten snakemake problems on subsequent attempts when this happens too)
 tmux
-
 
 # May want to use a smaller machine for step 1, then scale up to more
 # cores for step 2, and back down to a small machine for step 3

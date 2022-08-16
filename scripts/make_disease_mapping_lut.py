@@ -11,13 +11,18 @@ from get_therapeutic_areas import *
 
 
 def main(
-    studies: str, finngen_mappings: str, ukb_original_mappings: str, ukb_updated_mappings: str, output_path: str
+    studies: str,
+    finngen_mappings: str,
+    finngen_version: int,
+    ukb_original_mappings: str,
+    ukb_updated_mappings: str,
+    output_path: str,
 ) -> None:
 
     # 1. Extract mappings per data source GWAS catalog traits from study table (these do not require OT mapping)
     gwas_catalog_mappings = get_gwas_catalog_mappings(studies)
     valid_ukb = get_ukb_mappings(ukb_original_mappings, ukb_updated_mappings)
-    valid_finngen = get_finngen_mappings(finngen_mappings)
+    valid_finngen = get_finngen_mappings(finngen_version, finngen_mappings)
     # Assert there are no studies with a null mapping
     for source in [gwas_catalog_mappings, valid_ukb, valid_finngen]:
         if 'proposed_efos' not in source.columns:
@@ -162,8 +167,22 @@ def get_ukb_original_mappings(ukb_original_mappings: str) -> pd.DataFrame:
     )
 
 
-def get_finngen_mappings(finngen_mappings: str) -> pd.DataFrame:
-    """Extracts Finngen trait mappings from the curation spreadsheet."""
+def get_finngen_mappings(finngen_version: int, finngen_mappings: str) -> pd.DataFrame:
+    """
+    Extracts Finngen trait mappings from the curation spreadsheet
+
+    Args:
+      finngen_version (int): The version of the Finngen data that you are using.
+      finngen_mappings (str): The path to the Finngen trait mappings spreadsheet.
+
+    Returns:
+      A dataframe with the following columns:
+        - study_id
+        - trait_reported
+        - proposed_efos
+    """
+
+    version = f'FINNGEN_R{finngen_version}_'
 
     return (
         read_input_file(finngen_mappings)
@@ -177,23 +196,20 @@ def get_finngen_mappings(finngen_mappings: str) -> pd.DataFrame:
         .reset_index()
         .rename(columns={'NAME': 'study_name', 'LONGNAME': 'trait_reported', 'efo_cls': 'proposed_efos'})
         .explode('trait_reported')
-        .assign(study_id=lambda x: 'FINNGEN_R5_' + x.study_name)
+        .assign(study_id=lambda x: version + x.study_name)
         .drop('study_name', axis=1)
     )
 
 
 def build_therapeutic_areas(genetics_mappings: pd.DataFrame) -> pd.DataFrame:
     """Therapeutic areas per trait are built into the mappings table."""
-
     efo_tas_df = extract_therapeutic_areas_from_owl()
-    genetics_mappings_w_trait = genetics_mappings.merge(
-        efo_tas_df, left_on='trait_efos', right_on='efo_id', how='left'
-    ).drop('efo_id', axis=1)
-
-    return genetics_mappings_w_trait
+    return genetics_mappings.merge(efo_tas_df, left_on='trait_efos', right_on='efo_id', how='left').drop(
+        'efo_id', axis=1
+    )
 
 
-def flatten_array(arr: List) -> List:
+def flatten_array(arr: List) -> List:  # sourcery skip: use-contextlib-suppress
     """Flattens a bidimensional array."""
     try:
         return [i for sublist in arr for i in sublist]
@@ -208,7 +224,13 @@ if __name__ == '__main__':
         '--finngen_mappings',
         help='URL of the spreadsheet that contains all Finngen disease mappings',
         nargs='?',
-        default='https://docs.google.com/spreadsheets/d/1yrQPpsRi-mijs_BliKFZjeoxP6kGIs9Bz-02_0WDvAA/edit?usp=sharing',
+        default='https://docs.google.com/spreadsheets/d/1RRWfUTLy4TO9XmBzcbJ2wPRdda3qISjRS4PJmEdxE3k/edit?usp=sharing',
+    )
+    parser.add_argument(
+        '--finngen_version',
+        help='The version of the Finngen manifest the study table is based on.',
+        required=True,
+        type=int,
     )
     parser.add_argument(
         '--ukb_original_mappings',
@@ -241,6 +263,7 @@ if __name__ == '__main__':
     main(
         studies=args.studies,
         finngen_mappings=args.finngen_mappings,
+        finngen_version=args.finngen_version,
         ukb_original_mappings=args.ukb_original_mappings,
         ukb_updated_mappings=args.ukb_updated_mappings,
         output_path=args.output,
