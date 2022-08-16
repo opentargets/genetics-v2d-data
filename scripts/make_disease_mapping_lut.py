@@ -11,7 +11,12 @@ from get_therapeutic_areas import *
 
 
 def main(
-    studies: str, finngen_version: int, finngen_mappings: str, ukb_original_mappings: str, ukb_updated_mappings: str, output_path: str
+    studies: str,
+    finngen_mappings: str,
+    finngen_version: int,
+    ukb_original_mappings: str,
+    ukb_updated_mappings: str,
+    output_path: str,
 ) -> None:
 
     # 1. Extract mappings per data source GWAS catalog traits from study table (these do not require OT mapping)
@@ -165,11 +170,11 @@ def get_ukb_original_mappings(ukb_original_mappings: str) -> pd.DataFrame:
 def get_finngen_mappings(finngen_version: int, finngen_mappings: str) -> pd.DataFrame:
     """
     Extracts Finngen trait mappings from the curation spreadsheet
-    
+
     Args:
       finngen_version (int): The version of the Finngen data that you are using.
       finngen_mappings (str): The path to the Finngen trait mappings spreadsheet.
-    
+
     Returns:
       A dataframe with the following columns:
         - study_id
@@ -199,7 +204,9 @@ def get_finngen_mappings(finngen_version: int, finngen_mappings: str) -> pd.Data
 def build_therapeutic_areas(genetics_mappings: pd.DataFrame) -> pd.DataFrame:
     """Therapeutic areas per trait are built into the mappings table."""
     efo_tas_df = extract_therapeutic_areas_from_owl()
-    return genetics_mappings.merge(efo_tas_df, left_on='trait_efos', right_on='efo_id', how='left').drop('efo_id', axis=1)
+    return genetics_mappings.merge(efo_tas_df, left_on='trait_efos', right_on='efo_id', how='left').drop(
+        'efo_id', axis=1
+    )
 
 
 def flatten_array(arr: List) -> List:  # sourcery skip: use-contextlib-suppress
@@ -222,7 +229,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--finngen_version',
         help='The version of the Finngen manifest the study table is based on.',
-        required=True, type=int,
+        required=True,
+        type=int,
     )
     parser.add_argument(
         '--ukb_original_mappings',
