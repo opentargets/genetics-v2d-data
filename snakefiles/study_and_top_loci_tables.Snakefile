@@ -256,6 +256,7 @@ rule study_table_to_parquet:
 rule make_disease_mappings_lut:
     ''' Build LUT that integrates all the disease mappings
         studies: merged study table in parquet format
+        finngen_version: version of the Finngen manifest
         finngen_mappings: curation recorded in Google Sheets
         ukb_original_mappings: initial UK Biobank disease curation
         ukb_updated_curation: updated mappings resulting from upgrading to EFO3
@@ -267,6 +268,7 @@ rule make_disease_mappings_lut:
     
     params:
         finngen_mappings = config['FINNGEN_efo_curation'],
+        finngen_version = config['FINNGEN_version']
 
     output:
         'output/{version}/trait_efo.parquet'
@@ -275,6 +277,7 @@ rule make_disease_mappings_lut:
         wget -q -O {tmpdir}/finngen_mappings.csv {params.finngen_mappings}
         python scripts/make_disease_mapping_lut.py \
             --studies {input.study_table} \
+            --finngen_version {params.finngen_version}
             --finngen_mappings {tmpdir}/finngen_mappings.csv \
             --ukb_original_mappings {input.ukb_original_mappings} \
             --output {output}

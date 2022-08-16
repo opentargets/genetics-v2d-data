@@ -18,11 +18,12 @@ ukb_manifest: 'gs://genetics-portal-input/ukb_phenotypes/neale2_saige_study_mani
 
 # FINNGEN sumstat manifest file
 FINNGEN_manifest: "https://r6.finngen.fi/api/phenos"
+FINNGEN_version: 6
 
 #Config files for disease mapping lut:
 ukb_efo_original_curation: 'gs://genetics-portal-input/ukb_phenotypes/ukb_efo_annotation.190828.json'
 ukb_efo_updated_curation: 'docs.google.com/spreadsheets/d/1PotmUEirkV36dh-vpZ3GgxQg_LcOefZKbyTq0PNQ6NY/edit?usp=sharing'
-FINNGEN_efo_curation: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4Dh1UVeLZ7TtmpU-QzRwO4GPzGt_3j9nMp5hn0R1Z_JGpwgAgU155UPsNwJcKdA1ra7nee-l7iBiz/pub?output=csv&gid=1853278839&single=true"
+FINNGEN_efo_curation: "https://docs.google.com/spreadsheets/d/1RRWfUTLy4TO9XmBzcbJ2wPRdda3qISjRS4PJmEdxE3k/edit?usp=sharing"
 
 # LD table
 url_1000G: 'gs://genetics-portal-input/1000Genomes_phase3/plink_format_b38'
