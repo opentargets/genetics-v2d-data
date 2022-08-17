@@ -1,22 +1,36 @@
 ### Disclarimer: this is a work in-progress version of the ingest script.
+# Scope of this script:
+# - Read and process GWAS Catalog associations and studies.
+# - Save TopLoci table.
+# - Save study table.
+
+## Summary of the logic:
+# - Read GWAS Catalog associations
+# - Read GWAS Catalog study table.
+# - Excluding a set of studies from the study table.
+# - Be flexible to handle unpublished studies if needed.
+
 import logging
 import sys
 
 import numpy as np
+from functools import reduce
 
 import pyspark.sql
 from pyspark.sql import DataFrame
-import pyspark.sql.types as t
-import pyspark.sql.functions as f
+import pyspark.sql.types as T
+import pyspark.sql.functions as F
 from pyspark import SparkFiles
 
-
-
-
 # These parameters will come as command line arguments:
-VARIANT_ANNOTATION = 'gs://genetics-portal-dev-analysis/dsuveges/variant_annotation/2022-06-22'
+VARIANT_ANNOTATION = 'gs://ot-team/dsuveges/variant_annotation/2022-08-11'
+
 # associations = 'https://www.ebi.ac.uk/gwas/api/search/downloads/alternative'  # URL to GWAS Catalog associations
 GWAS_CATALOG_ASSOCIATIONS = 'gs://ot-team/dsuveges/v2d_files/gwas_associations_2022-06-27.tsv'
+
+# Pointers to study files:
+STUDY_FILE = 'gs://ot-team/dsuveges/v2d_files/gwas_studies_v1.03_2022_08_16.tsv'
+UNPUBLISHED_STUDY_FILE = 'gs://ot-team/dsuveges/v2d_files/gwas_studies_v1.03_unpublished_2022_08_16.tsv'
 
 ##
 ## Temporary output files:
@@ -26,7 +40,7 @@ OUTPUT_PATH = 'gs://ot-team/dsuveges/v2d_files/'
 # These parameters will be read from a config file:
 
 
-# Ingesting GWAS Catalog associations:
+# List of studies to be dropped:
 DROPPED_STUDIES = [
     'GCST005806',  # Sun et al pQTL study
     'GCST005837'  # Huang et al IBD study
@@ -66,25 +80,136 @@ ASSOCIATION_COLUMNS_MAP = {
     'CONTEXT': 'context',
 }
 
+STUDY_COLUMNS_MAP = {
+    # 'DATE ADDED TO CATALOG': 'date_added_to_catalog',
+    'PUBMED ID': 'pubmed_id',
+    'FIRST AUTHOR': 'first_author',
+    'DATE': 'publication_date',
+    'JOURNAL': 'journal',
+    'LINK': 'link',
+    'STUDY': 'study',
+    'DISEASE/TRAIT': 'disease_trait',
+    'INITIAL SAMPLE SIZE': 'initial_sample_size',
+    # 'REPLICATION SAMPLE SIZE': 'replication_sample_size',
+    # 'PLATFORM [SNPS PASSING QC]': 'platform',
+    # 'ASSOCIATION COUNT': 'association_count',
+    'MAPPED_TRAIT': 'mapped_trait',
+    'MAPPED_TRAIT_URI': 'mapped_trait_uri',
+    'STUDY ACCESSION': 'study_accession',
+    # 'GENOTYPING TECHNOLOGY': 'genotyping_technology',
+    'SUMMARY STATS LOCATION': 'summary_stats_location',
+    # 'SUBMISSION DATE': 'submission_date',
+    # 'STATISTICAL MODEL': 'statistical_model',
+    'BACKGROUND TRAIT': 'background_trait',
+    'MAPPED BACKGROUND TRAIT': 'mapped_background_trait',
+    'MAPPED BACKGROUND TRAIT URI': 'mapped_background_trait_uri',
+}
+
+def read_study_table(read_unpublished: bool = False) -> pyspark.sql.DataFrame:
+    """
+    This function reads the study table and returns a Spark DataFrame with the columns renamed to match the names
+    in the `STUDY_COLUMNS_MAP` dictionary
+
+    Args:
+      read_unpublished (bool): bool=False. Defaults to False. Indicating if unpublished studies should be read.
+
+    Returns:
+      A dataframe with the columns specified in STUDY_COLUMNS_MAP.
+    """
+
+    # Reading the study table:
+    study_table = spark.read.csv(STUDY_FILE, sep='\t', header=True)
+
+    if read_unpublished:
+
+        # Reading the unpublished study table:
+        unpublished_study_table = (
+            spark.read.csv(UNPUBLISHED_STUDY_FILE, sep='\t', header=True)
+
+            # The column names are expected to be the same in both tables, so this should be gone at some point:
+            .withColumnRenamed('MAPPED TRAIT', 'MAPPED_TRAIT')
+            .withColumnRenamed('MAPPED TRAIT URI', 'MAPPED_TRAIT_URI')
+        )
+
+        # Expression to replace "not yet cureated" string with nulls:
+        expressions = map(
+            lambda column: (column, F.when(F.col(column) == 'not yet curated', F.lit(None)).otherwise(F.col(column))),
+            STUDY_COLUMNS_MAP.keys()
+        )
+        unpublished_study_table = reduce(lambda DF, value: DF.withColumn(*value), expressions, unpublished_study_table)
+
+        study_table = study_table.union(unpublished_study_table)
+
+    # Selecting and renaming relevant columns:
+    return (
+        study_table
+        .select(*[F.col(old_name).alias(new_name) for old_name, new_name in STUDY_COLUMNS_MAP.items()])
+        .persist()
+    )
+
+
+def extract_sample_sizes(df: pyspark.sql.DataFrame) -> pyspark.sql.DataFrame:
+    """
+    It takes a dataframe with a column called `initial_sample_size` and returns a dataframe with columns
+    `n_cases`, `n_controls`, and `n_samples`
+
+    Args:
+      df (pyspark.sql.DataFrame): pyspark.sql.DataFrame
+
+    Returns:
+      A dataframe with the columns:
+        - n_cases
+        - n_controls
+        - n_samples
+    """
+
+    columns = df.columns
+
+    return (
+        df
+        # .withColumn('samples', F.explode_outer(F.col('initial_sample_size')))
+        .withColumn('samples', F.explode(F.split(F.col('initial_sample_size'), r',\s+')))
+
+        # Extracting the sample size from the string:
+        .withColumn('sample_size', F.regexp_extract(F.regexp_replace(F.col('samples'), ',', ''), r'[0-9,]+', 0).cast(T.IntegerType()))
+
+        # Extracting number of cases:
+        .withColumn('n_cases', F.when(F.col('samples').contains('cases'), F.col('sample_size')).otherwise(F.lit(0)))
+        .withColumn('n_controls', F.when(F.col('samples').contains('controls'), F.col('sample_size')).otherwise(F.lit(0)))
+
+        .groupBy(columns)
+        .agg(
+            F.sum('n_cases').alias('n_cases'),
+            F.sum('n_controls').alias('n_controls'),
+            F.sum('sample_size').alias('n_samples')
+        )
+        .persist()
+    )
 
 def read_GWAS_associations() -> DataFrame:
-    '''This function retrieves the GWAS Catalog association dataset'''
+    """
+    It reads the GWAS Catalog association dataset, selects and renames columns, casts columns, and
+    applies some pre-defined filters on the data
+
+    Returns:
+      A dataframe with the GWAS Catalog associations.
+    """
 
     # Reading and filtering associations:
     association_df = (
         spark.read.csv(GWAS_CATALOG_ASSOCIATIONS, sep='\t', header=True)
 
         # Select and rename columns:
-        .select(*[f.col(old_name).alias(new_name) for old_name, new_name in ASSOCIATION_COLUMNS_MAP.items()])
+        .select(*[F.col(old_name).alias(new_name) for old_name, new_name in ASSOCIATION_COLUMNS_MAP.items()])
 
         # Cast columns:
-        .withColumn('pvalue_mlog', f.col('pvalue_mlog').cast(t.FloatType()))
+        .withColumn('pvalue_mlog', F.col('pvalue_mlog').cast(T.FloatType()))
 
         # Apply some pre-defined filters on the data:
         .filter(
-            (~f.col('chr_id').contains(' x '))  # Dropping associations based on variant x variant interactions
-            & (f.col('pvalue_mlog') > -np.log10(PVALCUTOFF))  # Dropping sub-significant associations
-            & (f.col('chr_pos').isNotNull() & f.col('chr_id').isNotNull())  # Dropping associations without genomic location
+            (~F.col('chr_id').contains(' x '))  # Dropping associations based on variant x variant interactions
+            & (F.col('pvalue_mlog') > -np.log10(PVALCUTOFF))  # Dropping sub-significant associations
+            & (F.col('chr_pos').isNotNull() & F.col('chr_id').isNotNull())  # Dropping associations without genomic location
         )
     )
 
@@ -108,7 +233,7 @@ def parse_associations(association_df: DataFrame) -> DataFrame:
         .withColumn('association_id', f.monotonically_increasing_id())
 
         # Processing variant related columns:
-        #   - Sorting out current rsID field:
+        #   - Sorting out current rsID field: <- why do we need this? rs identifiers should always come from the GnomAD dataset.
         #   - Removing variants with no genomic mappings -> losing ~3% of all associations
         #   - Multiple variants can correspond to a single association.
         #   - Variant identifiers are stored in the SNPS column, while the mapped coordinates are stored in the CHR_ID and CHR_POS columns.
@@ -119,35 +244,35 @@ def parse_associations(association_df: DataFrame) -> DataFrame:
         # The current snp id field is just a number at the moment (stored as a string). Adding 'rs' prefix if looks good.
         .withColumn(
             'snp_id_current',
-            f.when(f.col('snp_id_current').rlike('^[0-9]*$'), f.format_string('rs%s', f.col('snp_id_current')))
-            .otherwise(f.col('snp_id_current'))
+            F.when(F.col('snp_id_current').rlike('^[0-9]*$'), F.format_string('rs%s', F.col('snp_id_current')))
+            .otherwise(F.col('snp_id_current'))
         )
 
         # Variant notation (chr, pos, snp id) are split into array:
-        .withColumn('chr_id', f.split(f.col('chr_id'), ';'))
-        .withColumn('chr_pos', f.split(f.col('chr_pos'), ';'))
-        .withColumn('strongest_snp_risk_allele', f.split(f.col('strongest_snp_risk_allele'), '; '))
-        .withColumn('snp_ids', f.split(f.col('snp_ids'), '; '))
+        .withColumn('chr_id', F.split(F.col('chr_id'), ';'))
+        .withColumn('chr_pos', F.split(F.col('chr_pos'), ';'))
+        .withColumn('strongest_snp_risk_allele', F.split(F.col('strongest_snp_risk_allele'), '; '))
+        .withColumn('snp_ids', F.split(F.col('snp_ids'), '; '))
 
         # Variant fields are joined together in a matching list, then extracted into a separate rows again:
-        .withColumn('VARIANT', f.explode(f.arrays_zip('chr_id', 'chr_pos', 'strongest_snp_risk_allele', 'snp_ids')))
+        .withColumn('VARIANT', F.explode(F.arrays_zip('chr_id', 'chr_pos', 'strongest_snp_risk_allele', 'snp_ids')))
 
         # Updating variant columns:
-        .withColumn('snp_ids', f.col('VARIANT.snp_ids'))
-        .withColumn('chr_id', f.col('VARIANT.chr_id'))
-        .withColumn('chr_pos', f.col('VARIANT.chr_pos').cast(t.IntegerType()))
-        .withColumn('strongest_snp_risk_allele', f.col('VARIANT.strongest_snp_risk_allele'))
+        .withColumn('snp_ids', F.col('VARIANT.snp_ids'))
+        .withColumn('chr_id', F.col('VARIANT.chr_id'))
+        .withColumn('chr_pos', F.col('VARIANT.chr_pos').cast(T.IntegerType()))
+        .withColumn('strongest_snp_risk_allele', F.col('VARIANT.strongest_snp_risk_allele'))
 
         # Extracting risk allele:
-        .withColumn('risk_allele', f.split(f.col('strongest_snp_risk_allele'), '-').getItem(1))
+        .withColumn('risk_allele', F.split(F.col('strongest_snp_risk_allele'), '-').getItem(1))
 
         # Create a unique set of SNPs linked to the assocition:
         .withColumn(
             'rsid_gwas_catalog',
-            f.array_distinct(f.array(
-                f.split(f.col('strongest_snp_risk_allele'), '-').getItem(0),
-                f.col('snp_id_current'),
-                f.col('snp_ids')
+            F.array_distinct(F.array(
+                F.split(F.col('strongest_snp_risk_allele'), '-').getItem(0),
+                F.col('snp_id_current'),
+                F.col('snp_ids')
             ))
         )
 
@@ -158,11 +283,11 @@ def parse_associations(association_df: DataFrame) -> DataFrame:
         #   - EFO terms in the study table is not considered as association level EFO annotation has priority (via p-value text)
 
         # Process EFO URIs:
-        .withColumn('efo', f.explode(f.expr(r"regexp_extract_all(mapped_trait_uri, '([A-Z]+_[0-9]+)')")))
+        .withColumn('efo', F.explode(F.expr(r"regexp_extract_all(mapped_trait_uri, '([A-Z]+_[0-9]+)')")))
 
         # Splitting p-value into exponent and mantissa:
-        .withColumn('exponent', f.split(f.col('p_value'), 'E').getItem(1).cast('integer'))
-        .withColumn('mantissa', f.split(f.col('p_value'), 'E').getItem(0).cast('float'))
+        .withColumn('exponent', F.split(F.col('p_value'), 'E').getItem(1).cast('integer'))
+        .withColumn('mantissa', F.split(F.col('p_value'), 'E').getItem(0).cast('float'))
 
         # Cleaning up:
         .drop('mapped_trait_uri', 'strongest_snp_risk_allele', 'VARIANT')
@@ -185,17 +310,18 @@ def map_associations(parsed_associations: DataFrame) -> DataFrame:
     variants = (
         spark.read.parquet(VARIANT_ANNOTATION)
         .select(
-            f.col('chrom_b38').alias('chr_id'),
-            f.col('pos_b38').alias('chr_pos'),
-            f.col('rsid').alias('rsid_gnomad'),
-            f.col('ref').alias('ref'),
-            f.col('alt').alias('alt')
+            F.col('chrom_b38').alias('chr_id'),
+            F.col('pos_b38').alias('chr_pos'),
+            F.col('rsid').alias('rsid_gnomad'),
+            F.col('ref').alias('ref'),
+            F.col('alt').alias('alt'),
+            F.col('id').alias('variant_id')
         )
     )
 
     mapped_associations = (
         parsed_associations
-        .join(variants, on=['chr_id', 'chr_pos'], how='left_outer')
+        .join(variants, on=['chr_id', 'chr_pos'], how='left')
         .persist()
     )
 
@@ -224,47 +350,53 @@ def main():
         mapped_associations
 
         # Dropping associations with no mapped variants:
-        .filter(f.col('alt').isNotNull())
+        .filter(F.col('alt').isNotNull())
 
         # Adding column with the reverse-complement of the risk allele:
         .withColumn(
             'risk_allele_reverse_complement',
-            f.when(
-                f.col('risk_allele').rlike(r'^[ACTG]+$'),
-                f.reverse(f.translate(f.col('risk_allele'), "ACTG", "TGAC"))
+            F.when(
+                F.col('risk_allele').rlike(r'^[ACTG]+$'),
+                F.reverse(F.translate(F.col('risk_allele'), "ACTG", "TGAC"))
             )
-            .otherwise(f.col('risk_allele'))
+            .otherwise(F.col('risk_allele'))
         )
 
         # Adding columns flagging concordance:
         .withColumn(
             'is_concordant',
             # If risk allele is found on the positive strand:
-            f.when((f.col('risk_allele') == f.col('ref')) | (f.col('risk_allele') == f.col('alt')), True)
+            F.when((F.col('risk_allele') == F.col('ref')) | (F.col('risk_allele') == F.col('alt')), True)
             # If risk allele is found on the negative strand:
             .when(
-                (f.col('risk_allele_reverse_complement') == f.col('ref'))
-                | (f.col('risk_allele_reverse_complement') == f.col('alt')),
+                (F.col('risk_allele_reverse_complement') == F.col('ref'))
+                | (F.col('risk_allele_reverse_complement') == F.col('alt')),
                 True
             )
             # If risk allele is ambiguous, still accepted:
-            .when(f.col('risk_allele') == '?', True)
+            .when(F.col('risk_allele') == '?', True)
             # Allele is discordant:
             .otherwise(False)
         )
 
         # Dropping discordant associations:
-        .filter((f.col('is_concordant') == True) & (f.col('risk_allele') == '?'))
+        .filter((F.col('is_concordant') == True) & (F.col('risk_allele') == '?'))
         .drop('is_concordant', 'risk_allele_reverse_complement')
 
         # Adding column for variant id:
-        .withColumn('variant_id', f.concat_ws('_', f.col('chr_id'), f.col('chr_pos'), f.col('ref'), f.col('alt')))
+        .withColumn('variant_id', F.concat_ws('_', F.col('chr_id'), F.col('chr_pos'), F.col('ref'), F.col('alt')))
 
         .show(1, False, True)
     )
 
     # Debug: saving concordant mappings:
     mapped_associations.write.mode('overwrite').parquet(f'{OUTPUT_PATH}/concordant_associations.parquet')
+
+    # Reading study table:
+    study_table = read_study_table(INGEST_UNPUBLISHED_STUDIES)
+
+    # Extract sample sizes:
+    study_table = extract_sample_sizes(study_table)
 
 
 if __name__ == '__main__':
