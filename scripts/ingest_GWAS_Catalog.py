@@ -147,7 +147,6 @@ def read_study_table(read_unpublished: bool = False) -> pyspark.sql.DataFrame:
         .persist()
     )
 
-
 def extract_sample_sizes(df: pyspark.sql.DataFrame) -> pyspark.sql.DataFrame:
     """
     It takes a dataframe with a column called `initial_sample_size` and returns a dataframe with columns
@@ -230,7 +229,7 @@ def parse_associations(association_df: DataFrame) -> DataFrame:
         association_df
 
         # Adding association identifier for future deduplication:
-        .withColumn('association_id', f.monotonically_increasing_id())
+        .withColumn('association_id', F.monotonically_increasing_id())
 
         # Processing variant related columns:
         #   - Sorting out current rsID field: <- why do we need this? rs identifiers should always come from the GnomAD dataset.
@@ -282,8 +281,9 @@ def parse_associations(association_df: DataFrame) -> DataFrame:
         #   - Associations are exploded to all EFO terms.
         #   - EFO terms in the study table is not considered as association level EFO annotation has priority (via p-value text)
 
-        # Process EFO URIs:
-        .withColumn('efo', F.explode(F.expr(r"regexp_extract_all(mapped_trait_uri, '([A-Z]+_[0-9]+)')")))
+        # Process EFO URIs: -> why do we explode?
+        # .withColumn('efo', F.explode(F.expr(r"regexp_extract_all(mapped_trait_uri, '([A-Z]+_[0-9]+)')")))
+        .withColumn('efo', F.expr(r"regexp_extract_all(mapped_trait_uri, '([A-Z]+_[0-9]+)')"))
 
         # Splitting p-value into exponent and mantissa:
         .withColumn('exponent', F.split(F.col('p_value'), 'E').getItem(1).cast('integer'))
@@ -303,6 +303,7 @@ def parse_associations(association_df: DataFrame) -> DataFrame:
     return parsed_associations
 
 def map_associations(parsed_associations: DataFrame) -> DataFrame:
+
     # Loading variant annotation and join with parsed associations:
     logging.info('Loading variant annotation:')
 
@@ -327,6 +328,44 @@ def map_associations(parsed_associations: DataFrame) -> DataFrame:
 
     return mapped_associations
 
+# Will be moved to separate file:
+def processing_GWAS_Catalog_associations():
+    pass
+
+# Will be moved to separate file:
+def processing_GWAS_Catalog_studies():
+    pass
+
+# Will be moved to separate file: < This might live with the study table.
+def processing_GWAS_Catalog_ancestries():
+    pass
+
+class ingesting_GWAS_Catalog:
+
+    def __init__(self):
+        # parameters will be added here from configuration.
+        pass
+
+    def ingest_associations(self):
+        pass
+
+    def ingest_studies(self):
+        pass
+
+    def aggregate_data(self):
+        pass
+
+    def extract_toploci_table(self):
+        pass
+
+    def extract_study_table(self):
+        pass
+
+    @staticmethod
+    def qc(df):
+        pass
+
+
 def main():
 
     # Read GWAS associations and process:
@@ -340,63 +379,75 @@ def main():
     mapped_associations = map_associations(parsed_gwas_associations)
 
     # Debug: save mapped data:
-    # mapped_associations.write.mode('overwrite').parquet(f'{OUTPUT_PATH}/mapped_parsed_associations.parquet')
+    mapped_associations.write.mode('overwrite').parquet(f'{OUTPUT_PATH}/mapped_parsed_associations.parquet')
 
     # Debug: read mapped associations:
     # mapped_associations = spark.read.parquet(f'{OUTPUT_PATH}/mapped_parsed_associations.parquet').persist()
 
-    # Drop association/variant mappings, where the alleles are discordant:
-    mapped_associations = (
-        mapped_associations
+    # # Drop association/variant mappings, where the alleles are discordant:
+    # mapped_associations = (
+    #     mapped_associations
 
-        # Dropping associations with no mapped variants:
-        .filter(F.col('alt').isNotNull())
+    #     # Dropping associations with no mapped variants:
+    #     .filter(F.col('alt').isNotNull())
 
-        # Adding column with the reverse-complement of the risk allele:
-        .withColumn(
-            'risk_allele_reverse_complement',
-            F.when(
-                F.col('risk_allele').rlike(r'^[ACTG]+$'),
-                F.reverse(F.translate(F.col('risk_allele'), "ACTG", "TGAC"))
-            )
-            .otherwise(F.col('risk_allele'))
-        )
+    #     # Adding column with the reverse-complement of the risk allele:
+    #     .withColumn(
+    #         'risk_allele_reverse_complement',
+    #         F.when(
+    #             F.col('risk_allele').rlike(r'^[ACTG]+$'),
+    #             F.reverse(F.translate(F.col('risk_allele'), "ACTG", "TGAC"))
+    #         )
+    #         .otherwise(F.col('risk_allele'))
+    #     )
 
-        # Adding columns flagging concordance:
-        .withColumn(
-            'is_concordant',
-            # If risk allele is found on the positive strand:
-            F.when((F.col('risk_allele') == F.col('ref')) | (F.col('risk_allele') == F.col('alt')), True)
-            # If risk allele is found on the negative strand:
-            .when(
-                (F.col('risk_allele_reverse_complement') == F.col('ref'))
-                | (F.col('risk_allele_reverse_complement') == F.col('alt')),
-                True
-            )
-            # If risk allele is ambiguous, still accepted:
-            .when(F.col('risk_allele') == '?', True)
-            # Allele is discordant:
-            .otherwise(False)
-        )
+    #     # Adding columns flagging concordance:
+    #     .withColumn(
+    #         'is_concordant',
+    #         # If risk allele is found on the positive strand:
+    #         F.when((F.col('risk_allele') == F.col('ref')) | (F.col('risk_allele') == F.col('alt')), True)
+    #         # If risk allele is found on the negative strand:
+    #         .when(
+    #             (F.col('risk_allele_reverse_complement') == F.col('ref'))
+    #             | (F.col('risk_allele_reverse_complement') == F.col('alt')),
+    #             True
+    #         )
+    #         # If risk allele is ambiguous, still accepted: < This condition could be reivewed!s
+    #         .when(F.col('risk_allele') == '?', True)
+    #         # Allele is discordant:
+    #         .otherwise(False)
+    #     )
 
-        # Dropping discordant associations:
-        .filter((F.col('is_concordant') == True) & (F.col('risk_allele') == '?'))
-        .drop('is_concordant', 'risk_allele_reverse_complement')
+    #     # Dropping discordant associations:
+    #     .filter((F.col('is_concordant') == True) & (F.col('risk_allele') == '?'))
+    #     .drop('is_concordant', 'risk_allele_reverse_complement')
 
-        # Adding column for variant id:
-        .withColumn('variant_id', F.concat_ws('_', F.col('chr_id'), F.col('chr_pos'), F.col('ref'), F.col('alt')))
+    #     # Adding column for variant id:
+    #     .withColumn('variant_id', F.concat_ws('_', F.col('chr_id'), F.col('chr_pos'), F.col('ref'), F.col('alt')))
 
-        .show(1, False, True)
-    )
+    #     .show(1, False, True)
+    # )
 
-    # Debug: saving concordant mappings:
-    mapped_associations.write.mode('overwrite').parquet(f'{OUTPUT_PATH}/concordant_associations.parquet')
+    # # Debug: saving concordant mappings:
+    # mapped_associations.write.mode('overwrite').parquet(f'{OUTPUT_PATH}/concordant_associations.parquet')
 
-    # Reading study table:
-    study_table = read_study_table(INGEST_UNPUBLISHED_STUDIES)
+    # # Processing study table:
+    # study_table = (
+    #     read_study_table(INGEST_UNPUBLISHED_STUDIES)
 
-    # Extract sample sizes:
-    study_table = extract_sample_sizes(study_table)
+    #     # Extract sample sizes:
+    #     .transform(extract_sample_sizes)
+
+    #     # Dropping link if pubmed id is available:
+    #     .withColumn('link', F.when(F.col('pubmed_id').isNull(), F.col('link')).otherwise(F.lit(None)))
+
+    #     # Extracting all EFOs from the assigned trait and the background trait:
+    #     .withColumn('mapped_efos', F.expr('regexp_extract_all(mapped_trait_uri, "([A-Z_0-9]+)")'))
+    #     .withColumn('mapped_background_efos', F.expr('regexp_extract_all(mapped_background_trait_uri, "([A-Z_0-9]+)")'))
+
+    #     .drop('mapped_trait_uri', 'mapped_background_trait_uri')
+    #     .persist()
+    # )
 
 
 if __name__ == '__main__':
