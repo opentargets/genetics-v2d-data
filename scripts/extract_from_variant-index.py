@@ -1,11 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
-# Ed Mountjoy
-#
 
-import sys
-import os
 import argparse
 import gzip
 
@@ -14,7 +8,7 @@ def main():
     # Parse args
     args = parse_args()
     allowed_chroms = set(
-        [str(x) for x  in range(1, 23)] + ['X', 'Y', 'MT']
+        [str(x) for x in range(1, 23)] + ['X', 'Y', 'MT']
     )
 
     # Load rsid and chr:pos sets from gwas catalog assocs
@@ -23,32 +17,37 @@ def main():
     # Parse vcf
     with gzip.open(args.vcf, 'r') as in_h:
         with gzip.open(args.out, 'w') as out_h:
-            in_h.readline() # Skip header
+            in_h.readline()  # Skip header
             for line in in_h:
-                
+
                 parts = line.decode().rstrip().split('\t')
-                
+
                 # Extract b37 chrom:pos
                 chrom_b37 = parts[2]
                 pos_b37 = parts[3]
                 chrom_pos_b37 = '{0}:{1}'.format(chrom_b37, pos_b37)
+
                 # Extract b38 chrom:pos
                 chrom_b38 = parts[4]
                 pos_b38 = parts[5]
                 chrom_pos_b38 = '{0}:{1}'.format(chrom_b38, pos_b38)
+
                 # Extract rsid
                 rsid = parts[8]
 
                 # Skip invalid chroms
-                if ((chrom_b37 not in allowed_chroms) or
-                    (chrom_b38 not in allowed_chroms)):
+                if (
+                    (chrom_b37 not in allowed_chroms)
+                    or (chrom_b38 not in allowed_chroms)
+                ):
                     continue
-                
-                # Write line if variant is a gwas association
-                if ((chrom_pos_b37 in chrom_pos_b37_set) or 
-                    (chrom_pos_b38 in chrom_pos_b38_set) or
-                    (rsid in rsid_set)):
 
+                # Write line if variant is a gwas association
+                if (
+                    (chrom_pos_b37 in chrom_pos_b37_set) or 
+                    (chrom_pos_b38 in chrom_pos_b38_set) or
+                    (rsid in rsid_set)
+                ):
                     out_h.write(line)
 
     return 0
@@ -71,7 +70,7 @@ def parse_sets(in_gwas):
     with open(in_gwas, 'r') as in_h:
         header = in_h.readline().rstrip().split('\t')
         for line in in_h:
-            
+
             parts = line.rstrip().split('\t')
 
             # Add rsid from SNP_ID_CURRENT to rsid set

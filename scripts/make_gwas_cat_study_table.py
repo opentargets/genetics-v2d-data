@@ -31,10 +31,18 @@ def main():
     # studies with > 0 associations (may not be valid for phewas studies).
 
     # Load GWAS Catalog's study table
-    cols_to_keep = ['STUDY ACCESSION', 'PUBMEDID', 'DATE', 'JOURNAL', 'STUDY',
-                    'INITIAL SAMPLE SIZE', 'FIRST AUTHOR', 'DISEASE/TRAIT',
-                    'MAPPED_TRAIT_URI']
-    
+    cols_to_keep = [
+        'STUDY ACCESSION',
+        'PUBMEDID',
+        'DATE',
+        'JOURNAL',
+        'STUDY',
+        'INITIAL SAMPLE SIZE',
+        'FIRST AUTHOR',
+        'DISEASE/TRAIT',
+        'MAPPED_TRAIT_URI'
+    ]
+
     # Load GWAS Catalog's study table
     gwascat_studies = pd.read_csv(
         args.in_gwascat_study,
@@ -52,7 +60,7 @@ def main():
 
     # Groupby will drop null 'P-VALUE (TEXT)' fields
     toploci_studies['P-VALUE (TEXT)'] = toploci_studies['P-VALUE (TEXT)'].fillna('')
-     
+
     # Merge gwascat_studies with toploci_studies
     studies = pd.merge(
         gwascat_studies, toploci_studies,
@@ -89,10 +97,10 @@ def main():
     n_counts = studies['INITIAL SAMPLE SIZE'].apply(extract_sample_sizes)
     # studies['n_initial'] = n_counts.apply(lambda x: x[0])
     studies['n_cases'] = n_counts.apply(lambda x: x[1])
-    
+
     # Drop 'INITIAL SAMPLE SIZE'
     studies = studies.drop('INITIAL SAMPLE SIZE', axis=1)
-    
+
     #
     # Group EFO codes together -------------------------------------------------
     #
@@ -197,7 +205,7 @@ def main():
     # Set sample size columns to NaN if they are 0
     for colname in ['n_initial', 'n_cases', 'n_replication']:
         df[colname] = df[colname].replace({0: nan})
-    
+
     # Split the efos into a list
     df['trait_efos'] = df['trait_efos'].str.split(';')
 
@@ -252,7 +260,7 @@ def extract_sample_sizes(s):
                 n_controls += n
             else:
                 n_quant += n
-    
+
     # Return n_total and n_cases
     if n_quant > 0:
         return n_quant, 0

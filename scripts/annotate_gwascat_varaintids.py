@@ -211,9 +211,11 @@ def main():
         .drop_duplicates()
     )
     multivar_collapsed = (
-        multivar.groupby('assoc_id')
-                .agg({'rsid':combine_rows, 'variant_id_b38':combine_rows})
-                .reset_index() )
+        multivar
+        .groupby('assoc_id')
+        .agg({'rsid':combine_rows, 'variant_id_b38':combine_rows})
+        .reset_index() 
+    )
 
     # Merge collapsed variant IDs back to the raw gwas data
     out_df = pd.merge(gwas_raw, multivar_collapsed,
@@ -354,3 +356,12 @@ def parse_args():
 if __name__ == '__main__':
 
     main()
+
+
+(
+    old
+    .select('STRONGEST SNP-RISK ALLELE', 'variant_id_b38', 'rsid')
+    .show()
+)
+
+old = spark.read.csv('gs://ot-team/dsuveges/v2d_data', sep='\t', header=True).persist()
